@@ -43,7 +43,8 @@ export async function eliminarUsuari(id: string) {
 // generat automàticament a partir del nom de l'associació).
 export async function crearUsuariNovaAssociacio(dades: {
   nomAssociacio: string;
-  president: string;
+  usuari?: string;
+  email?: string;
   provincia?: string;
   contrasenya: string;
 }): Promise<{ agrupacio: { id: string; nom: string }; usuari: Usuari }> {

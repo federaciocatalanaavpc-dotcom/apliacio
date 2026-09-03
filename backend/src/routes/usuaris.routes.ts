@@ -63,41 +63,42 @@ async function generarUsuariUnic(base: string): Promise<string> {
   return candidat;
 }
 
-// Crea en un sol pas una associació nova, el seu usuari d'accés (amb un
-// login generat automàticament a partir del nom).
+// Crea en un sol pas una associació nova i el seu usuari d'accés. Si no
+// s'indica un nom d'usuari, es genera automàticament a partir del nom de
+// l'associació.
 router.post('/nova-associacio', async (req, res) => {
-  const { nomAssociacio, president, provincia, contrasenya } = req.body;
-  if (!nomAssociacio || !president || !contrasenya) {
-    return res.status(400).json({ error: "Falten camps obligatoris (nom de l'associació, president i contrasenya)" });
+  const { nomAssociacio, usuari, email, provincia, contrasenya } = req.body;
+  if (!nomAssociacio || !contrasenya) {
+    return res.status(400).json({ error: "Falten camps obligatoris (nom de l'associació i contrasenya)" });
   }
   if (contrasenya.length < 6) {
     return res.status(400).json({ error: 'La contrasenya ha de tenir almenys 6 caràcters' });
   }
 
-  const usuariLogin = await generarUsuariUnic(nomAssociacio);
+  const usuariLogin = usuari ? usuari.toLowerCase() : await generarUsuariUnic(nomAssociacio);
   const contrasenyaHash = await bcrypt.hash(contrasenya, 10);
 
   try {
     const resultat = await prisma.$transaction(async (tx) => {
       const agrupacio = await tx.agrupacio.create({
-        data: { nom: nomAssociacio, president, provincia: provincia || undefined },
+        data: { nom: nomAssociacio, email: email || undefined, provincia: provincia || undefined },
       });
-      const usuari = await tx.usuari.create({
+      const nouUsuari = await tx.usuari.create({
         data: {
-          nom: president,
+          nom: nomAssociacio,
           usuari: usuariLogin,
           contrasenya: contrasenyaHash,
           rol: 'AGRUPACIO',
           agrupacioId: agrupacio.id,
         },
       });
-      return { agrupacio, usuari };
+      return { agrupacio, usuari: nouUsuari };
     });
 
     const { contrasenya: _c, ...usuariResta } = resultat.usuari;
     res.status(201).json({ agrupacio: resultat.agrupacio, usuari: usuariResta });
   } catch {
-    res.status(400).json({ error: "No s'ha pogut crear l'associació i l'usuari" });
+    res.status(400).json({ error: "No s'ha pogut crear l'associació i l'usuari (potser el nom d'usuari ja existeix)" });
   }
 });
 

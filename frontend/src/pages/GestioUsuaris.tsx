@@ -12,7 +12,8 @@ const buit = {
   usuari: '',
   // alta ràpida: associació nova + usuari en un sol pas
   nomAssociacio: '',
-  president: '',
+  usuariNova: '',
+  email: '',
   provincia: '',
   agrupacioId: '',
   contrasenya: '',
@@ -70,7 +71,8 @@ export default function GestioUsuaris() {
       } else if (form.mode === 'nova') {
         const resultat = await crearUsuariNovaAssociacio({
           nomAssociacio: form.nomAssociacio,
-          president: form.president,
+          usuari: form.usuariNova || undefined,
+          email: form.email || undefined,
           provincia: form.provincia || undefined,
           contrasenya: form.contrasenya,
         });
@@ -225,8 +227,12 @@ export default function GestioUsuaris() {
                     <input value={form.nomAssociacio} onChange={(e) => setForm({ ...form, nomAssociacio: e.target.value })} required style={{ width: '100%' }} />
                   </div>
                   <div style={{ marginBottom: 10 }}>
-                    <label>President/a</label>
-                    <input value={form.president} onChange={(e) => setForm({ ...form, president: e.target.value })} required style={{ width: '100%' }} />
+                    <label>Nom d'usuari (opcional, es genera sol si el deixes buit)</label>
+                    <input value={form.usuariNova} onChange={(e) => setForm({ ...form, usuariNova: e.target.value })} style={{ width: '100%' }} />
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <label>Email (opcional)</label>
+                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={{ width: '100%' }} />
                   </div>
                   <div style={{ marginBottom: 6 }}>
                     <label>Província</label>
