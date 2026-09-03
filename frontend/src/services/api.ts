@@ -38,6 +38,13 @@ export function getUsuariActual(): UsuariActual | null {
   return raw ? JSON.parse(raw) : null;
 }
 
+// Cada usuari pot canviar la seva pròpia contrasenya (cal saber l'actual).
+// La federació mai veu les contrasenyes en clar; només les pot restablir
+// des de Gestionar usuaris.
+export async function canviarContrasenya(contrasenyaActual: string, contrasenyaNova: string) {
+  await api.patch('/auth/contrasenya', { contrasenyaActual, contrasenyaNova });
+}
+
 // Els fitxers pujats (estatuts, actes, documentació de membres) es serveixen
 // darrere d'autenticació, així que no es poden obrir amb un <a href> normal
 // (el navegador no hi afegiria el token). Es descarreguen com a blob amb el

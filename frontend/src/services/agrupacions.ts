@@ -3,7 +3,8 @@ import { api } from './api';
 export interface Agrupacio {
   id: string;
   nom: string;
-  municipi: string;
+  provincia: string | null;
+  municipi: string | null;
   comarca: string | null;
   adreca: string | null;
   telefon: string | null;
@@ -21,7 +22,8 @@ export async function llistarAgrupacions(): Promise<Agrupacio[]> {
 
 export async function crearAgrupacio(dades: {
   nom: string;
-  municipi: string;
+  provincia?: string;
+  municipi?: string;
   comarca?: string;
   adreca?: string;
   telefon?: string;

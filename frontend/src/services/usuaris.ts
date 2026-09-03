@@ -38,3 +38,15 @@ export async function editarUsuari(
 export async function eliminarUsuari(id: string) {
   await api.delete(`/usuaris/${id}`);
 }
+
+// Crea en un sol pas una associació, el seu usuari d'accés (login generat
+// automàticament a partir del nom) i el/la president/a com a primer membre.
+export async function crearUsuariNovaAssociacio(dades: {
+  nomAssociacio: string;
+  president: string;
+  provincia?: string;
+  contrasenya: string;
+}): Promise<{ agrupacio: { id: string; nom: string }; usuari: Usuari }> {
+  const { data } = await api.post('/usuaris/nova-associacio', dades);
+  return data;
+}

@@ -17,6 +17,7 @@ import {
   llistarMembres,
 } from '../services/membres';
 import { getUsuariActual } from '../services/api';
+import { Provincia, llistarProvincies } from '../services/provincies';
 import BotoTornar from '../components/BotoTornar';
 
 const TIPUS_DOC_LABEL: Record<TipusDocMembre, string> = {
@@ -35,6 +36,7 @@ const ESTAT_DOC_COLOR: Record<string, string> = {
 
 const buit = {
   nom: '',
+  provincia: '',
   municipi: '',
   comarca: '',
   adreca: '',
@@ -59,6 +61,7 @@ export default function Associacions() {
 
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [membres, setMembres] = useState<Membre[]>([]);
+  const [provincies, setProvincies] = useState<Provincia[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
 
@@ -78,9 +81,10 @@ export default function Associacions() {
   async function carregar() {
     setCarregant(true);
     try {
-      const [ags, mem] = await Promise.all([llistarAgrupacions(), llistarMembres()]);
+      const [ags, mem, provs] = await Promise.all([llistarAgrupacions(), llistarMembres(), llistarProvincies()]);
       setAgrupacions(esFederacio ? ags : ags.filter((a) => a.id === usuariActual?.agrupacioId));
       setMembres(mem);
+      setProvincies(provs);
     } catch {
       setError('No s\'han pogut carregar les associacions');
     } finally {
@@ -99,7 +103,8 @@ export default function Associacions() {
     try {
       await crearAgrupacio({
         nom: form.nom,
-        municipi: form.municipi,
+        provincia: form.provincia || undefined,
+        municipi: form.municipi || undefined,
         comarca: form.comarca || undefined,
         adreca: form.adreca || undefined,
         telefon: form.telefon || undefined,
@@ -119,7 +124,8 @@ export default function Associacions() {
     setEditantId(editantId === a.id ? null : a.id);
     setEditForm({
       nom: a.nom,
-      municipi: a.municipi,
+      provincia: a.provincia || '',
+      municipi: a.municipi || '',
       comarca: a.comarca || '',
       adreca: a.adreca || '',
       telefon: a.telefon || '',
@@ -136,7 +142,8 @@ export default function Associacions() {
     try {
       await editarAgrupacio(editantId, {
         nom: editForm.nom,
-        municipi: editForm.municipi,
+        provincia: editForm.provincia || undefined,
+        municipi: editForm.municipi || undefined,
         comarca: editForm.comarca || undefined,
         adreca: editForm.adreca || undefined,
         telefon: editForm.telefon || undefined,
@@ -249,11 +256,20 @@ export default function Associacions() {
               <input value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} required style={{ width: '100%' }} />
             </div>
             <div style={{ flex: 1 }}>
-              <label>Municipi</label>
-              <input value={form.municipi} onChange={(e) => setForm({ ...form, municipi: e.target.value })} required style={{ width: '100%' }} />
+              <label>Província (opcional)</label>
+              <select value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} style={{ width: '100%' }}>
+                <option value="">Sense especificar</option>
+                {provincies.map((p) => (
+                  <option key={p.id} value={p.nom}>{p.nom}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label>Municipi (opcional)</label>
+              <input value={form.municipi} onChange={(e) => setForm({ ...form, municipi: e.target.value })} style={{ width: '100%' }} />
+            </div>
             <div style={{ flex: 1 }}>
               <label>Comarca (opcional)</label>
               <input value={form.comarca} onChange={(e) => setForm({ ...form, comarca: e.target.value })} style={{ width: '100%' }} />
@@ -298,9 +314,11 @@ export default function Associacions() {
                   <strong>{a.nom}</strong>
                   {!a.actiu && <span className="badge" style={{ color: 'var(--c-error)', background: 'var(--c-error-bg)' }}>Inactiva</span>}
                 </div>
-                <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
-                  {a.municipi}{a.comarca ? ` · ${a.comarca}` : ''}
-                </p>
+                {(a.provincia || a.municipi || a.comarca) && (
+                  <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
+                    {[a.provincia, a.municipi, a.comarca].filter(Boolean).join(' · ')}
+                  </p>
+                )}
                 {a.president && <p style={{ fontSize: 13, margin: '4px 0' }}>President/a: {a.president}</p>}
                 {(a.telefon || a.email) && (
                   <p className="text-muted" style={{ fontSize: 12, margin: '4px 0' }}>
@@ -337,19 +355,28 @@ export default function Associacions() {
                         <input value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} required style={{ width: '100%' }} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label>Municipi</label>
-                        <input value={editForm.municipi} onChange={(e) => setEditForm({ ...editForm, municipi: e.target.value })} required style={{ width: '100%' }} />
+                        <label>Província</label>
+                        <select value={editForm.provincia} onChange={(e) => setEditForm({ ...editForm, provincia: e.target.value })} style={{ width: '100%' }}>
+                          <option value="">Sense especificar</option>
+                          {provincies.map((p) => (
+                            <option key={p.id} value={p.nom}>{p.nom}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                     <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
                       <div style={{ flex: 1 }}>
+                        <label>Municipi</label>
+                        <input value={editForm.municipi} onChange={(e) => setEditForm({ ...editForm, municipi: e.target.value })} style={{ width: '100%' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
                         <label>Comarca</label>
                         <input value={editForm.comarca} onChange={(e) => setEditForm({ ...editForm, comarca: e.target.value })} style={{ width: '100%' }} />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label>President/a</label>
-                        <input value={editForm.president} onChange={(e) => setEditForm({ ...editForm, president: e.target.value })} style={{ width: '100%' }} />
-                      </div>
+                    </div>
+                    <div style={{ marginBottom: 8 }}>
+                      <label>President/a</label>
+                      <input value={editForm.president} onChange={(e) => setEditForm({ ...editForm, president: e.target.value })} style={{ width: '100%' }} />
                     </div>
                     <div style={{ marginBottom: 8 }}>
                       <label>Adreça</label>

@@ -29,6 +29,7 @@ export default function Dashboard() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Link to="/canviar-contrasenya" style={{ fontSize: 13 }}>🔑 Contrasenya</Link>
           <button onClick={handleLogout}>Sortir</button>
         </div>
       </div>

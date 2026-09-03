@@ -67,11 +67,12 @@ model Usuari {
   documentsPujats   Document[]
 }
 
-// Una agrupació per municipi, federada dins la Federació Catalana d'AVPC.
+// Una agrupació/associació federada dins la Federació Catalana d'AVPC.
 model Agrupacio {
   id           String    @id @default(uuid())
   nom          String
-  municipi     String
+  provincia    String?
+  municipi     String?
   comarca      String?
   adreca       String?
   telefon      String?
@@ -226,4 +227,12 @@ model SubscripcioPush {
   p256dh   String
   auth     String
   creatEl  DateTime @default(now())
+}
+
+// Catàleg de províncies que la federació manté (afegir/editar/eliminar),
+// perquè el desplegable de "crear usuari" sempre mostri opcions controlades.
+model Provincia {
+  id      String   @id @default(uuid())
+  nom     String   @unique
+  creatEl DateTime @default(now())
 }

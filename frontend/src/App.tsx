@@ -8,6 +8,7 @@ import Material from './pages/Material';
 import Documents from './pages/Documents';
 import Formacio from './pages/Formacio';
 import Avisos from './pages/Avisos';
+import CanviarContrasenya from './pages/CanviarContrasenya';
 import RutaProtegida from './components/RutaProtegida';
 import RutaFederacio from './components/RutaFederacio';
 
@@ -77,6 +78,14 @@ export default function App() {
           element={
             <RutaProtegida>
               <Avisos />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/canviar-contrasenya"
+          element={
+            <RutaProtegida>
+              <CanviarContrasenya />
             </RutaProtegida>
           }
         />

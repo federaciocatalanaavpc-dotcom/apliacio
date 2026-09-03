@@ -13,15 +13,16 @@ router.get('/', async (_req, res) => {
 });
 
 router.post('/', requireFederacio, async (req, res) => {
-  const { nom, municipi, comarca, adreca, telefon, email, president, dataFundacio } = req.body;
-  if (!nom || !municipi) {
-    return res.status(400).json({ error: "Cal indicar el nom i el municipi de l'associació" });
+  const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio } = req.body;
+  if (!nom) {
+    return res.status(400).json({ error: "Cal indicar el nom de l'associació" });
   }
   try {
     const agrupacio = await prisma.agrupacio.create({
       data: {
         nom,
-        municipi,
+        provincia: provincia || undefined,
+        municipi: municipi || undefined,
         comarca: comarca || undefined,
         adreca: adreca || undefined,
         telefon: telefon || undefined,
@@ -37,13 +38,14 @@ router.post('/', requireFederacio, async (req, res) => {
 });
 
 router.patch('/:id', requireFederacio, async (req, res) => {
-  const { nom, municipi, comarca, adreca, telefon, email, president, dataFundacio, actiu } = req.body;
+  const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio, actiu } = req.body;
   try {
     const agrupacio = await prisma.agrupacio.update({
       where: { id: req.params.id },
       data: {
         nom,
-        municipi,
+        provincia: provincia || null,
+        municipi: municipi || null,
         comarca: comarca || null,
         adreca: adreca || null,
         telefon: telefon || null,

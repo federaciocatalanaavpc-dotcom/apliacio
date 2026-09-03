@@ -5,6 +5,7 @@ import path from 'path';
 import authRoutes from './routes/auth.routes';
 import usuarisRoutes from './routes/usuaris.routes';
 import agrupacionsRoutes from './routes/agrupacions.routes';
+import provinciesRoutes from './routes/provincies.routes';
 import membresRoutes from './routes/membres.routes';
 import documentsMembreRoutes from './routes/documentsMembre.routes';
 import vehiclesRoutes from './routes/vehicles.routes';
@@ -31,6 +32,7 @@ app.use('/uploads', requireAuth, express.static(path.join(__dirname, 'uploads'))
 app.use('/api/auth', authRoutes);
 app.use('/api/usuaris', usuarisRoutes);
 app.use('/api/agrupacions', agrupacionsRoutes);
+app.use('/api/provincies', provinciesRoutes);
 app.use('/api/membres', membresRoutes);
 app.use('/api/documents-membre', documentsMembreRoutes);
 app.use('/api/vehicles', vehiclesRoutes);

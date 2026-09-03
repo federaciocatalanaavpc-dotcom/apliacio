@@ -41,6 +41,72 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Genera un nom d'usuari (login) únic a partir d'un text lliure (p.ex. el
+// nom de l'associació), traient accents i caràcters no alfanumèrics.
+const DIACRITICS_REGEX = new RegExp('[̀-ͯ]', 'g');
+
+async function generarUsuariUnic(base: string): Promise<string> {
+  const arrel =
+    base
+      .normalize('NFD')
+      .replace(DIACRITICS_REGEX, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '')
+      .slice(0, 30) || 'associacio';
+
+  let candidat = arrel;
+  let comptador = 1;
+  while (await prisma.usuari.findUnique({ where: { usuari: candidat } })) {
+    comptador += 1;
+    candidat = `${arrel}${comptador}`;
+  }
+  return candidat;
+}
+
+// Crea en un sol pas una associació nova, el seu usuari d'accés (amb un
+// login generat automàticament a partir del nom) i el/la president/a com
+// a primer membre del seu roster.
+router.post('/nova-associacio', async (req, res) => {
+  const { nomAssociacio, president, provincia, contrasenya } = req.body;
+  if (!nomAssociacio || !president || !contrasenya) {
+    return res.status(400).json({ error: "Falten camps obligatoris (nom de l'associació, president i contrasenya)" });
+  }
+  if (contrasenya.length < 6) {
+    return res.status(400).json({ error: 'La contrasenya ha de tenir almenys 6 caràcters' });
+  }
+
+  const usuariLogin = await generarUsuariUnic(nomAssociacio);
+  const contrasenyaHash = await bcrypt.hash(contrasenya, 10);
+  const [primerNom, ...resta] = president.trim().split(/\s+/);
+  const cognoms = resta.join(' ');
+
+  try {
+    const resultat = await prisma.$transaction(async (tx) => {
+      const agrupacio = await tx.agrupacio.create({
+        data: { nom: nomAssociacio, president, provincia: provincia || undefined },
+      });
+      await tx.membre.create({
+        data: { agrupacioId: agrupacio.id, nom: primerNom, cognoms: cognoms || primerNom },
+      });
+      const usuari = await tx.usuari.create({
+        data: {
+          nom: president,
+          usuari: usuariLogin,
+          contrasenya: contrasenyaHash,
+          rol: 'AGRUPACIO',
+          agrupacioId: agrupacio.id,
+        },
+      });
+      return { agrupacio, usuari };
+    });
+
+    const { contrasenya: _c, ...usuariResta } = resultat.usuari;
+    res.status(201).json({ agrupacio: resultat.agrupacio, usuari: usuariResta });
+  } catch {
+    res.status(400).json({ error: "No s'ha pogut crear l'associació i l'usuari" });
+  }
+});
+
 router.patch('/:id', async (req, res) => {
   const { nom, rol, agrupacioId, actiu, contrasenya } = req.body;
   try {
