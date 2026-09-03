@@ -1,0 +1,229 @@
+// Schema de base de dades per a l'app de gestió de la Federació Catalana d'AVPC
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  FEDERACIO
+  AGRUPACIO
+}
+
+enum PropietatVehicle {
+  PROPI
+  RENTING
+  CEDIT
+}
+
+enum TipusDocMembre {
+  DNI
+  CARNET_CONDUIR
+  CERTIFICAT_MEDIC
+  ASSEGURANCA
+  ALTRES
+}
+
+enum EstatDocMembre {
+  PENDENT
+  REBUT
+  CADUCAT
+}
+
+enum EstatMaterial {
+  OPERATIU
+  MANTENIMENT
+  BAIXA
+}
+
+enum TipusDocument {
+  ESTATUTS
+  ACTA
+  ALTRES
+}
+
+enum EstatFormacio {
+  PENDENT
+  COMPLETADA
+}
+
+model Usuari {
+  id          String   @id @default(uuid())
+  nom         String
+  usuari      String   @unique
+  contrasenya String
+  rol         Rol
+  actiu       Boolean  @default(true)
+  creatEl     DateTime @default(now())
+
+  agrupacio   Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String?
+
+  subscripcionsPush SubscripcioPush[]
+  documentsPujats   Document[]
+}
+
+// Una agrupació per municipi, federada dins la Federació Catalana d'AVPC.
+model Agrupacio {
+  id           String    @id @default(uuid())
+  nom          String
+  municipi     String
+  comarca      String?
+  adreca       String?
+  telefon      String?
+  email        String?
+  president    String?
+  dataFundacio DateTime?
+  actiu        Boolean   @default(true)
+  creatEl      DateTime  @default(now())
+
+  usuaris    Usuari[]
+  membres    Membre[]
+  vehicles   Vehicle[]
+  materials  Material[]
+  documents  Document[]
+  formacions Formacio[]
+  avisos     Avis[]
+}
+
+// Roster de voluntaris d'una agrupació. No necessàriament tenen accés a
+// l'app (l'agrupació gestiona les seves dades i documentació pendent).
+model Membre {
+  id            String    @id @default(uuid())
+  agrupacio     Agrupacio @relation(fields: [agrupacioId], references: [id])
+  agrupacioId   String
+  nom           String
+  cognoms       String
+  dni           String?
+  dataNaixement DateTime?
+  telefon       String?
+  email         String?
+  dataAlta      DateTime  @default(now())
+  dataBaixa     DateTime?
+  actiu         Boolean   @default(true)
+  notes         String?
+  creatEl       DateTime  @default(now())
+
+  documents  DocumentMembre[]
+  formacions FormacioMembre[]
+}
+
+// Documentació personal de cada voluntari (DNI, carnet de conduir, certificat
+// mèdic...) amb estat i, opcionalment, el fitxer pujat i data de caducitat.
+model DocumentMembre {
+  id            String         @id @default(uuid())
+  membre        Membre         @relation(fields: [membreId], references: [id])
+  membreId      String
+  tipus         TipusDocMembre
+  estat         EstatDocMembre @default(PENDENT)
+  dataCaducitat DateTime?
+  fitxerUrl     String?
+  fitxerNom     String?
+  notes         String?
+  creatEl       DateTime       @default(now())
+}
+
+// Flota de vehicles de cada agrupació, amb les properes dates d'ITV i de
+// revisió (mateix control que fa servir AITASA per a la seva pròpia flota).
+model Vehicle {
+  id             String           @id @default(uuid())
+  agrupacio      Agrupacio        @relation(fields: [agrupacioId], references: [id])
+  agrupacioId    String
+  matricula      String           @unique
+  marca          String?
+  model          String?
+  propietat      PropietatVehicle
+  empresaRenting String?
+  proximaItv     DateTime?
+  proximaRevisio DateTime?
+  notes          String?
+  creatEl        DateTime         @default(now())
+}
+
+// Material i equipament de cada agrupació. Es llista sencer a totes les
+// agrupacions (només lectura fora de la pròpia) perquè en cas d'emergència
+// es pugui saber ràpidament què hi ha disponible a prop.
+model Material {
+  id            String        @id @default(uuid())
+  agrupacio     Agrupacio     @relation(fields: [agrupacioId], references: [id])
+  agrupacioId   String
+  nom           String
+  categoria     String?
+  quantitat     Int           @default(0)
+  estat         EstatMaterial @default(OPERATIU)
+  notes         String?
+  creatEl       DateTime      @default(now())
+  actualitzatEl DateTime      @updatedAt
+}
+
+// Estatuts, llibre d'actes i altra documentació oficial de cada agrupació.
+model Document {
+  id           String        @id @default(uuid())
+  agrupacio    Agrupacio     @relation(fields: [agrupacioId], references: [id])
+  agrupacioId  String
+  tipus        TipusDocument
+  titol        String
+  dataDocument DateTime?
+  fitxerUrl    String
+  fitxerNom    String
+  pujatPer     Usuari        @relation(fields: [pujatPerId], references: [id])
+  pujatPerId   String
+  creatEl      DateTime      @default(now())
+}
+
+// Catàleg de formacions. agrupacioId nul vol dir que és una formació comuna
+// de tota la federació; si té agrupació, és una formació local seva.
+model Formacio {
+  id             String    @id @default(uuid())
+  nom            String
+  descripcio     String?
+  agrupacio      Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId    String?
+  dataProgramada DateTime?
+  obligatoria    Boolean   @default(false)
+  creatEl        DateTime  @default(now())
+
+  inscripcions FormacioMembre[]
+}
+
+// Seguiment de qui ha fet cada formació.
+model FormacioMembre {
+  id             String        @id @default(uuid())
+  formacio       Formacio      @relation(fields: [formacioId], references: [id])
+  formacioId     String
+  membre         Membre        @relation(fields: [membreId], references: [id])
+  membreId       String
+  estat          EstatFormacio @default(PENDENT)
+  dataCompletada DateTime?
+
+  @@unique([formacioId, membreId])
+}
+
+// Comunicats amb notificació push. agrupacioId nul vol dir que és un avís
+// de tota la federació; si té agrupació, només arriba als usuaris d'aquesta.
+model Avis {
+  id            String     @id @default(uuid())
+  titol         String
+  cos           String
+  agrupacio     Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId   String?
+  dataEnviament DateTime   @default(now())
+  enviat        Boolean    @default(false)
+  creatEl       DateTime   @default(now())
+}
+
+// Guarda la subscripció push del navegador de cada dispositiu de l'usuari,
+// perquè el servidor pugui enviar-li notificacions encara que no tingui la web oberta.
+model SubscripcioPush {
+  id       String   @id @default(uuid())
+  usuari   Usuari   @relation(fields: [usuariId], references: [id])
+  usuariId String
+  endpoint String   @unique
+  p256dh   String
+  auth     String
+  creatEl  DateTime @default(now())
+}

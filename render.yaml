@@ -1,0 +1,45 @@
+databases:
+  - name: avpc-federacio-db
+    plan: free
+    databaseName: avpc_federacio_db
+    user: avpc_federacio
+
+services:
+  - type: web
+    name: avpc-federacio-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    disk:
+      name: avpc-federacio-uploads
+      mountPath: /opt/render/project/src/backend/src/uploads
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: avpc-federacio-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+
+  - type: web
+    name: avpc-federacio-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Després del primer deploy, edita aquest valor al dashboard de Render
+      # amb la URL real del backend, p.ex. https://avpc-federacio-backend.onrender.com/api
+      - key: VITE_API_URL
+        value: https://avpc-federacio-backend.onrender.com/api

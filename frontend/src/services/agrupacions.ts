@@ -1,0 +1,43 @@
+import { api } from './api';
+
+export interface Agrupacio {
+  id: string;
+  nom: string;
+  municipi: string;
+  comarca: string | null;
+  adreca: string | null;
+  telefon: string | null;
+  email: string | null;
+  president: string | null;
+  dataFundacio: string | null;
+  actiu: boolean;
+  creatEl: string;
+}
+
+export async function llistarAgrupacions(): Promise<Agrupacio[]> {
+  const { data } = await api.get('/agrupacions');
+  return data;
+}
+
+export async function crearAgrupacio(dades: {
+  nom: string;
+  municipi: string;
+  comarca?: string;
+  adreca?: string;
+  telefon?: string;
+  email?: string;
+  president?: string;
+  dataFundacio?: string;
+}): Promise<Agrupacio> {
+  const { data } = await api.post('/agrupacions', dades);
+  return data;
+}
+
+export async function editarAgrupacio(id: string, dades: Partial<Agrupacio>): Promise<Agrupacio> {
+  const { data } = await api.patch(`/agrupacions/${id}`, dades);
+  return data;
+}
+
+export async function eliminarAgrupacio(id: string) {
+  await api.delete(`/agrupacions/${id}`);
+}
