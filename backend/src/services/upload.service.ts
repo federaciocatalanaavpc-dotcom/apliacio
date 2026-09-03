@@ -16,5 +16,4 @@ function crearStorage(subcarpeta: string) {
 
 const limits = { fileSize: 10 * 1024 * 1024 }; // 10 MB
 
-export const pujadaDocumentsMembre = multer({ storage: crearStorage('membres'), limits });
 export const pujadaDocumentsAgrupacio = multer({ storage: crearStorage('documents'), limits });

@@ -1,15 +1,15 @@
 # AVPC Federació - Gestió d'Agrupacions
 
 Aplicació de gestió per a la Federació Catalana d'Agrupacions de Voluntaris de
-Protecció Civil (AVPC): membres, vehicles, material, estatuts, llibre d'actes,
-formació i avisos de cada agrupació federada.
+Protecció Civil (AVPC): vehicles, material, estatuts, llibre d'actes, formació
+i avisos de cada agrupació federada.
 
 ## Estructura
 - `backend/` — API REST amb Node.js + Express + TypeScript + Prisma + PostgreSQL
 - `frontend/` — App web (PWA) amb React + TypeScript + Vite
 
 ## Model de rols
-- **Federació**: veu i gestiona totes les agrupacions, usuaris, membres, vehicles, material, documents, formació i avisos.
+- **Federació**: veu i gestiona totes les agrupacions, usuaris, vehicles, material, documents, formació i avisos.
 - **Agrupació**: gestiona només les dades de la seva pròpia agrupació (un usuari per agrupació, típicament el/la president/a o secretari/ària). Pot veure el material de la resta d'agrupacions en només lectura, per saber què hi ha disponible a prop en cas d'emergència.
 
 ## Posar en marxa el backend
@@ -43,8 +43,7 @@ VITE_API_URL=http://localhost:<port>/api
 **Important**: no canviïs aquestes claus un cop els usuaris ja s'hagin subscrit, o hauran de tornar a activar les notificacions.
 
 ## Pujada de documents
-Els fitxers (estatuts, actes, documentació de membres) es guarden al disc del
-servidor (`backend/src/uploads/`).
+Els fitxers (estatuts, actes...) es guarden al disc del servidor (`backend/src/uploads/`).
 
 **Important sobre Render**: el pla gratuït no admet discos persistents, així
 que aquesta carpeta és efímera al núvol — els fitxers pujats es poden perdre

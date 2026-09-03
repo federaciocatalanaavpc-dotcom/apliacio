@@ -38,7 +38,10 @@ router.post('/registre', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   const { usuari, contrasenya } = req.body;
-  const trobat = await prisma.usuari.findUnique({ where: { usuari } });
+  const trobat = await prisma.usuari.findUnique({
+    where: { usuari },
+    include: { agrupacio: { select: { nom: true } } },
+  });
   if (!trobat || !trobat.actiu) {
     return res.status(401).json({ error: 'Credencials incorrectes' });
   }
@@ -53,7 +56,14 @@ router.post('/login', async (req, res) => {
   );
   res.json({
     token,
-    usuari: { id: trobat.id, nom: trobat.nom, usuari: trobat.usuari, rol: trobat.rol, agrupacioId: trobat.agrupacioId },
+    usuari: {
+      id: trobat.id,
+      nom: trobat.nom,
+      usuari: trobat.usuari,
+      rol: trobat.rol,
+      agrupacioId: trobat.agrupacioId,
+      agrupacioNom: trobat.agrupacio?.nom || null,
+    },
   });
 });
 

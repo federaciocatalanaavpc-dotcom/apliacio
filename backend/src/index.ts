@@ -6,8 +6,6 @@ import authRoutes from './routes/auth.routes';
 import usuarisRoutes from './routes/usuaris.routes';
 import agrupacionsRoutes from './routes/agrupacions.routes';
 import provinciesRoutes from './routes/provincies.routes';
-import membresRoutes from './routes/membres.routes';
-import documentsMembreRoutes from './routes/documentsMembre.routes';
 import vehiclesRoutes from './routes/vehicles.routes';
 import materialRoutes from './routes/material.routes';
 import documentsRoutes from './routes/documents.routes';
@@ -25,16 +23,13 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-// Els fitxers pujats (estatuts, actes, documentació de membres) només es
-// poden descarregar amb sessió iniciada.
+// Els fitxers pujats (estatuts, actes...) només es poden descarregar amb sessió iniciada.
 app.use('/uploads', requireAuth, express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuaris', usuarisRoutes);
 app.use('/api/agrupacions', agrupacionsRoutes);
 app.use('/api/provincies', provinciesRoutes);
-app.use('/api/membres', membresRoutes);
-app.use('/api/documents-membre', documentsMembreRoutes);
 app.use('/api/vehicles', vehiclesRoutes);
 app.use('/api/material', materialRoutes);
 app.use('/api/documents', documentsRoutes);

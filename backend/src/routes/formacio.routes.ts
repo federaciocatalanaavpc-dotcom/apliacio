@@ -14,7 +14,6 @@ router.get('/', async (req: AuthRequest, res) => {
     where: agrupacioId ? { OR: [{ agrupacioId: null }, { agrupacioId }] } : undefined,
     include: {
       agrupacio: { select: { id: true, nom: true } },
-      inscripcions: { include: { membre: { select: { id: true, nom: true, cognoms: true, agrupacioId: true } } } },
     },
     orderBy: { creatEl: 'desc' },
   });
@@ -53,46 +52,6 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     return res.status(403).json({ error: 'Només la federació pot eliminar formacions comunes' });
   }
   await prisma.formacio.delete({ where: { id: req.params.id } });
-  res.status(204).send();
-});
-
-// Inscriu o actualitza l'estat d'un membre en una formació
-router.post('/:id/inscripcions', async (req: AuthRequest, res) => {
-  const { membreId, estat } = req.body;
-  const formacio = await prisma.formacio.findUnique({ where: { id: req.params.id } });
-  if (!formacio) return res.status(404).json({ error: 'Formació no trobada' });
-  const membre = await prisma.membre.findUnique({ where: { id: membreId } });
-  if (!membre) return res.status(404).json({ error: 'Membre no trobat' });
-  if (!potGestionarAgrupacio(req, membre.agrupacioId)) {
-    return res.status(403).json({ error: "No pots inscriure membres d'una altra associació" });
-  }
-  try {
-    const inscripcio = await prisma.formacioMembre.upsert({
-      where: { formacioId_membreId: { formacioId: req.params.id, membreId } },
-      update: {
-        estat: estat || 'PENDENT',
-        dataCompletada: estat === 'COMPLETADA' ? new Date() : null,
-      },
-      create: {
-        formacioId: req.params.id,
-        membreId,
-        estat: estat || 'PENDENT',
-        dataCompletada: estat === 'COMPLETADA' ? new Date() : undefined,
-      },
-    });
-    res.status(201).json(inscripcio);
-  } catch {
-    res.status(400).json({ error: "No s'ha pogut desar la inscripció" });
-  }
-});
-
-router.delete('/inscripcions/:id', async (req: AuthRequest, res) => {
-  const existent = await prisma.formacioMembre.findUnique({ where: { id: req.params.id }, include: { membre: true } });
-  if (!existent) return res.status(404).json({ error: 'Inscripció no trobada' });
-  if (!potGestionarAgrupacio(req, existent.membre.agrupacioId)) {
-    return res.status(403).json({ error: 'No pots eliminar aquesta inscripció' });
-  }
-  await prisma.formacioMembre.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

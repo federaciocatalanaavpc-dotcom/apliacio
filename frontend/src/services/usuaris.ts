@@ -39,8 +39,8 @@ export async function eliminarUsuari(id: string) {
   await api.delete(`/usuaris/${id}`);
 }
 
-// Crea en un sol pas una associació, el seu usuari d'accés (login generat
-// automàticament a partir del nom) i el/la president/a com a primer membre.
+// Crea en un sol pas una associació i el seu usuari d'accés (amb un login
+// generat automàticament a partir del nom de l'associació).
 export async function crearUsuariNovaAssociacio(dades: {
   nomAssociacio: string;
   president: string;

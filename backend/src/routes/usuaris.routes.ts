@@ -64,8 +64,7 @@ async function generarUsuariUnic(base: string): Promise<string> {
 }
 
 // Crea en un sol pas una associació nova, el seu usuari d'accés (amb un
-// login generat automàticament a partir del nom) i el/la president/a com
-// a primer membre del seu roster.
+// login generat automàticament a partir del nom).
 router.post('/nova-associacio', async (req, res) => {
   const { nomAssociacio, president, provincia, contrasenya } = req.body;
   if (!nomAssociacio || !president || !contrasenya) {
@@ -77,16 +76,11 @@ router.post('/nova-associacio', async (req, res) => {
 
   const usuariLogin = await generarUsuariUnic(nomAssociacio);
   const contrasenyaHash = await bcrypt.hash(contrasenya, 10);
-  const [primerNom, ...resta] = president.trim().split(/\s+/);
-  const cognoms = resta.join(' ');
 
   try {
     const resultat = await prisma.$transaction(async (tx) => {
       const agrupacio = await tx.agrupacio.create({
         data: { nom: nomAssociacio, president, provincia: provincia || undefined },
-      });
-      await tx.membre.create({
-        data: { agrupacioId: agrupacio.id, nom: primerNom, cognoms: cognoms || primerNom },
       });
       const usuari = await tx.usuari.create({
         data: {

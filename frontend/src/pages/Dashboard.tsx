@@ -2,7 +2,6 @@ import { getUsuariActual, logout } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const enllacos = [
-  { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
   { to: '/vehicles', icon: '🚗', label: 'Vehicles' },
   { to: '/material', icon: '🎒', label: 'Material' },
   { to: '/documents', icon: '📄', label: "Estatuts i llibre d'actes" },
@@ -13,6 +12,7 @@ const enllacos = [
 export default function Dashboard() {
   const usuari = getUsuariActual();
   const navigate = useNavigate();
+  const nomMostrat = usuari?.rol === 'FEDERACIO' ? usuari?.nom : usuari?.agrupacioNom || usuari?.nom;
 
   function handleLogout() {
     logout();
@@ -23,7 +23,7 @@ export default function Dashboard() {
     <div className="page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ marginBottom: 6 }}>Hola, {usuari?.nom} 👋</h1>
+          <h1 style={{ marginBottom: 6 }}>Hola, {nomMostrat} 👋</h1>
           <span className="badge badge--role">
             {usuari?.rol === 'FEDERACIO' ? 'Federació' : 'Associació'}
           </span>
@@ -46,6 +46,11 @@ export default function Dashboard() {
 
       {usuari?.rol === 'FEDERACIO' && (
         <div className="nav-grid" style={{ marginTop: 20 }}>
+          <Link to="/agrupacions" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">🏛️</span>
+            Associacions
+            <span className="nav-tile__arrow">→</span>
+          </Link>
           <Link to="/usuaris" className="card card--clickable nav-tile">
             <span className="nav-tile__icon">👥</span>
             Gestionar usuaris

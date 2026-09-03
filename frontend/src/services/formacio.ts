@@ -1,16 +1,5 @@
 import { api } from './api';
 
-export type EstatFormacio = 'PENDENT' | 'COMPLETADA';
-
-export interface InscripcioFormacio {
-  id: string;
-  formacioId: string;
-  membreId: string;
-  estat: EstatFormacio;
-  dataCompletada: string | null;
-  membre: { id: string; nom: string; cognoms: string; agrupacioId: string };
-}
-
 export interface Formacio {
   id: string;
   nom: string;
@@ -20,7 +9,6 @@ export interface Formacio {
   dataProgramada: string | null;
   obligatoria: boolean;
   creatEl: string;
-  inscripcions: InscripcioFormacio[];
 }
 
 export async function llistarFormacions(): Promise<Formacio[]> {
@@ -41,13 +29,4 @@ export async function crearFormacio(dades: {
 
 export async function eliminarFormacio(id: string) {
   await api.delete(`/formacio/${id}`);
-}
-
-export async function inscriureMembre(formacioId: string, membreId: string, estat: EstatFormacio): Promise<InscripcioFormacio> {
-  const { data } = await api.post(`/formacio/${formacioId}/inscripcions`, { membreId, estat });
-  return data;
-}
-
-export async function eliminarInscripcio(id: string) {
-  await api.delete(`/formacio/inscripcions/${id}`);
 }

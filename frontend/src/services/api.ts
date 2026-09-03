@@ -19,6 +19,7 @@ export interface UsuariActual {
   usuari: string;
   rol: 'FEDERACIO' | 'AGRUPACIO';
   agrupacioId: string | null;
+  agrupacioNom: string | null;
 }
 
 export async function login(usuari: string, contrasenya: string): Promise<UsuariActual> {
@@ -45,7 +46,7 @@ export async function canviarContrasenya(contrasenyaActual: string, contrasenyaN
   await api.patch('/auth/contrasenya', { contrasenyaActual, contrasenyaNova });
 }
 
-// Els fitxers pujats (estatuts, actes, documentació de membres) es serveixen
+// Els fitxers pujats (estatuts, actes...) es serveixen
 // darrere d'autenticació, així que no es poden obrir amb un <a href> normal
 // (el navegador no hi afegiria el token). Es descarreguen com a blob amb el
 // token i s'obren amb una URL d'objecte temporal.

@@ -20,20 +20,6 @@ enum PropietatVehicle {
   CEDIT
 }
 
-enum TipusDocMembre {
-  DNI
-  CARNET_CONDUIR
-  CERTIFICAT_MEDIC
-  ASSEGURANCA
-  ALTRES
-}
-
-enum EstatDocMembre {
-  PENDENT
-  REBUT
-  CADUCAT
-}
-
 enum EstatMaterial {
   OPERATIU
   MANTENIMENT
@@ -44,11 +30,6 @@ enum TipusDocument {
   ESTATUTS
   ACTA
   ALTRES
-}
-
-enum EstatFormacio {
-  PENDENT
-  COMPLETADA
 }
 
 model Usuari {
@@ -83,49 +64,11 @@ model Agrupacio {
   creatEl      DateTime  @default(now())
 
   usuaris    Usuari[]
-  membres    Membre[]
   vehicles   Vehicle[]
   materials  Material[]
   documents  Document[]
   formacions Formacio[]
   avisos     Avis[]
-}
-
-// Roster de voluntaris d'una agrupació. No necessàriament tenen accés a
-// l'app (l'agrupació gestiona les seves dades i documentació pendent).
-model Membre {
-  id            String    @id @default(uuid())
-  agrupacio     Agrupacio @relation(fields: [agrupacioId], references: [id])
-  agrupacioId   String
-  nom           String
-  cognoms       String
-  dni           String?
-  dataNaixement DateTime?
-  telefon       String?
-  email         String?
-  dataAlta      DateTime  @default(now())
-  dataBaixa     DateTime?
-  actiu         Boolean   @default(true)
-  notes         String?
-  creatEl       DateTime  @default(now())
-
-  documents  DocumentMembre[]
-  formacions FormacioMembre[]
-}
-
-// Documentació personal de cada voluntari (DNI, carnet de conduir, certificat
-// mèdic...) amb estat i, opcionalment, el fitxer pujat i data de caducitat.
-model DocumentMembre {
-  id            String         @id @default(uuid())
-  membre        Membre         @relation(fields: [membreId], references: [id])
-  membreId      String
-  tipus         TipusDocMembre
-  estat         EstatDocMembre @default(PENDENT)
-  dataCaducitat DateTime?
-  fitxerUrl     String?
-  fitxerNom     String?
-  notes         String?
-  creatEl       DateTime       @default(now())
 }
 
 // Flota de vehicles de cada agrupació, amb les properes dates d'ITV i de
@@ -187,21 +130,6 @@ model Formacio {
   dataProgramada DateTime?
   obligatoria    Boolean   @default(false)
   creatEl        DateTime  @default(now())
-
-  inscripcions FormacioMembre[]
-}
-
-// Seguiment de qui ha fet cada formació.
-model FormacioMembre {
-  id             String        @id @default(uuid())
-  formacio       Formacio      @relation(fields: [formacioId], references: [id])
-  formacioId     String
-  membre         Membre        @relation(fields: [membreId], references: [id])
-  membreId       String
-  estat          EstatFormacio @default(PENDENT)
-  dataCompletada DateTime?
-
-  @@unique([formacioId, membreId])
 }
 
 // Comunicats amb notificació push. agrupacioId nul vol dir que és un avís

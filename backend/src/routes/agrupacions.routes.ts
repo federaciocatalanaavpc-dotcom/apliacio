@@ -67,7 +67,7 @@ router.delete('/:id', requireFederacio, async (req, res) => {
     res.status(204).send();
   } catch {
     res.status(409).json({
-      error: "No es pot eliminar l'associació perquè té dades associades (membres, vehicles...). Desactiva-la en lloc d'eliminar-la.",
+      error: "No es pot eliminar l'associació perquè té dades associades (vehicles, material...). Desactiva-la en lloc d'eliminar-la.",
     });
   }
 });

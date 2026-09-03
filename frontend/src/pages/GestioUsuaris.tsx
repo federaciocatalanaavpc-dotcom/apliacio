@@ -10,7 +10,7 @@ const buit = {
   // usuari de federació, o usuari d'una associació ja existent
   nom: '',
   usuari: '',
-  // alta ràpida: associació nova + usuari + membre (president) en un sol pas
+  // alta ràpida: associació nova + usuari en un sol pas
   nomAssociacio: '',
   president: '',
   provincia: '',
