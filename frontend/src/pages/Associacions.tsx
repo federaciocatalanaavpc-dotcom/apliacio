@@ -9,6 +9,7 @@ import {
 import { Provincia, llistarProvincies } from '../services/provincies';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
+import SelectorMapa from '../components/SelectorMapa';
 
 const buit = {
   nom: '',
@@ -20,6 +21,8 @@ const buit = {
   email: '',
   president: '',
   dataFundacio: '',
+  latitud: null as number | null,
+  longitud: null as number | null,
 };
 
 export default function Associacions() {
@@ -65,6 +68,8 @@ export default function Associacions() {
         email: form.email || undefined,
         president: form.president || undefined,
         dataFundacio: form.dataFundacio || undefined,
+        latitud: form.latitud ?? undefined,
+        longitud: form.longitud ?? undefined,
       });
       setForm(buit);
       setMostrarFormulari(false);
@@ -86,6 +91,8 @@ export default function Associacions() {
       email: a.email || '',
       president: a.president || '',
       dataFundacio: a.dataFundacio ? a.dataFundacio.slice(0, 10) : '',
+      latitud: a.latitud,
+      longitud: a.longitud,
     });
   }
 
@@ -104,6 +111,8 @@ export default function Associacions() {
         email: editForm.email || undefined,
         president: editForm.president || undefined,
         dataFundacio: editForm.dataFundacio || undefined,
+        latitud: editForm.latitud ?? undefined,
+        longitud: editForm.longitud ?? undefined,
       } as any);
       setEditantId(null);
       carregar();
@@ -186,6 +195,14 @@ export default function Associacions() {
             <label>Data de fundació (opcional)</label>
             <input type="date" value={form.dataFundacio} onChange={(e) => setForm({ ...form, dataFundacio: e.target.value })} style={{ width: '100%' }} />
           </div>
+          <div style={{ marginBottom: 10 }}>
+            <label>Ubicació de la seu (opcional)</label>
+            <SelectorMapa
+              latitud={form.latitud}
+              longitud={form.longitud}
+              onCanviar={(lat, lng) => setForm({ ...form, latitud: lat, longitud: lng })}
+            />
+          </div>
           <button type="submit">Crear associació</button>
         </form>
       )}
@@ -267,6 +284,14 @@ export default function Associacions() {
                       <label>Email</label>
                       <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} style={{ width: '100%' }} />
                     </div>
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <label>Ubicació de la seu</label>
+                    <SelectorMapa
+                      latitud={editForm.latitud}
+                      longitud={editForm.longitud}
+                      onCanviar={(lat, lng) => setEditForm({ ...editForm, latitud: lat, longitud: lng })}
+                    />
                   </div>
                   <button type="submit">Desar canvis</button>
                 </form>

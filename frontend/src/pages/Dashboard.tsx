@@ -5,6 +5,7 @@ const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
   { to: '/vehicles', icon: '🚗', label: 'Vehicles' },
   { to: '/material', icon: '🎒', label: 'Material' },
+  { to: '/mapa', icon: '🗺️', label: 'Mapa' },
   { to: '/documents', icon: '📄', label: 'Documentació' },
   { to: '/formacio', icon: '🎓', label: 'Formació' },
   { to: '/avisos', icon: '📢', label: 'Avisos' },

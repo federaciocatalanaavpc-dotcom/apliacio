@@ -7,8 +7,10 @@ import {
   llistarVehicles,
 } from '../services/vehicles';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
+import { TipusVehicle, crearTipusVehicle, editarTipusVehicle, eliminarTipusVehicle, llistarTipusVehicles } from '../services/tipusVehicles';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
+import GestorCataleg from '../components/GestorCataleg';
 
 function aDataInput(iso: string | null): string {
   if (!iso) return '';
@@ -64,6 +66,7 @@ function pitjorLed(...leds: string[]): string {
 const buit = {
   agrupacioId: '',
   matricula: '',
+  tipus: '',
   marca: '',
   model: '',
   propietat: 'PROPI' as 'PROPI' | 'RENTING' | 'CEDIT',
@@ -78,9 +81,11 @@ export default function Vehicles() {
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
+  const [tipusVehicles, setTipusVehicles] = useState<TipusVehicle[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const [mostrarFormulari, setMostrarFormulari] = useState(false);
+  const [mostrarTipus, setMostrarTipus] = useState(false);
   const [form, setForm] = useState(buit);
 
   const [editantId, setEditantId] = useState<string | null>(null);
@@ -89,9 +94,14 @@ export default function Vehicles() {
   async function carregar() {
     setCarregant(true);
     try {
-      const [dades, ags] = await Promise.all([llistarVehicles(), esFederacio ? llistarAgrupacions() : Promise.resolve([])]);
+      const [dades, ags, tipus] = await Promise.all([
+        llistarVehicles(),
+        esFederacio ? llistarAgrupacions() : Promise.resolve([]),
+        llistarTipusVehicles(),
+      ]);
       setVehicles([...dades].sort((a, b) => propera(a) - propera(b)));
       setAgrupacions(ags);
+      setTipusVehicles(tipus);
     } catch {
       setError('No s\'han pogut carregar els vehicles');
     } finally {
@@ -111,6 +121,7 @@ export default function Vehicles() {
       await crearVehicle({
         agrupacioId: esFederacio ? form.agrupacioId : undefined,
         matricula: form.matricula,
+        tipus: form.tipus || undefined,
         marca: form.marca || undefined,
         model: form.model || undefined,
         propietat: form.propietat,
@@ -132,6 +143,7 @@ export default function Vehicles() {
     setEditForm({
       agrupacioId: v.agrupacioId,
       matricula: v.matricula,
+      tipus: v.tipus || '',
       marca: v.marca || '',
       model: v.model || '',
       propietat: v.propietat,
@@ -149,6 +161,7 @@ export default function Vehicles() {
     try {
       await editarVehicle(editantId, {
         matricula: editForm.matricula,
+        tipus: editForm.tipus || undefined,
         marca: editForm.marca || undefined,
         model: editForm.model || undefined,
         propietat: editForm.propietat,
@@ -218,6 +231,27 @@ export default function Vehicles() {
               </select>
             </div>
           </div>
+          <div style={{ marginBottom: 6 }}>
+            <label>Tipus (opcional)</label>
+            <select value={form.tipus} onChange={(e) => setForm({ ...form, tipus: e.target.value })} style={{ width: '100%' }}>
+              <option value="">Sense especificar</option>
+              {tipusVehicles.map((t) => (
+                <option key={t.id} value={t.nom}>{t.nom}</option>
+              ))}
+            </select>
+          </div>
+          <button type="button" onClick={() => setMostrarTipus(!mostrarTipus)} style={{ fontSize: 12, marginBottom: 10 }}>
+            {mostrarTipus ? 'Amagar gestió de tipus' : 'Gestionar tipus de vehicle'}
+          </button>
+          {mostrarTipus && (
+            <GestorCataleg
+              items={tipusVehicles}
+              placeholder="Nou tipus (p.ex. Pickup)"
+              onAfegir={async (nom) => { await crearTipusVehicle(nom); carregar(); }}
+              onEditar={async (id, nom) => { await editarTipusVehicle(id, nom); carregar(); }}
+              onEliminar={async (id) => { await eliminarTipusVehicle(id); carregar(); }}
+            />
+          )}
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
               <label>Marca (opcional)</label>
@@ -273,6 +307,7 @@ export default function Vehicles() {
                 {esFederacio && v.agrupacio && (
                   <p className="text-muted" style={{ fontSize: 12, margin: '2px 0' }}>{v.agrupacio.nom}</p>
                 )}
+                {v.tipus && <p className="text-muted" style={{ fontSize: 12, margin: '2px 0' }}>{v.tipus}</p>}
                 {(v.marca || v.model) && (
                   <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
                     {[v.marca, v.model].filter(Boolean).join(' ')}
@@ -313,6 +348,15 @@ export default function Vehicles() {
                           <option value="CEDIT">Cedit</option>
                         </select>
                       </div>
+                    </div>
+                    <div style={{ marginBottom: 8 }}>
+                      <label>Tipus</label>
+                      <select value={editForm.tipus} onChange={(e) => setEditForm({ ...editForm, tipus: e.target.value })} style={{ width: '100%' }}>
+                        <option value="">Sense especificar</option>
+                        {tipusVehicles.map((t) => (
+                          <option key={t.id} value={t.nom}>{t.nom}</option>
+                        ))}
+                      </select>
                     </div>
                     <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
                       <div style={{ flex: 1 }}>

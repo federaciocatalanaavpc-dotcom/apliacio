@@ -11,6 +11,8 @@ export interface Agrupacio {
   email: string | null;
   president: string | null;
   dataFundacio: string | null;
+  latitud: number | null;
+  longitud: number | null;
   actiu: boolean;
   creatEl: string;
 }
@@ -30,6 +32,8 @@ export async function crearAgrupacio(dades: {
   email?: string;
   president?: string;
   dataFundacio?: string;
+  latitud?: number;
+  longitud?: number;
 }): Promise<Agrupacio> {
   const { data } = await api.post('/agrupacions', dades);
   return data;

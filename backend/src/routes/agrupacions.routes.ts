@@ -13,7 +13,7 @@ router.get('/', async (_req, res) => {
 });
 
 router.post('/', requireFederacio, async (req, res) => {
-  const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio } = req.body;
+  const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio, latitud, longitud } = req.body;
   if (!nom) {
     return res.status(400).json({ error: "Cal indicar el nom de l'associació" });
   }
@@ -29,6 +29,8 @@ router.post('/', requireFederacio, async (req, res) => {
         email: email || undefined,
         president: president || undefined,
         dataFundacio: dataFundacio ? new Date(dataFundacio) : undefined,
+        latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : undefined,
+        longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : undefined,
       },
     });
     res.status(201).json(agrupacio);
@@ -40,7 +42,7 @@ router.post('/', requireFederacio, async (req, res) => {
 // El nom de l'associació i el nom dels seus usuaris han d'anar sempre
 // lligats: si es canvia el nom aquí, es sincronitza als seus usuaris.
 router.patch('/:id', requireFederacio, async (req, res) => {
-  const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio, actiu } = req.body;
+  const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio, actiu, latitud, longitud } = req.body;
   try {
     const agrupacio = await prisma.$transaction(async (tx) => {
       const actualitzada = await tx.agrupacio.update({
@@ -55,6 +57,8 @@ router.patch('/:id', requireFederacio, async (req, res) => {
           email: email || null,
           president: president || null,
           dataFundacio: dataFundacio ? new Date(dataFundacio) : null,
+          latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : null,
+          longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : null,
           actiu,
         },
       });

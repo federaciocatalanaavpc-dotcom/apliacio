@@ -1,8 +1,10 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Material, crearMaterial, editarMaterial, eliminarMaterial, llistarMaterial } from '../services/material';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
+import { TipusMaterial, crearTipusMaterial, editarTipusMaterial, eliminarTipusMaterial, llistarTipusMaterial } from '../services/tipusMaterial';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
+import GestorCataleg from '../components/GestorCataleg';
 
 const ESTAT_LABEL: Record<string, string> = {
   OPERATIU: 'Operatiu',
@@ -30,9 +32,11 @@ export default function MaterialPage() {
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [material, setMaterial] = useState<Material[]>([]);
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
+  const [tipusMaterial, setTipusMaterial] = useState<TipusMaterial[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const [mostrarFormulari, setMostrarFormulari] = useState(false);
+  const [mostrarTipus, setMostrarTipus] = useState(false);
   const [form, setForm] = useState(buit);
   const [editantId, setEditantId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(buit);
@@ -41,9 +45,14 @@ export default function MaterialPage() {
   async function carregar() {
     setCarregant(true);
     try {
-      const [dades, ags] = await Promise.all([llistarMaterial(), esFederacio ? llistarAgrupacions() : Promise.resolve([])]);
+      const [dades, ags, tipus] = await Promise.all([
+        llistarMaterial(),
+        esFederacio ? llistarAgrupacions() : Promise.resolve([]),
+        llistarTipusMaterial(),
+      ]);
       setMaterial(dades);
       setAgrupacions(ags);
+      setTipusMaterial(tipus);
     } catch {
       setError('No s\'ha pogut carregar el material');
     } finally {
@@ -161,16 +170,33 @@ export default function MaterialPage() {
               </select>
             </div>
           )}
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
+          <div style={{ marginBottom: 6, display: 'flex', gap: 10 }}>
             <div style={{ flex: 2 }}>
               <label>Nom del material</label>
-              <input value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} required style={{ width: '100%' }} />
+              <select value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} required style={{ width: '100%' }}>
+                <option value="">Selecciona un nom...</option>
+                {tipusMaterial.map((t) => (
+                  <option key={t.id} value={t.nom}>{t.nom}</option>
+                ))}
+              </select>
             </div>
             <div style={{ flex: 1 }}>
               <label>Quantitat</label>
               <input type="number" min={0} value={form.quantitat} onChange={(e) => setForm({ ...form, quantitat: Number(e.target.value) })} style={{ width: '100%' }} />
             </div>
           </div>
+          <button type="button" onClick={() => setMostrarTipus(!mostrarTipus)} style={{ fontSize: 12, marginBottom: 10 }}>
+            {mostrarTipus ? 'Amagar gestió de noms' : 'Gestionar noms de material'}
+          </button>
+          {mostrarTipus && (
+            <GestorCataleg
+              items={tipusMaterial}
+              placeholder="Nou nom (p.ex. Casc)"
+              onAfegir={async (nom) => { await crearTipusMaterial(nom); carregar(); }}
+              onEditar={async (id, nom) => { await editarTipusMaterial(id, nom); carregar(); }}
+              onEliminar={async (id) => { await eliminarTipusMaterial(id); carregar(); }}
+            />
+          )}
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
               <label>Categoria (opcional)</label>
@@ -238,7 +264,12 @@ export default function MaterialPage() {
                         <form onSubmit={handleGuardarEdicio} style={{ padding: '8px 0', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                           <div>
                             <label>Nom</label>
-                            <input value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} required />
+                            <select value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} required>
+                              <option value="">Selecciona un nom...</option>
+                              {tipusMaterial.map((t) => (
+                                <option key={t.id} value={t.nom}>{t.nom}</option>
+                              ))}
+                            </select>
                           </div>
                           <div>
                             <label>Categoria</label>

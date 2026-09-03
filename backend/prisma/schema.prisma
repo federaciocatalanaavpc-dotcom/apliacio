@@ -60,6 +60,8 @@ model Agrupacio {
   email        String?
   president    String?
   dataFundacio DateTime?
+  latitud      Float?
+  longitud     Float?
   actiu        Boolean   @default(true)
   creatEl      DateTime  @default(now())
 
@@ -78,6 +80,7 @@ model Vehicle {
   agrupacio      Agrupacio        @relation(fields: [agrupacioId], references: [id])
   agrupacioId    String
   matricula      String           @unique
+  tipus          String?
   marca          String?
   model          String?
   propietat      PropietatVehicle
@@ -165,6 +168,24 @@ model SubscripcioPush {
 // Catàleg de províncies que la federació manté (afegir/editar/eliminar),
 // perquè el desplegable de "crear usuari" sempre mostri opcions controlades.
 model Provincia {
+  id      String   @id @default(uuid())
+  nom     String   @unique
+  creatEl DateTime @default(now())
+}
+
+// Catàleg de tipus de vehicle (turisme, pickup, camió, remolc, tractor...)
+// que la federació manté, perquè el desplegable de vehicles s'adapti a
+// qualsevol tipus de vehicle que tinguin les associacions.
+model TipusVehicle {
+  id      String   @id @default(uuid())
+  nom     String   @unique
+  creatEl DateTime @default(now())
+}
+
+// Catàleg de noms de material (ràdio, motxilla, casc, armilla...) que la
+// federació manté, perquè totes les associacions facin servir el mateix
+// nom per al mateix tipus de material a l'inventari.
+model TipusMaterial {
   id      String   @id @default(uuid())
   nom     String   @unique
   creatEl DateTime @default(now())

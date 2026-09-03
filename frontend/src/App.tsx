@@ -5,6 +5,7 @@ import Associacions from './pages/Associacions';
 import GestioUsuaris from './pages/GestioUsuaris';
 import Vehicles from './pages/Vehicles';
 import Material from './pages/Material';
+import Mapa from './pages/Mapa';
 import Documents from './pages/Documents';
 import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
@@ -55,6 +56,14 @@ export default function App() {
           element={
             <RutaProtegida>
               <Material />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/mapa"
+          element={
+            <RutaProtegida>
+              <Mapa />
             </RutaProtegida>
           }
         />
