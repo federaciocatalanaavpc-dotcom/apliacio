@@ -23,7 +23,7 @@ export default function Login() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div className="card" style={{ maxWidth: 360, width: '100%', padding: 32 }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ fontSize: 40 }}>🚨</div>
+          <img src="/logo.png" alt="AVPC Federació" style={{ width: 100, height: 100 }} />
           <h2 style={{ margin: '8px 0 0' }}>AVPC Federació</h2>
           <p className="text-muted" style={{ fontSize: 13, margin: '4px 0 0' }}>
             Federació Catalana d'Agrupacions de Voluntaris de Protecció Civil
