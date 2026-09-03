@@ -29,6 +29,7 @@ export default function Documents() {
   const [agrupacioId, setAgrupacioId] = useState('');
   const [titol, setTitol] = useState('');
   const [dataDocument, setDataDocument] = useState('');
+  const [pendent, setPendent] = useState(false);
   const [fitxer, setFitxer] = useState<File | null>(null);
 
   async function carregar() {
@@ -52,20 +53,22 @@ export default function Documents() {
   async function handlePujar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!fitxer) {
-      setError('Cal seleccionar un fitxer');
+    if (!pendent && !fitxer) {
+      setError('Cal seleccionar un fitxer (o marcar-lo com a pendent)');
       return;
     }
     try {
       await pujarDocument({
-        agrupacioId: esFederacio ? agrupacioId : undefined,
+        agrupacioId: agrupacioId || undefined,
         tipus: pestanya,
         titol,
         dataDocument: dataDocument || undefined,
+        pendent,
         fitxer,
       });
       setTitol('');
       setDataDocument('');
+      setPendent(false);
       setFitxer(null);
       setMostrarFormulari(false);
       carregar();
@@ -90,7 +93,7 @@ export default function Documents() {
   return (
     <div className="page">
       <BotoTornar />
-      <h1>Estatuts i llibre d'actes</h1>
+      <h1>Documentació</h1>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {PESTANYES.map((p) => (
@@ -106,25 +109,25 @@ export default function Documents() {
 
       {error && <p className="text-error">{error}</p>}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-        <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
-          {mostrarFormulari ? 'Cancel·lar' : '+ Pujar document'}
-        </button>
-      </div>
+      {esFederacio && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+            {mostrarFormulari ? 'Cancel·lar' : '+ Pujar document'}
+          </button>
+        </div>
+      )}
 
-      {mostrarFormulari && (
+      {esFederacio && mostrarFormulari && (
         <form onSubmit={handlePujar} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
-          {esFederacio && (
-            <div style={{ marginBottom: 10 }}>
-              <label>Associació</label>
-              <select value={agrupacioId} onChange={(e) => setAgrupacioId(e.target.value)} required style={{ width: '100%' }}>
-                <option value="">Selecciona una associació...</option>
-                {agrupacions.map((a) => (
-                  <option key={a.id} value={a.id}>{a.nom} ({a.municipi})</option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div style={{ marginBottom: 10 }}>
+            <label>Associació (opcional, buit = comú de la federació)</label>
+            <select value={agrupacioId} onChange={(e) => setAgrupacioId(e.target.value)} style={{ width: '100%' }}>
+              <option value="">Comú de la federació</option>
+              {agrupacions.map((a) => (
+                <option key={a.id} value={a.id}>{a.nom}</option>
+              ))}
+            </select>
+          </div>
           <div style={{ marginBottom: 10 }}>
             <label>Títol</label>
             <input
@@ -140,10 +143,18 @@ export default function Documents() {
             <input type="date" value={dataDocument} onChange={(e) => setDataDocument(e.target.value)} style={{ width: '100%' }} />
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label>Fitxer (PDF o imatge)</label>
-            <input type="file" onChange={(e) => setFitxer(e.target.files?.[0] || null)} required style={{ width: '100%' }} />
+            <label>
+              <input type="checkbox" checked={pendent} onChange={(e) => setPendent(e.target.checked)} style={{ width: 'auto', marginRight: 6 }} />
+              Sol·licitud pendent (sense fitxer encara, l'associació el pujarà)
+            </label>
           </div>
-          <button type="submit">Pujar document</button>
+          {!pendent && (
+            <div style={{ marginBottom: 10 }}>
+              <label>Fitxer (PDF o imatge)</label>
+              <input type="file" onChange={(e) => setFitxer(e.target.files?.[0] || null)} required style={{ width: '100%' }} />
+            </div>
+          )}
+          <button type="submit">{pendent ? 'Crear sol·licitud' : 'Pujar document'}</button>
         </form>
       )}
 
@@ -154,20 +165,27 @@ export default function Documents() {
           {llistaPestanya.map((d) => (
             <div key={d.id} className="card" style={{ maxWidth: 480, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>{d.titol}</p>
+                <p style={{ margin: 0, fontWeight: 600 }}>
+                  {d.titol}
+                  {d.pendent && <span className="badge" style={{ marginLeft: 8, color: 'var(--c-warning)', background: 'var(--c-warning-bg)' }}>Pendent</span>}
+                </p>
                 <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
-                  {esFederacio && d.agrupacio ? `${d.agrupacio.nom} · ` : ''}
+                  {d.agrupacio ? `${d.agrupacio.nom} · ` : 'Comú de la federació · '}
                   {d.dataDocument ? new Date(d.dataDocument).toLocaleDateString('ca-ES') + ' · ' : ''}
-                  Pujat per {d.pujatPer.nom}
+                  Creat per {d.pujatPer.nom}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button onClick={() => obrirFitxerProtegit(d.fitxerUrl)} style={{ fontSize: 13 }}>
-                  Obrir
-                </button>
-                <button onClick={() => handleEliminar(d.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
-                  Eliminar
-                </button>
+                {d.fitxerUrl && (
+                  <button onClick={() => obrirFitxerProtegit(d.fitxerUrl!)} style={{ fontSize: 13 }}>
+                    Obrir
+                  </button>
+                )}
+                {esFederacio && (
+                  <button onClick={() => handleEliminar(d.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                    Eliminar
+                  </button>
+                )}
               </div>
             </div>
           ))}

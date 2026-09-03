@@ -5,7 +5,7 @@ const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
   { to: '/vehicles', icon: '🚗', label: 'Vehicles' },
   { to: '/material', icon: '🎒', label: 'Material' },
-  { to: '/documents', icon: '📄', label: "Estatuts i llibre d'actes" },
+  { to: '/documents', icon: '📄', label: 'Documentació' },
   { to: '/formacio', icon: '🎓', label: 'Formació' },
   { to: '/avisos', icon: '📢', label: 'Avisos' },
 ];
@@ -44,6 +44,16 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
+
+      {usuari?.rol === 'AGRUPACIO' && (
+        <div className="nav-grid" style={{ marginTop: 20 }}>
+          <Link to="/documentacio-propia" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">📁</span>
+            Documentació pròpia
+            <span className="nav-tile__arrow">→</span>
+          </Link>
+        </div>
+      )}
 
       {usuari?.rol === 'FEDERACIO' && (
         <div className="nav-grid" style={{ marginTop: 20 }}>

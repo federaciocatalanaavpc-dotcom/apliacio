@@ -6,6 +6,7 @@ import GestioUsuaris from './pages/GestioUsuaris';
 import Vehicles from './pages/Vehicles';
 import Material from './pages/Material';
 import Documents from './pages/Documents';
+import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
 import Avisos from './pages/Avisos';
 import CanviarContrasenya from './pages/CanviarContrasenya';
@@ -62,6 +63,14 @@ export default function App() {
           element={
             <RutaProtegida>
               <Documents />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/documentacio-propia"
+          element={
+            <RutaProtegida>
+              <DocumentacioPropia />
             </RutaProtegida>
           }
         />

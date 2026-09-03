@@ -4,13 +4,14 @@ export type TipusDocument = 'ESTATUTS' | 'ACTA' | 'ALTRES';
 
 export interface DocumentAgrupacio {
   id: string;
-  agrupacioId: string;
-  agrupacio?: { id: string; nom: string };
+  agrupacioId: string | null;
+  agrupacio?: { id: string; nom: string } | null;
   tipus: TipusDocument;
   titol: string;
   dataDocument: string | null;
-  fitxerUrl: string;
-  fitxerNom: string;
+  pendent: boolean;
+  fitxerUrl: string | null;
+  fitxerNom: string | null;
   pujatPer: { id: string; nom: string };
   creatEl: string;
 }
@@ -20,20 +21,34 @@ export async function llistarDocuments(): Promise<DocumentAgrupacio[]> {
   return data;
 }
 
+// Puja un document real (fitxer obligatori), o crea una sol·licitud pendent
+// (sense fitxer) perquè una associació el pugi més tard.
 export async function pujarDocument(dades: {
   agrupacioId?: string;
   tipus: TipusDocument;
   titol: string;
   dataDocument?: string;
-  fitxer: File;
+  pendent?: boolean;
+  fitxer?: File | null;
 }): Promise<DocumentAgrupacio> {
   const form = new FormData();
   if (dades.agrupacioId) form.append('agrupacioId', dades.agrupacioId);
   form.append('tipus', dades.tipus);
   form.append('titol', dades.titol);
   if (dades.dataDocument) form.append('dataDocument', dades.dataDocument);
-  form.append('fitxer', dades.fitxer);
+  if (dades.pendent) form.append('pendent', 'true');
+  if (dades.fitxer) form.append('fitxer', dades.fitxer);
   const { data } = await api.post('/documents', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+// Puja el fitxer que resol una sol·licitud pendent
+export async function resoldrePendent(id: string, fitxer: File): Promise<DocumentAgrupacio> {
+  const form = new FormData();
+  form.append('fitxer', fitxer);
+  const { data } = await api.patch(`/documents/${id}`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
