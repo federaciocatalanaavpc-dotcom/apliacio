@@ -18,7 +18,7 @@ router.post('/:membreId', pujadaDocumentsMembre.single('fitxer'), async (req: Au
   const acces = await comprovarAccesMembre(req, req.params.membreId);
   if (acces === null) return res.status(404).json({ error: 'Membre no trobat' });
   if (acces === false) {
-    return res.status(403).json({ error: "No pots gestionar documentació d'un membre d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots gestionar documentació d'un membre d'una altra associació" });
   }
 
   const { tipus, estat, dataCaducitat, notes } = req.body;

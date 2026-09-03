@@ -152,9 +152,9 @@ export default function MaterialPage() {
         <form onSubmit={handleCrear} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
           {esFederacio && (
             <div style={{ marginBottom: 10 }}>
-              <label>Agrupació</label>
+              <label>Associació</label>
               <select value={form.agrupacioId} onChange={(e) => setForm({ ...form, agrupacioId: e.target.value })} required style={{ width: '100%' }}>
-                <option value="">Selecciona una agrupació...</option>
+                <option value="">Selecciona una associació...</option>
                 {agrupacions.map((a) => (
                   <option key={a.id} value={a.id}>{a.nom} ({a.municipi})</option>
                 ))}
@@ -201,7 +201,7 @@ export default function MaterialPage() {
             <thead>
               <tr>
                 <th>Material</th>
-                <th>Agrupació</th>
+                <th>Associació</th>
                 <th>Categoria</th>
                 <th>Quantitat</th>
                 <th>Estat</th>

@@ -20,10 +20,10 @@ router.post('/', async (req: AuthRequest, res) => {
   const { agrupacioId, nom, cognoms, dni, dataNaixement, telefon, email, dataAlta, notes } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
   if (!agrupacioFinal || !nom || !cognoms) {
-    return res.status(400).json({ error: 'Falten camps obligatoris (agrupació, nom i cognoms)' });
+    return res.status(400).json({ error: 'Falten camps obligatoris (associació, nom i cognoms)' });
   }
   if (!potGestionarAgrupacio(req, agrupacioFinal)) {
-    return res.status(403).json({ error: "No pots crear membres d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots crear membres d'una altra associació" });
   }
   try {
     const membre = await prisma.membre.create({
@@ -49,7 +49,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.membre.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Membre no trobat' });
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots editar membres d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots editar membres d'una altra associació" });
   }
   const { nom, cognoms, dni, dataNaixement, telefon, email, dataBaixa, actiu, notes } = req.body;
   try {
@@ -77,7 +77,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.membre.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Membre no trobat' });
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots eliminar membres d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots eliminar membres d'una altra associació" });
   }
   await prisma.membre.delete({ where: { id: req.params.id } });
   res.status(204).send();

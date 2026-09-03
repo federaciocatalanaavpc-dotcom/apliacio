@@ -19,10 +19,10 @@ router.post('/', async (req: AuthRequest, res) => {
   const { agrupacioId, nom, categoria, quantitat, estat, notes } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
   if (!agrupacioFinal || !nom) {
-    return res.status(400).json({ error: "Cal indicar l'agrupació i el nom del material" });
+    return res.status(400).json({ error: "Cal indicar l'associació i el nom del material" });
   }
   if (!potGestionarAgrupacio(req, agrupacioFinal)) {
-    return res.status(403).json({ error: 'No pots afegir material a una altra agrupació' });
+    return res.status(403).json({ error: 'No pots afegir material a una altra associació' });
   }
   try {
     const material = await prisma.material.create({
@@ -45,7 +45,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.material.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Material no trobat' });
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots editar material d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots editar material d'una altra associació" });
   }
   const { nom, categoria, quantitat, estat, notes } = req.body;
   try {
@@ -63,7 +63,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.material.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Material no trobat' });
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots eliminar material d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots eliminar material d'una altra associació" });
   }
   await prisma.material.delete({ where: { id: req.params.id } });
   res.status(204).send();

@@ -20,10 +20,10 @@ router.post('/', async (req: AuthRequest, res) => {
   const { agrupacioId, matricula, marca, model, propietat, empresaRenting, proximaItv, proximaRevisio, notes } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
   if (!agrupacioFinal || !matricula || !propietat) {
-    return res.status(400).json({ error: "Cal indicar l'agrupació, la matrícula i la propietat del vehicle" });
+    return res.status(400).json({ error: "Cal indicar l'associació, la matrícula i la propietat del vehicle" });
   }
   if (!potGestionarAgrupacio(req, agrupacioFinal)) {
-    return res.status(403).json({ error: "No pots crear vehicles d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots crear vehicles d'una altra associació" });
   }
   try {
     const vehicle = await prisma.vehicle.create({
@@ -49,7 +49,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.vehicle.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Vehicle no trobat' });
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots editar vehicles d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots editar vehicles d'una altra associació" });
   }
   const { matricula, marca, model, propietat, empresaRenting, proximaItv, proximaRevisio, notes } = req.body;
   try {
@@ -76,7 +76,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.vehicle.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Vehicle no trobat' });
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots eliminar vehicles d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots eliminar vehicles d'una altra associació" });
   }
   await prisma.vehicle.delete({ where: { id: req.params.id } });
   res.status(204).send();

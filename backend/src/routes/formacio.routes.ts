@@ -6,7 +6,7 @@ const router = Router();
 router.use(requireAuth);
 
 // Llista les formacions comunes de la federació (agrupacioId nul) més les
-// pròpies de l'agrupació de l'usuari (o d'una agrupació concreta, si ho tria la federació)
+// pròpies de l'associació de l'usuari (o d'una associació concreta, si ho tria la federació)
 router.get('/', async (req: AuthRequest, res) => {
   const agrupacioId =
     req.usuari!.rol === 'FEDERACIO' ? (req.query.agrupacioId as string | undefined) : req.usuari!.agrupacioId;
@@ -64,7 +64,7 @@ router.post('/:id/inscripcions', async (req: AuthRequest, res) => {
   const membre = await prisma.membre.findUnique({ where: { id: membreId } });
   if (!membre) return res.status(404).json({ error: 'Membre no trobat' });
   if (!potGestionarAgrupacio(req, membre.agrupacioId)) {
-    return res.status(403).json({ error: "No pots inscriure membres d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots inscriure membres d'una altra associació" });
   }
   try {
     const inscripcio = await prisma.formacioMembre.upsert({

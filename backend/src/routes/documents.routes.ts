@@ -22,10 +22,10 @@ router.post('/', pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequ
   const { agrupacioId, tipus, titol, dataDocument } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
   if (!agrupacioFinal || !tipus || !titol || !req.file) {
-    return res.status(400).json({ error: 'Falten camps obligatoris (agrupació, tipus, títol i fitxer)' });
+    return res.status(400).json({ error: 'Falten camps obligatoris (associació, tipus, títol i fitxer)' });
   }
   if (!potGestionarAgrupacio(req, agrupacioFinal)) {
-    return res.status(403).json({ error: "No pots pujar documents d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots pujar documents d'una altra associació" });
   }
   try {
     const document = await prisma.document.create({

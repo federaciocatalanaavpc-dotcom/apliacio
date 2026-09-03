@@ -116,9 +116,9 @@ export default function Documents() {
         <form onSubmit={handlePujar} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
           {esFederacio && (
             <div style={{ marginBottom: 10 }}>
-              <label>Agrupació</label>
+              <label>Associació</label>
               <select value={agrupacioId} onChange={(e) => setAgrupacioId(e.target.value)} required style={{ width: '100%' }}>
-                <option value="">Selecciona una agrupació...</option>
+                <option value="">Selecciona una associació...</option>
                 {agrupacions.map((a) => (
                   <option key={a.id} value={a.id}>{a.nom} ({a.municipi})</option>
                 ))}

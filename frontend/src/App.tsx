@@ -1,9 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Agrupacions from './pages/Agrupacions';
+import Associacions from './pages/Associacions';
 import GestioUsuaris from './pages/GestioUsuaris';
-import Membres from './pages/Membres';
 import Vehicles from './pages/Vehicles';
 import Material from './pages/Material';
 import Documents from './pages/Documents';
@@ -28,9 +27,9 @@ export default function App() {
         <Route
           path="/agrupacions"
           element={
-            <RutaFederacio>
-              <Agrupacions />
-            </RutaFederacio>
+            <RutaProtegida>
+              <Associacions />
+            </RutaProtegida>
           }
         />
         <Route
@@ -39,14 +38,6 @@ export default function App() {
             <RutaFederacio>
               <GestioUsuaris />
             </RutaFederacio>
-          }
-        />
-        <Route
-          path="/membres"
-          element={
-            <RutaProtegida>
-              <Membres />
-            </RutaProtegida>
           }
         />
         <Route

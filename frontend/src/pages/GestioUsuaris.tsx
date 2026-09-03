@@ -122,15 +122,15 @@ export default function GestioUsuaris() {
           <div style={{ marginBottom: 10 }}>
             <label>Rol</label>
             <select value={form.rol} onChange={(e) => setForm({ ...form, rol: e.target.value as any })} style={{ width: '100%' }}>
-              <option value="AGRUPACIO">Agrupació</option>
+              <option value="AGRUPACIO">Associació</option>
               <option value="FEDERACIO">Federació</option>
             </select>
           </div>
           {form.rol === 'AGRUPACIO' && (
             <div style={{ marginBottom: 10 }}>
-              <label>Agrupació</label>
+              <label>Associació</label>
               <select value={form.agrupacioId} onChange={(e) => setForm({ ...form, agrupacioId: e.target.value })} required style={{ width: '100%' }}>
-                <option value="">Selecciona una agrupació...</option>
+                <option value="">Selecciona una associació...</option>
                 {agrupacions.map((a) => (
                   <option key={a.id} value={a.id}>{a.nom} ({a.municipi})</option>
                 ))}
@@ -149,7 +149,7 @@ export default function GestioUsuaris() {
             <div key={u.id} className="card" style={{ maxWidth: 460 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <strong>{u.nom}</strong>
-                <span className="badge badge--role">{u.rol === 'FEDERACIO' ? 'Federació' : u.agrupacio?.nom || 'Agrupació'}</span>
+                <span className="badge badge--role">{u.rol === 'FEDERACIO' ? 'Federació' : u.agrupacio?.nom || 'Associació'}</span>
               </div>
               <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
                 @{u.usuari} {!u.actiu && '· Desactivat'}
@@ -173,15 +173,15 @@ export default function GestioUsuaris() {
                   <div style={{ marginBottom: 8 }}>
                     <label>Rol</label>
                     <select value={editForm.rol} onChange={(e) => setEditForm({ ...editForm, rol: e.target.value as any })} style={{ width: '100%' }}>
-                      <option value="AGRUPACIO">Agrupació</option>
+                      <option value="AGRUPACIO">Associació</option>
                       <option value="FEDERACIO">Federació</option>
                     </select>
                   </div>
                   {editForm.rol === 'AGRUPACIO' && (
                     <div style={{ marginBottom: 8 }}>
-                      <label>Agrupació</label>
+                      <label>Associació</label>
                       <select value={editForm.agrupacioId} onChange={(e) => setEditForm({ ...editForm, agrupacioId: e.target.value })} required style={{ width: '100%' }}>
-                        <option value="">Selecciona una agrupació...</option>
+                        <option value="">Selecciona una associació...</option>
                         {agrupacions.map((a) => (
                           <option key={a.id} value={a.id}>{a.nom} ({a.municipi})</option>
                         ))}

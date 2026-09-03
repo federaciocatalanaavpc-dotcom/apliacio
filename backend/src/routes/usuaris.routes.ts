@@ -21,7 +21,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Falten camps obligatoris' });
   }
   if (rol === 'AGRUPACIO' && !agrupacioId) {
-    return res.status(400).json({ error: "Cal indicar l'agrupació per a un usuari d'agrupació" });
+    return res.status(400).json({ error: "Cal indicar l'associació per a un usuari d'associació" });
   }
   try {
     const contrasenyaHash = await bcrypt.hash(contrasenya, 10);

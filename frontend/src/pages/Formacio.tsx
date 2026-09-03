@@ -150,7 +150,7 @@ export default function FormacioPage() {
           </div>
           {esFederacio && (
             <div style={{ marginBottom: 10 }}>
-              <label>Agrupació</label>
+              <label>Associació</label>
               <select value={form.agrupacioId} onChange={(e) => setForm({ ...form, agrupacioId: e.target.value })} style={{ width: '100%' }}>
                 <option value="">Comuna (tota la federació)</option>
                 {agrupacions.map((a) => (

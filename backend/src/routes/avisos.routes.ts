@@ -47,7 +47,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.avis.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Avís no trobat' });
   if (existent.agrupacioId && !potGestionarAgrupacio(req, existent.agrupacioId)) {
-    return res.status(403).json({ error: "No pots eliminar l'avís d'una altra agrupació" });
+    return res.status(403).json({ error: "No pots eliminar l'avís d'una altra associació" });
   }
   if (!existent.agrupacioId && req.usuari!.rol !== 'FEDERACIO') {
     return res.status(403).json({ error: 'Només la federació pot eliminar avisos generals' });

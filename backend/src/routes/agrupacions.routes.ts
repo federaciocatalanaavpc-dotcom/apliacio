@@ -15,7 +15,7 @@ router.get('/', async (_req, res) => {
 router.post('/', requireFederacio, async (req, res) => {
   const { nom, municipi, comarca, adreca, telefon, email, president, dataFundacio } = req.body;
   if (!nom || !municipi) {
-    return res.status(400).json({ error: "Cal indicar el nom i el municipi de l'agrupació" });
+    return res.status(400).json({ error: "Cal indicar el nom i el municipi de l'associació" });
   }
   try {
     const agrupacio = await prisma.agrupacio.create({
@@ -32,7 +32,7 @@ router.post('/', requireFederacio, async (req, res) => {
     });
     res.status(201).json(agrupacio);
   } catch {
-    res.status(400).json({ error: "No s'ha pogut crear l'agrupació" });
+    res.status(400).json({ error: "No s'ha pogut crear l'associació" });
   }
 });
 
@@ -55,7 +55,7 @@ router.patch('/:id', requireFederacio, async (req, res) => {
     });
     res.json(agrupacio);
   } catch {
-    res.status(400).json({ error: "No s'han pogut desar els canvis de l'agrupació" });
+    res.status(400).json({ error: "No s'han pogut desar els canvis de l'associació" });
   }
 });
 
@@ -65,7 +65,7 @@ router.delete('/:id', requireFederacio, async (req, res) => {
     res.status(204).send();
   } catch {
     res.status(409).json({
-      error: "No es pot eliminar l'agrupació perquè té dades associades (membres, vehicles...). Desactiva-la en lloc d'eliminar-la.",
+      error: "No es pot eliminar l'associació perquè té dades associades (membres, vehicles...). Desactiva-la en lloc d'eliminar-la.",
     });
   }
 });
