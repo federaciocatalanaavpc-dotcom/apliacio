@@ -2,6 +2,7 @@ import { getUsuariActual, logout } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const enllacos = [
+  { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
   { to: '/vehicles', icon: '🚗', label: 'Vehicles' },
   { to: '/material', icon: '🎒', label: 'Material' },
   { to: '/documents', icon: '📄', label: "Estatuts i llibre d'actes" },
@@ -46,11 +47,6 @@ export default function Dashboard() {
 
       {usuari?.rol === 'FEDERACIO' && (
         <div className="nav-grid" style={{ marginTop: 20 }}>
-          <Link to="/agrupacions" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">🏛️</span>
-            Associacions
-            <span className="nav-tile__arrow">→</span>
-          </Link>
           <Link to="/usuaris" className="card card--clickable nav-tile">
             <span className="nav-tile__icon">👥</span>
             Gestionar usuaris

@@ -7,6 +7,7 @@ import {
   llistarAgrupacions,
 } from '../services/agrupacions';
 import { Provincia, llistarProvincies } from '../services/provincies';
+import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 
 const buit = {
@@ -22,6 +23,7 @@ const buit = {
 };
 
 export default function Associacions() {
+  const esFederacio = getUsuariActual()?.rol === 'FEDERACIO';
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [provincies, setProvincies] = useState<Provincia[]>([]);
   const [carregant, setCarregant] = useState(true);
@@ -126,14 +128,16 @@ export default function Associacions() {
       <BotoTornar />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Associacions</h1>
-        <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
-          {mostrarFormulari ? 'Cancel·lar' : '+ Nova associació'}
-        </button>
+        {esFederacio && (
+          <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+            {mostrarFormulari ? 'Cancel·lar' : '+ Nova associació'}
+          </button>
+        )}
       </div>
 
       {error && <p className="text-error">{error}</p>}
 
-      {mostrarFormulari && (
+      {esFederacio && mostrarFormulari && (
         <form onSubmit={handleCrear} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
@@ -208,16 +212,18 @@ export default function Associacions() {
                 </p>
               )}
 
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button onClick={() => obrirEdicio(a)} style={{ fontSize: 12 }}>
-                  {editantId === a.id ? 'Cancel·lar' : 'Editar'}
-                </button>
-                <button onClick={() => handleEliminar(a.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
-                  Eliminar
-                </button>
-              </div>
+              {esFederacio && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button onClick={() => obrirEdicio(a)} style={{ fontSize: 12 }}>
+                    {editantId === a.id ? 'Cancel·lar' : 'Editar'}
+                  </button>
+                  <button onClick={() => handleEliminar(a.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                    Eliminar
+                  </button>
+                </div>
+              )}
 
-              {editantId === a.id && (
+              {esFederacio && editantId === a.id && (
                 <form onSubmit={handleGuardarEdicio} style={{ borderTop: '1px solid var(--c-border)', marginTop: 10, paddingTop: 10 }}>
                   <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
                     <div style={{ flex: 1 }}>

@@ -28,9 +28,9 @@ export default function App() {
         <Route
           path="/agrupacions"
           element={
-            <RutaFederacio>
+            <RutaProtegida>
               <Associacions />
-            </RutaFederacio>
+            </RutaProtegida>
           }
         />
         <Route
