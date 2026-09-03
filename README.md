@@ -44,9 +44,14 @@ VITE_API_URL=http://localhost:<port>/api
 
 ## Pujada de documents
 Els fitxers (estatuts, actes, documentació de membres) es guarden al disc del
-servidor (`backend/src/uploads/`). En desplegar a Render cal un *persistent
-disk* muntat a aquesta carpeta perquè els fitxers no es perdin en cada deploy
-(ja configurat a `render.yaml`).
+servidor (`backend/src/uploads/`).
+
+**Important sobre Render**: el pla gratuït no admet discos persistents, així
+que aquesta carpeta és efímera al núvol — els fitxers pujats es poden perdre
+en cada redeploy o reinici del servei backend. Per a ús real amb documents
+importants, cal passar el servei backend a un pla de pagament i afegir un
+`disk` al `render.yaml` (hi ha un exemple comentat al fitxer), o migrar la
+pujada de fitxers a un emmagatzematge extern (p.ex. Cloudflare R2).
 
 ## Nota important sobre el primer usuari
 Com que crear usuaris requereix ja estar loguejat com a federació, cal crear

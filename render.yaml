@@ -12,10 +12,14 @@ services:
     rootDir: backend
     buildCommand: npm install && npm run build
     startCommand: npm start
-    disk:
-      name: avpc-federacio-uploads
-      mountPath: /opt/render/project/src/backend/src/uploads
-      sizeGB: 1
+    # NOTA: el pla free de Render no permet discos persistents. Els fitxers
+    # pujats (estatuts, actes, documentació) es guarden al disc efímer del
+    # contenidor i es poden perdre en cada redeploy o reinici del servei.
+    # Si cal persistència real, cal passar a un pla de pagament i afegir:
+    #   disk:
+    #     name: avpc-federacio-uploads
+    #     mountPath: /opt/render/project/src/backend/src/uploads
+    #     sizeGB: 1
     envVars:
       - key: DATABASE_URL
         fromDatabase:
