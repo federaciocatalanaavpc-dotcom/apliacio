@@ -37,23 +37,34 @@ router.post('/', requireFederacio, async (req, res) => {
   }
 });
 
+// El nom de l'associació i el nom dels seus usuaris han d'anar sempre
+// lligats: si es canvia el nom aquí, es sincronitza als seus usuaris.
 router.patch('/:id', requireFederacio, async (req, res) => {
   const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio, actiu } = req.body;
   try {
-    const agrupacio = await prisma.agrupacio.update({
-      where: { id: req.params.id },
-      data: {
-        nom,
-        provincia: provincia || null,
-        municipi: municipi || null,
-        comarca: comarca || null,
-        adreca: adreca || null,
-        telefon: telefon || null,
-        email: email || null,
-        president: president || null,
-        dataFundacio: dataFundacio ? new Date(dataFundacio) : null,
-        actiu,
-      },
+    const agrupacio = await prisma.$transaction(async (tx) => {
+      const actualitzada = await tx.agrupacio.update({
+        where: { id: req.params.id },
+        data: {
+          nom,
+          provincia: provincia || null,
+          municipi: municipi || null,
+          comarca: comarca || null,
+          adreca: adreca || null,
+          telefon: telefon || null,
+          email: email || null,
+          president: president || null,
+          dataFundacio: dataFundacio ? new Date(dataFundacio) : null,
+          actiu,
+        },
+      });
+      if (nom) {
+        await tx.usuari.updateMany({
+          where: { agrupacioId: req.params.id, rol: 'AGRUPACIO' },
+          data: { nom },
+        });
+      }
+      return actualitzada;
     });
     res.json(agrupacio);
   } catch {

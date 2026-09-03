@@ -102,6 +102,8 @@ router.post('/nova-associacio', async (req, res) => {
   }
 });
 
+// El nom d'un usuari d'associació i el nom de la seva associació han
+// d'anar sempre lligats: si es canvia un dels dos, l'altre es sincronitza.
 router.patch('/:id', async (req, res) => {
   const { nom, rol, agrupacioId, actiu, contrasenya } = req.body;
   try {
@@ -114,7 +116,13 @@ router.patch('/:id', async (req, res) => {
     if (contrasenya) {
       data.contrasenya = await bcrypt.hash(contrasenya, 10);
     }
-    const actualitzat = await prisma.usuari.update({ where: { id: req.params.id }, data });
+    const actualitzat = await prisma.$transaction(async (tx) => {
+      const usuari = await tx.usuari.update({ where: { id: req.params.id }, data });
+      if (usuari.rol === 'AGRUPACIO' && usuari.agrupacioId && nom) {
+        await tx.agrupacio.update({ where: { id: usuari.agrupacioId }, data: { nom } });
+      }
+      return usuari;
+    });
     const { contrasenya: _c, ...resta } = actualitzat;
     res.json(resta);
   } catch {

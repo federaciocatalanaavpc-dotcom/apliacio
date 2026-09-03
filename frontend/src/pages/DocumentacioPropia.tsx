@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { DocumentAgrupacio, llistarDocuments, resoldrePendent } from '../services/documents';
+import { DocumentAgrupacio, TipusDocument, llistarDocuments, pujarDocument, resoldrePendent } from '../services/documents';
+import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual, obrirFitxerProtegit } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 
@@ -11,16 +12,29 @@ const TIPUS_LABEL: Record<string, string> = {
 
 export default function DocumentacioPropia() {
   const usuariActual = getUsuariActual();
+  const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [documents, setDocuments] = useState<DocumentAgrupacio[]>([]);
+  const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
+  const [agrupacioSeleccionada, setAgrupacioSeleccionada] = useState('');
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const [fitxerPerPendent, setFitxerPerPendent] = useState<Record<string, File | null>>({});
 
+  const [mostrarFormulari, setMostrarFormulari] = useState(false);
+  const [tipus, setTipus] = useState<TipusDocument>('ALTRES');
+  const [titol, setTitol] = useState('');
+  const [dataDocument, setDataDocument] = useState('');
+  const [pendent, setPendent] = useState(false);
+  const [fitxer, setFitxer] = useState<File | null>(null);
+
+  const agrupacioId = esFederacio ? agrupacioSeleccionada : usuariActual?.agrupacioId || '';
+
   async function carregar() {
     setCarregant(true);
     try {
-      const dades = await llistarDocuments();
-      setDocuments(dades.filter((d) => d.agrupacioId === usuariActual?.agrupacioId));
+      const [dades, ags] = await Promise.all([llistarDocuments(), esFederacio ? llistarAgrupacions() : Promise.resolve([])]);
+      setDocuments(dades);
+      setAgrupacions(ags);
     } catch {
       setError('No s\'ha pogut carregar la documentació');
     } finally {
@@ -49,7 +63,34 @@ export default function DocumentacioPropia() {
     }
   }
 
-  if (!usuariActual?.agrupacioId) {
+  async function handlePujar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (!pendent && !fitxer) {
+      setError('Cal seleccionar un fitxer (o marcar-lo com a pendent)');
+      return;
+    }
+    try {
+      await pujarDocument({
+        agrupacioId,
+        tipus,
+        titol,
+        dataDocument: dataDocument || undefined,
+        pendent,
+        fitxer,
+      });
+      setTitol('');
+      setDataDocument('');
+      setPendent(false);
+      setFitxer(null);
+      setMostrarFormulari(false);
+      carregar();
+    } catch {
+      setError('No s\'ha pogut pujar el document');
+    }
+  }
+
+  if (!esFederacio && !usuariActual?.agrupacioId) {
     return (
       <div className="page">
         <BotoTornar />
@@ -61,65 +102,126 @@ export default function DocumentacioPropia() {
 
   if (carregant) return <p className="page text-muted">Carregant documentació...</p>;
 
-  const pendents = documents.filter((d) => d.pendent);
-  const rebuts = documents.filter((d) => !d.pendent);
+  const documentsAssociacio = agrupacioId ? documents.filter((d) => d.agrupacioId === agrupacioId) : [];
+  const pendents = documentsAssociacio.filter((d) => d.pendent);
+  const rebuts = documentsAssociacio.filter((d) => !d.pendent);
 
   return (
     <div className="page">
       <BotoTornar />
       <h1>Documentació pròpia</h1>
       <p className="text-muted" style={{ fontSize: 13 }}>
-        Documents de la teva associació pujats per la federació.
+        {esFederacio
+          ? "Documents propis d'una associació concreta (a més dels comuns, que es gestionen a Documentació)."
+          : 'Documents de la teva associació pujats per la federació.'}
       </p>
 
       {error && <p className="text-error">{error}</p>}
 
-      {pendents.length > 0 && (
-        <div className="card card--warning" style={{ marginBottom: 20, maxWidth: 480 }}>
-          <p style={{ margin: '0 0 10px', fontWeight: 700 }}>📁 Documentació pendent</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {pendents.map((d) => (
-              <div key={d.id} style={{ borderTop: '1px solid var(--c-warning-border)', paddingTop: 10 }}>
-                <p style={{ margin: '0 0 6px' }}>
-                  <strong>{d.titol}</strong> <span className="text-muted">({TIPUS_LABEL[d.tipus]})</span>
-                </p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <input
-                    type="file"
-                    onChange={(e) => setFitxerPerPendent((prev) => ({ ...prev, [d.id]: e.target.files?.[0] || null }))}
-                    style={{ fontSize: 12 }}
-                  />
-                  <button onClick={() => handleResoldre(d.id)} style={{ fontSize: 12 }}>
-                    Pujar
-                  </button>
-                </div>
-              </div>
+      {esFederacio && (
+        <div className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
+          <label>Associació</label>
+          <select value={agrupacioSeleccionada} onChange={(e) => setAgrupacioSeleccionada(e.target.value)} style={{ width: '100%' }}>
+            <option value="">Selecciona una associació...</option>
+            {agrupacions.map((a) => (
+              <option key={a.id} value={a.id}>{a.nom}</option>
             ))}
-          </div>
+          </select>
         </div>
       )}
 
-      {rebuts.length === 0 ? (
-        <p className="text-muted">Encara no hi ha cap document propi.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {rebuts.map((d) => (
-            <div key={d.id} className="card" style={{ maxWidth: 480, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>{d.titol}</p>
-                <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
-                  {TIPUS_LABEL[d.tipus]}
-                  {d.dataDocument ? ` · ${new Date(d.dataDocument).toLocaleDateString('ca-ES')}` : ''}
-                </p>
-              </div>
-              {d.fitxerUrl && (
-                <button onClick={() => obrirFitxerProtegit(d.fitxerUrl!)} style={{ fontSize: 13 }}>
-                  Obrir
-                </button>
-              )}
+      {agrupacioId && (
+        <>
+          {esFederacio && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+              <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+                {mostrarFormulari ? 'Cancel·lar' : '+ Afegir document'}
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+
+          {esFederacio && mostrarFormulari && (
+            <form onSubmit={handlePujar} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
+              <div style={{ marginBottom: 10 }}>
+                <label>Tipus</label>
+                <select value={tipus} onChange={(e) => setTipus(e.target.value as TipusDocument)} style={{ width: '100%' }}>
+                  <option value="ESTATUTS">Estatuts</option>
+                  <option value="ACTA">Llibre d'actes</option>
+                  <option value="ALTRES">Altres</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label>Títol</label>
+                <input value={titol} onChange={(e) => setTitol(e.target.value)} required style={{ width: '100%' }} />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label>Data del document (opcional)</label>
+                <input type="date" value={dataDocument} onChange={(e) => setDataDocument(e.target.value)} style={{ width: '100%' }} />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label>
+                  <input type="checkbox" checked={pendent} onChange={(e) => setPendent(e.target.checked)} style={{ width: 'auto', marginRight: 6 }} />
+                  Sol·licitud pendent (sense fitxer encara, l'associació el pujarà)
+                </label>
+              </div>
+              {!pendent && (
+                <div style={{ marginBottom: 10 }}>
+                  <label>Fitxer (PDF o imatge)</label>
+                  <input type="file" onChange={(e) => setFitxer(e.target.files?.[0] || null)} required style={{ width: '100%' }} />
+                </div>
+              )}
+              <button type="submit">{pendent ? 'Crear sol·licitud' : 'Pujar document'}</button>
+            </form>
+          )}
+
+          {pendents.length > 0 && (
+            <div className="card card--warning" style={{ marginBottom: 20, maxWidth: 480 }}>
+              <p style={{ margin: '0 0 10px', fontWeight: 700 }}>📁 Documentació pendent</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {pendents.map((d) => (
+                  <div key={d.id} style={{ borderTop: '1px solid var(--c-warning-border)', paddingTop: 10 }}>
+                    <p style={{ margin: '0 0 6px' }}>
+                      <strong>{d.titol}</strong> <span className="text-muted">({TIPUS_LABEL[d.tipus]})</span>
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input
+                        type="file"
+                        onChange={(e) => setFitxerPerPendent((prev) => ({ ...prev, [d.id]: e.target.files?.[0] || null }))}
+                        style={{ fontSize: 12 }}
+                      />
+                      <button onClick={() => handleResoldre(d.id)} style={{ fontSize: 12 }}>
+                        Pujar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {rebuts.length === 0 ? (
+            <p className="text-muted">Encara no hi ha cap document propi.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {rebuts.map((d) => (
+                <div key={d.id} className="card" style={{ maxWidth: 480, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{d.titol}</p>
+                    <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
+                      {TIPUS_LABEL[d.tipus]}
+                      {d.dataDocument ? ` · ${new Date(d.dataDocument).toLocaleDateString('ca-ES')}` : ''}
+                    </p>
+                  </div>
+                  {d.fitxerUrl && (
+                    <button onClick={() => obrirFitxerProtegit(d.fitxerUrl!)} style={{ fontSize: 13 }}>
+                      Obrir
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -45,25 +45,20 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {usuari?.rol === 'AGRUPACIO' && (
-        <div className="nav-grid" style={{ marginTop: 20 }}>
-          <Link to="/documentacio-propia" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">📁</span>
-            Documentació pròpia
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-        </div>
-      )}
-
-      {usuari?.rol === 'FEDERACIO' && (
-        <div className="nav-grid" style={{ marginTop: 20 }}>
+      <div className="nav-grid" style={{ marginTop: 20 }}>
+        <Link to="/documentacio-propia" className="card card--clickable nav-tile">
+          <span className="nav-tile__icon">📁</span>
+          Documentació pròpia
+          <span className="nav-tile__arrow">→</span>
+        </Link>
+        {usuari?.rol === 'FEDERACIO' && (
           <Link to="/usuaris" className="card card--clickable nav-tile">
             <span className="nav-tile__icon">👥</span>
             Gestionar usuaris
             <span className="nav-tile__arrow">→</span>
           </Link>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
