@@ -3,8 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 
 const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
-  { to: '/vehicles', icon: '🚗', label: 'Vehicles' },
-  { to: '/material', icon: '🎒', label: 'Material' },
+  { to: '/inventari', icon: '🚗', label: 'Inventari' },
   { to: '/mapa', icon: '🗺️', label: 'Mapa' },
   { to: '/documents', icon: '📄', label: 'Documentació' },
   { to: '/formacio', icon: '🎓', label: 'Formació' },

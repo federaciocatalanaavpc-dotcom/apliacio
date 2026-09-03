@@ -76,7 +76,7 @@ const buit = {
   notes: '',
 };
 
-export default function Vehicles() {
+export default function Vehicles({ embedded = false }: { embedded?: boolean } = {}) {
   const usuariActual = getUsuariActual();
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -186,13 +186,13 @@ export default function Vehicles() {
     }
   }
 
-  if (carregant) return <p className="page text-muted">Carregant vehicles...</p>;
+  if (carregant) return <p className={embedded ? 'text-muted' : 'page text-muted'}>Carregant vehicles...</p>;
 
   return (
-    <div className="page">
-      <BotoTornar />
+    <div className={embedded ? undefined : 'page'}>
+      {!embedded && <BotoTornar />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Vehicles</h1>
+        {!embedded && <h1>Vehicles</h1>}
         <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
           {mostrarFormulari ? 'Cancel·lar' : '+ Nou vehicle'}
         </button>

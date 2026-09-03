@@ -3,8 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Associacions from './pages/Associacions';
 import GestioUsuaris from './pages/GestioUsuaris';
-import Vehicles from './pages/Vehicles';
-import Material from './pages/Material';
+import Inventari from './pages/Inventari';
 import Mapa from './pages/Mapa';
 import Documents from './pages/Documents';
 import DocumentacioPropia from './pages/DocumentacioPropia';
@@ -44,18 +43,10 @@ export default function App() {
           }
         />
         <Route
-          path="/vehicles"
+          path="/inventari"
           element={
             <RutaProtegida>
-              <Vehicles />
-            </RutaProtegida>
-          }
-        />
-        <Route
-          path="/material"
-          element={
-            <RutaProtegida>
-              <Material />
+              <Inventari />
             </RutaProtegida>
           }
         />

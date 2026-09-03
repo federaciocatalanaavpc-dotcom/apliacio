@@ -27,7 +27,7 @@ const buit = {
   notes: '',
 };
 
-export default function MaterialPage() {
+export default function MaterialPage({ embedded = false }: { embedded?: boolean } = {}) {
   const usuariActual = getUsuariActual();
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [material, setMaterial] = useState<Material[]>([]);
@@ -129,15 +129,15 @@ export default function MaterialPage() {
     }
   }
 
-  if (carregant) return <p className="page text-muted">Carregant material...</p>;
+  if (carregant) return <p className={embedded ? 'text-muted' : 'page text-muted'}>Carregant material...</p>;
 
   const llistaFiltrada = nomesMeu ? material.filter((m) => m.agrupacioId === usuariActual?.agrupacioId) : material;
 
   return (
-    <div className="page">
-      <BotoTornar />
+    <div className={embedded ? undefined : 'page'}>
+      {!embedded && <BotoTornar />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Material</h1>
+        {!embedded && <h1>Material</h1>}
         <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
           {mostrarFormulari ? 'Cancel·lar' : '+ Nou material'}
         </button>
