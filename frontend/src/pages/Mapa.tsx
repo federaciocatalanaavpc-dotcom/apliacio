@@ -115,11 +115,11 @@ export default function Mapa() {
 
           // L'etiqueta amb el nom del poble tapa visualment el marcador (sobretot
           // al mòbil, on és més fàcil tocar el text que la xinxeta petita), així
-          // que també ha d'obrir el popup en tocar-la.
-          marcador.on('tooltipopen', () => {
-            const element = marcador.getTooltip()?.getElement();
-            if (element) element.onclick = () => marcador.openPopup();
-          });
+          // que també ha d'obrir el popup en tocar-la. Com que el marcador ja
+          // està afegit al mapa, bindTooltip() amb permanent:true obre l'etiqueta
+          // de seguida (de manera síncrona), així que l'element ja hi és aquí.
+          const elementEtiqueta = marcador.getTooltip()?.getElement();
+          if (elementEtiqueta) elementEtiqueta.onclick = () => marcador.openPopup();
         }
 
         if (ubicacioDispositiu) {
