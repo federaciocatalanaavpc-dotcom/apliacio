@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -6,6 +7,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { Material, llistarMaterial } from '../services/material';
+import { Vehicle, llistarVehicles } from '../services/vehicles';
 import BotoTornar from '../components/BotoTornar';
 
 const iconaPerDefecte = L.icon({
@@ -24,11 +26,26 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
+// Demana la ubicació del dispositiu amb un límit de temps; si l'usuari la
+// denega o triga massa, es continua sense (el mapa cau al comportament
+// anterior de centrar-se segons les associacions).
+function obtenirUbicacioDispositiu(): Promise<[number, number] | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve([pos.coords.latitude, pos.coords.longitude]),
+      () => resolve(null),
+      { timeout: 6000, maximumAge: 60000 }
+    );
+  });
+}
+
 export default function Mapa() {
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const contenidorRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelat = false;
@@ -36,7 +53,12 @@ export default function Mapa() {
     async function carregar() {
       setCarregant(true);
       try {
-        const [agrupacions, material] = await Promise.all([llistarAgrupacions(), llistarMaterial()]);
+        const [agrupacions, material, vehicles, ubicacioDispositiu] = await Promise.all([
+          llistarAgrupacions(),
+          llistarMaterial(),
+          llistarVehicles(),
+          obtenirUbicacioDispositiu(),
+        ]);
         if (cancelat || !contenidorRef.current) return;
 
         const materialPerAgrupacio = new Map<string, Material[]>();
@@ -44,6 +66,12 @@ export default function Mapa() {
           const llista = materialPerAgrupacio.get(m.agrupacioId) || [];
           llista.push(m);
           materialPerAgrupacio.set(m.agrupacioId, llista);
+        }
+        const vehiclesPerAgrupacio = new Map<string, Vehicle[]>();
+        for (const v of vehicles) {
+          const llista = vehiclesPerAgrupacio.get(v.agrupacioId) || [];
+          llista.push(v);
+          vehiclesPerAgrupacio.set(v.agrupacioId, llista);
         }
 
         const ambUbicacio = agrupacions.filter((a): a is Agrupacio & { latitud: number; longitud: number } => a.latitud != null && a.longitud != null);
@@ -57,18 +85,32 @@ export default function Mapa() {
         const mapa = mapaRef.current;
 
         for (const a of ambUbicacio) {
+          const vehiclesAssociacio = vehiclesPerAgrupacio.get(a.id) || [];
           const materialAssociacio = materialPerAgrupacio.get(a.id) || [];
-          const llistaHtml = materialAssociacio.length
-            ? `<ul style="margin:6px 0 0;padding-left:18px;">${materialAssociacio
-                .map((m) => `<li>${escapeHtml(m.nom)} · ${m.quantitat}</li>`)
-                .join('')}</ul>`
-            : '<p style="margin:6px 0 0;color:#7a6a58;">Sense material registrat.</p>';
-          L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte })
-            .addTo(mapa)
-            .bindPopup(`<strong>${escapeHtml(a.nom)}</strong>${llistaHtml}`);
+          const resum = `${vehiclesAssociacio.length} vehicle${vehiclesAssociacio.length === 1 ? '' : 's'} · ${materialAssociacio.length} material${materialAssociacio.length === 1 ? '' : 's'}`;
+          const contingut = document.createElement('div');
+          contingut.innerHTML = `<strong>${escapeHtml(a.nom)}</strong><p style="margin:4px 0 8px;color:#7a6a58;">${resum}</p>`;
+          const botoInventari = document.createElement('button');
+          botoInventari.textContent = 'Veure inventari →';
+          botoInventari.style.cssText = 'font-size:12px;';
+          botoInventari.onclick = () => navigate(`/inventari?agrupacio=${a.id}&nom=${encodeURIComponent(a.nom)}`);
+          contingut.appendChild(botoInventari);
+
+          L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte }).addTo(mapa).bindPopup(contingut);
         }
 
-        if (ambUbicacio.length > 0) {
+        if (ubicacioDispositiu) {
+          L.circleMarker(ubicacioDispositiu, {
+            radius: 8,
+            color: '#1a73e8',
+            fillColor: '#1a73e8',
+            fillOpacity: 0.8,
+            weight: 2,
+          })
+            .addTo(mapa)
+            .bindPopup('La teva ubicació');
+          mapa.setView(ubicacioDispositiu, 13);
+        } else if (ambUbicacio.length > 0) {
           const bounds = L.latLngBounds(ambUbicacio.map((a) => [a.latitud, a.longitud] as [number, number]));
           mapa.fitBounds(bounds, { padding: [30, 30] });
         }
@@ -85,6 +127,7 @@ export default function Mapa() {
       mapaRef.current?.remove();
       mapaRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -92,7 +135,8 @@ export default function Mapa() {
       <BotoTornar />
       <h1>Mapa d'associacions i material</h1>
       <p className="text-muted" style={{ fontSize: 13 }}>
-        Ubicació de la seu de cada associació (les que la tinguin marcada) i el material que hi ha registrat.
+        Ubicació de la seu de cada associació (les que la tinguin marcada). Clica una associació per veure'n
+        l'inventari.
       </p>
       {error && <p className="text-error">{error}</p>}
       {carregant && <p className="text-muted">Carregant mapa...</p>}

@@ -27,7 +27,10 @@ const buit = {
   notes: '',
 };
 
-export default function MaterialPage({ embedded = false }: { embedded?: boolean } = {}) {
+export default function MaterialPage({
+  embedded = false,
+  filtreAgrupacioId,
+}: { embedded?: boolean; filtreAgrupacioId?: string } = {}) {
   const usuariActual = getUsuariActual();
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [material, setMaterial] = useState<Material[]>([]);
@@ -131,7 +134,8 @@ export default function MaterialPage({ embedded = false }: { embedded?: boolean 
 
   if (carregant) return <p className={embedded ? 'text-muted' : 'page text-muted'}>Carregant material...</p>;
 
-  const llistaFiltrada = nomesMeu ? material.filter((m) => m.agrupacioId === usuariActual?.agrupacioId) : material;
+  const llistaBase = filtreAgrupacioId ? material.filter((m) => m.agrupacioId === filtreAgrupacioId) : material;
+  const llistaFiltrada = nomesMeu ? llistaBase.filter((m) => m.agrupacioId === usuariActual?.agrupacioId) : llistaBase;
 
   return (
     <div className={embedded ? undefined : 'page'}>

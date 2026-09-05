@@ -68,7 +68,10 @@ const buit = {
   notes: '',
 };
 
-export default function Vehicles({ embedded = false }: { embedded?: boolean } = {}) {
+export default function Vehicles({
+  embedded = false,
+  filtreAgrupacioId,
+}: { embedded?: boolean; filtreAgrupacioId?: string } = {}) {
   const usuariActual = getUsuariActual();
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -177,6 +180,8 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
 
   if (carregant) return <p className={embedded ? 'text-muted' : 'page text-muted'}>Carregant vehicles...</p>;
 
+  const llistaFiltrada = filtreAgrupacioId ? vehicles.filter((v) => v.agrupacioId === filtreAgrupacioId) : vehicles;
+
   return (
     <div className={embedded ? undefined : 'page'}>
       {!embedded && <BotoTornar />}
@@ -269,11 +274,11 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
         </form>
       )}
 
-      {vehicles.length === 0 ? (
+      {llistaFiltrada.length === 0 ? (
         <p className="text-muted">Encara no hi ha cap vehicle registrat.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {vehicles.map((v) => {
+          {llistaFiltrada.map((v) => {
             const revisio = estatData(v.proximaRevisio);
             return (
               <div key={v.id} className="card" style={{ maxWidth: 480 }}>
