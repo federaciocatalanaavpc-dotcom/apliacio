@@ -21,7 +21,6 @@ const ESTAT_COLOR: Record<string, string> = {
 const buit = {
   agrupacioId: '',
   nom: '',
-  categoria: '',
   quantitat: 1,
   estat: 'OPERATIU' as 'OPERATIU' | 'MANTENIMENT' | 'BAIXA',
   notes: '',
@@ -79,7 +78,6 @@ export default function MaterialPage({
       await crearMaterial({
         agrupacioId: esFederacio ? form.agrupacioId : undefined,
         nom: form.nom,
-        categoria: form.categoria || undefined,
         quantitat: form.quantitat,
         estat: form.estat,
         notes: form.notes || undefined,
@@ -97,7 +95,6 @@ export default function MaterialPage({
     setEditForm({
       agrupacioId: m.agrupacioId,
       nom: m.nom,
-      categoria: m.categoria || '',
       quantitat: m.quantitat,
       estat: m.estat,
       notes: m.notes || '',
@@ -111,7 +108,6 @@ export default function MaterialPage({
     try {
       await editarMaterial(editantId, {
         nom: editForm.nom,
-        categoria: editForm.categoria || undefined,
         quantitat: editForm.quantitat,
         estat: editForm.estat,
         notes: editForm.notes || undefined,
@@ -201,19 +197,13 @@ export default function MaterialPage({
               onEliminar={async (id) => { await eliminarTipusMaterial(id); carregar(); }}
             />
           )}
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <label>Categoria (opcional)</label>
-              <input value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} placeholder="p.ex. comunicacions, EPI..." style={{ width: '100%' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Estat</label>
-              <select value={form.estat} onChange={(e) => setForm({ ...form, estat: e.target.value as any })} style={{ width: '100%' }}>
-                <option value="OPERATIU">Operatiu</option>
-                <option value="MANTENIMENT">En manteniment</option>
-                <option value="BAIXA">De baixa</option>
-              </select>
-            </div>
+          <div style={{ marginBottom: 10 }}>
+            <label>Estat</label>
+            <select value={form.estat} onChange={(e) => setForm({ ...form, estat: e.target.value as any })} style={{ width: '100%' }}>
+              <option value="OPERATIU">Operatiu</option>
+              <option value="MANTENIMENT">En manteniment</option>
+              <option value="BAIXA">De baixa</option>
+            </select>
           </div>
           <div style={{ marginBottom: 10 }}>
             <label>Notes (opcional)</label>
@@ -232,7 +222,6 @@ export default function MaterialPage({
               <tr>
                 <th>Material</th>
                 <th>Associació</th>
-                <th>Categoria</th>
                 <th>Quantitat</th>
                 <th>Estat</th>
                 <th></th>
@@ -244,7 +233,6 @@ export default function MaterialPage({
                   <tr>
                     <td>{m.nom}</td>
                     <td className="text-muted">{m.agrupacio?.nom}{m.agrupacio?.municipi ? ` (${m.agrupacio.municipi})` : ''}</td>
-                    <td className="text-muted">{m.categoria || '—'}</td>
                     <td>{m.quantitat}</td>
                     <td><span style={{ color: ESTAT_COLOR[m.estat], fontWeight: 600 }}>{ESTAT_LABEL[m.estat]}</span></td>
                     <td>
@@ -264,7 +252,7 @@ export default function MaterialPage({
                   </tr>
                   {editantId === m.id && (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={5}>
                         <form onSubmit={handleGuardarEdicio} style={{ padding: '8px 0', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                           <div>
                             <label>Nom</label>
@@ -274,10 +262,6 @@ export default function MaterialPage({
                                 <option key={t.id} value={t.nom}>{t.nom}</option>
                               ))}
                             </select>
-                          </div>
-                          <div>
-                            <label>Categoria</label>
-                            <input value={editForm.categoria} onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })} />
                           </div>
                           <div>
                             <label>Quantitat</label>

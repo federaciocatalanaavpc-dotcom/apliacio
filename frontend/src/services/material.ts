@@ -5,7 +5,6 @@ export interface Material {
   agrupacioId: string;
   agrupacio?: { id: string; nom: string; municipi: string };
   nom: string;
-  categoria: string | null;
   quantitat: number;
   estat: 'OPERATIU' | 'MANTENIMENT' | 'BAIXA';
   notes: string | null;
@@ -21,7 +20,6 @@ export async function llistarMaterial(): Promise<Material[]> {
 export async function crearMaterial(dades: {
   agrupacioId?: string;
   nom: string;
-  categoria?: string;
   quantitat?: number;
   estat?: 'OPERATIU' | 'MANTENIMENT' | 'BAIXA';
   notes?: string;

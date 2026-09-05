@@ -16,7 +16,7 @@ router.get('/', async (_req, res) => {
 });
 
 router.post('/', async (req: AuthRequest, res) => {
-  const { agrupacioId, nom, categoria, quantitat, estat, notes } = req.body;
+  const { agrupacioId, nom, quantitat, estat, notes } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
   if (!agrupacioFinal || !nom) {
     return res.status(400).json({ error: "Cal indicar l'associació i el nom del material" });
@@ -29,7 +29,6 @@ router.post('/', async (req: AuthRequest, res) => {
       data: {
         agrupacioId: agrupacioFinal,
         nom,
-        categoria: categoria || undefined,
         quantitat: quantitat ?? 0,
         estat: estat || undefined,
         notes: notes || undefined,
@@ -47,11 +46,11 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
     return res.status(403).json({ error: "No pots editar material d'una altra associació" });
   }
-  const { nom, categoria, quantitat, estat, notes } = req.body;
+  const { nom, quantitat, estat, notes } = req.body;
   try {
     const material = await prisma.material.update({
       where: { id: req.params.id },
-      data: { nom, categoria: categoria || null, quantitat, estat, notes: notes || null },
+      data: { nom, quantitat, estat, notes: notes || null },
     });
     res.json(material);
   } catch {

@@ -98,7 +98,6 @@ model Material {
   agrupacio     Agrupacio     @relation(fields: [agrupacioId], references: [id])
   agrupacioId   String
   nom           String
-  categoria     String?
   quantitat     Int           @default(0)
   estat         EstatMaterial @default(OPERATIU)
   notes         String?
