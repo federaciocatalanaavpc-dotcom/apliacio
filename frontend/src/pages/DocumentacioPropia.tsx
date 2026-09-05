@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DocumentAgrupacio, TipusDocument, llistarDocuments, pujarDocument, resoldrePendent } from '../services/documents';
+import { DocumentAgrupacio, TipusDocument, llistarDocuments, pujarDocuments, resoldrePendent } from '../services/documents';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual, obrirFitxerProtegit } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
@@ -25,7 +25,7 @@ export default function DocumentacioPropia() {
   const [titol, setTitol] = useState('');
   const [dataDocument, setDataDocument] = useState('');
   const [pendent, setPendent] = useState(false);
-  const [fitxer, setFitxer] = useState<File | null>(null);
+  const [fitxers, setFitxers] = useState<File[]>([]);
 
   const agrupacioId = esFederacio ? agrupacioSeleccionada : usuariActual?.agrupacioId || '';
 
@@ -66,23 +66,23 @@ export default function DocumentacioPropia() {
   async function handlePujar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!pendent && !fitxer) {
-      setError('Cal seleccionar un fitxer (o marcar-lo com a pendent)');
+    if (!pendent && fitxers.length === 0) {
+      setError('Cal seleccionar almenys un fitxer (o marcar-lo com a pendent)');
       return;
     }
     try {
-      await pujarDocument({
+      await pujarDocuments({
         agrupacioId,
         tipus,
         titol,
         dataDocument: dataDocument || undefined,
         pendent,
-        fitxer,
+        fitxers,
       });
       setTitol('');
       setDataDocument('');
       setPendent(false);
-      setFitxer(null);
+      setFitxers([]);
       setMostrarFormulari(false);
       carregar();
     } catch {
@@ -151,8 +151,13 @@ export default function DocumentacioPropia() {
                 </select>
               </div>
               <div style={{ marginBottom: 10 }}>
-                <label>Títol</label>
-                <input value={titol} onChange={(e) => setTitol(e.target.value)} required style={{ width: '100%' }} />
+                <label>Títol {fitxers.length > 1 ? '(opcional, prefix per a cada fitxer)' : ''}</label>
+                <input
+                  value={titol}
+                  onChange={(e) => setTitol(e.target.value)}
+                  required={pendent || fitxers.length === 0}
+                  style={{ width: '100%' }}
+                />
               </div>
               <div style={{ marginBottom: 10 }}>
                 <label>Data del document (opcional)</label>
@@ -166,11 +171,17 @@ export default function DocumentacioPropia() {
               </div>
               {!pendent && (
                 <div style={{ marginBottom: 10 }}>
-                  <label>Fitxer (PDF o imatge)</label>
-                  <input type="file" onChange={(e) => setFitxer(e.target.files?.[0] || null)} required style={{ width: '100%' }} />
+                  <label>Fitxer(s) (PDF o imatge, es poden seleccionar diversos)</label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => setFitxers(Array.from(e.target.files || []))}
+                    required
+                    style={{ width: '100%' }}
+                  />
                 </div>
               )}
-              <button type="submit">{pendent ? 'Crear sol·licitud' : 'Pujar document'}</button>
+              <button type="submit">{pendent ? 'Crear sol·licitud' : fitxers.length > 1 ? `Pujar ${fitxers.length} documents` : 'Pujar document'}</button>
             </form>
           )}
 

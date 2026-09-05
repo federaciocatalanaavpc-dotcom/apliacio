@@ -44,6 +44,33 @@ export async function pujarDocument(dades: {
   return data;
 }
 
+// Igual que pujarDocument, però permet seleccionar diversos fitxers de cop:
+// es crea un document per fitxer (el títol de cadascun es basa en el nom del
+// fitxer si n'hi ha més d'un, o s'hi combina amb el títol indicat).
+export async function pujarDocuments(dades: {
+  agrupacioId?: string;
+  tipus: TipusDocument;
+  titol: string;
+  dataDocument?: string;
+  pendent?: boolean;
+  fitxers: File[];
+}): Promise<DocumentAgrupacio[]> {
+  if (dades.pendent || dades.fitxers.length === 0) {
+    return [await pujarDocument({ ...dades, fitxer: null })];
+  }
+  const resultats: DocumentAgrupacio[] = [];
+  for (const fitxer of dades.fitxers) {
+    const titolFinal =
+      dades.fitxers.length > 1
+        ? dades.titol
+          ? `${dades.titol} - ${fitxer.name}`
+          : fitxer.name
+        : dades.titol || fitxer.name;
+    resultats.push(await pujarDocument({ ...dades, titol: titolFinal, fitxer }));
+  }
+  return resultats;
+}
+
 // Puja el fitxer que resol una sol·licitud pendent
 export async function resoldrePendent(id: string, fitxer: File): Promise<DocumentAgrupacio> {
   const form = new FormData();

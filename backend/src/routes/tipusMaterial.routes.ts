@@ -11,7 +11,10 @@ router.get('/', async (_req, res) => {
   res.json(tipus);
 });
 
-router.post('/', requireFederacio, async (req, res) => {
+// Qualsevol usuari autenticat pot afegir un nou nom (p.ex. una associació que
+// té un material que encara no és al catàleg comú); editar/eliminar es
+// reserva a la federació per evitar que es trenqui la llista per a tothom.
+router.post('/', async (req, res) => {
   const { nom } = req.body;
   if (!nom) return res.status(400).json({ error: 'Cal indicar el nom del material' });
   try {

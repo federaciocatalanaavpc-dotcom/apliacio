@@ -4,7 +4,8 @@ import {
   TipusDocument,
   eliminarDocument,
   llistarDocuments,
-  pujarDocument,
+  pujarDocuments,
+  resoldrePendent,
 } from '../services/documents';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual, obrirFitxerProtegit } from '../services/api';
@@ -30,7 +31,8 @@ export default function Documents() {
   const [titol, setTitol] = useState('');
   const [dataDocument, setDataDocument] = useState('');
   const [pendent, setPendent] = useState(false);
-  const [fitxer, setFitxer] = useState<File | null>(null);
+  const [fitxers, setFitxers] = useState<File[]>([]);
+  const [fitxerPerPendent, setFitxerPerPendent] = useState<Record<string, File | null>>({});
 
   async function carregar() {
     setCarregant(true);
@@ -53,23 +55,23 @@ export default function Documents() {
   async function handlePujar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!pendent && !fitxer) {
-      setError('Cal seleccionar un fitxer (o marcar-lo com a pendent)');
+    if (!pendent && fitxers.length === 0) {
+      setError('Cal seleccionar almenys un fitxer (o marcar-lo com a pendent)');
       return;
     }
     try {
-      await pujarDocument({
+      await pujarDocuments({
         agrupacioId: agrupacioId || undefined,
         tipus: pestanya,
         titol,
         dataDocument: dataDocument || undefined,
         pendent,
-        fitxer,
+        fitxers,
       });
       setTitol('');
       setDataDocument('');
       setPendent(false);
-      setFitxer(null);
+      setFitxers([]);
       setMostrarFormulari(false);
       carregar();
     } catch {
@@ -83,6 +85,22 @@ export default function Documents() {
       carregar();
     } catch {
       setError('No s\'ha pogut eliminar el document');
+    }
+  }
+
+  async function handleResoldre(id: string) {
+    const fitxer = fitxerPerPendent[id];
+    if (!fitxer) {
+      setError('Selecciona primer el fitxer a pujar');
+      return;
+    }
+    setError('');
+    try {
+      await resoldrePendent(id, fitxer);
+      setFitxerPerPendent((prev) => ({ ...prev, [id]: null }));
+      carregar();
+    } catch {
+      setError('No s\'ha pogut pujar el fitxer');
     }
   }
 
@@ -129,11 +147,11 @@ export default function Documents() {
             </select>
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label>Títol</label>
+            <label>Títol {fitxers.length > 1 ? '(opcional, prefix per a cada fitxer)' : ''}</label>
             <input
               value={titol}
               onChange={(e) => setTitol(e.target.value)}
-              required
+              required={pendent || fitxers.length === 0}
               placeholder={pestanya === 'ACTA' ? 'p.ex. Acta assemblea 12/03/2026' : undefined}
               style={{ width: '100%' }}
             />
@@ -150,11 +168,17 @@ export default function Documents() {
           </div>
           {!pendent && (
             <div style={{ marginBottom: 10 }}>
-              <label>Fitxer (PDF o imatge)</label>
-              <input type="file" onChange={(e) => setFitxer(e.target.files?.[0] || null)} required style={{ width: '100%' }} />
+              <label>Fitxer(s) (PDF o imatge, es poden seleccionar diversos)</label>
+              <input
+                type="file"
+                multiple
+                onChange={(e) => setFitxers(Array.from(e.target.files || []))}
+                required
+                style={{ width: '100%' }}
+              />
             </div>
           )}
-          <button type="submit">{pendent ? 'Crear sol·licitud' : 'Pujar document'}</button>
+          <button type="submit">{pendent ? 'Crear sol·licitud' : fitxers.length > 1 ? `Pujar ${fitxers.length} documents` : 'Pujar document'}</button>
         </form>
       )}
 
@@ -163,30 +187,44 @@ export default function Documents() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {llistaPestanya.map((d) => (
-            <div key={d.id} className="card" style={{ maxWidth: 480, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>
-                  {d.titol}
-                  {d.pendent && <span className="badge" style={{ marginLeft: 8, color: 'var(--c-warning)', background: 'var(--c-warning-bg)' }}>Pendent</span>}
-                </p>
-                <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
-                  {d.agrupacio ? `${d.agrupacio.nom} · ` : 'Comú de la federació · '}
-                  {d.dataDocument ? new Date(d.dataDocument).toLocaleDateString('ca-ES') + ' · ' : ''}
-                  Creat per {d.pujatPer.nom}
-                </p>
+            <div key={d.id} className="card" style={{ maxWidth: 480 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600 }}>
+                    {d.titol}
+                    {d.pendent && <span className="badge" style={{ marginLeft: 8, color: 'var(--c-warning)', background: 'var(--c-warning-bg)' }}>Pendent</span>}
+                  </p>
+                  <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
+                    {d.agrupacio ? `${d.agrupacio.nom} · ` : 'Comú de la federació · '}
+                    {d.dataDocument ? new Date(d.dataDocument).toLocaleDateString('ca-ES') + ' · ' : ''}
+                    Creat per {d.pujatPer.nom}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {d.fitxerUrl && (
+                    <button onClick={() => obrirFitxerProtegit(d.fitxerUrl!)} style={{ fontSize: 13 }}>
+                      Obrir
+                    </button>
+                  )}
+                  {esFederacio && (
+                    <button onClick={() => handleEliminar(d.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                      Eliminar
+                    </button>
+                  )}
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {d.fitxerUrl && (
-                  <button onClick={() => obrirFitxerProtegit(d.fitxerUrl!)} style={{ fontSize: 13 }}>
-                    Obrir
+              {d.pendent && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--c-border)' }}>
+                  <input
+                    type="file"
+                    onChange={(e) => setFitxerPerPendent((prev) => ({ ...prev, [d.id]: e.target.files?.[0] || null }))}
+                    style={{ fontSize: 12 }}
+                  />
+                  <button onClick={() => handleResoldre(d.id)} style={{ fontSize: 12 }}>
+                    Pujar
                   </button>
-                )}
-                {esFederacio && (
-                  <button onClick={() => handleEliminar(d.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
-                    Eliminar
-                  </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
