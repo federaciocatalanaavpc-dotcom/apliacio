@@ -241,7 +241,7 @@ export default function MaterialPage({
                           <button onClick={() => obrirEdicio(m)} style={{ fontSize: 12 }}>
                             {editantId === m.id ? 'Cancel·lar' : 'Editar'}
                           </button>
-                          <button onClick={() => handleEliminar(m.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                          <button onClick={() => handleEliminar(m.id)} className="btn-danger" style={{ fontSize: 12 }}>
                             Eliminar
                           </button>
                         </div>

@@ -311,7 +311,7 @@ export default function Vehicles({
                   <button onClick={() => obrirEdicio(v)} style={{ fontSize: 12 }}>
                     {editantId === v.id ? 'Cancel·lar' : 'Editar'}
                   </button>
-                  <button onClick={() => handleEliminar(v.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                  <button onClick={() => handleEliminar(v.id)} className="btn-danger" style={{ fontSize: 12 }}>
                     Eliminar
                   </button>
                 </div>

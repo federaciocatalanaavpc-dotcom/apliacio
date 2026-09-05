@@ -171,11 +171,11 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button onClick={() => setPestanya('oberts')} style={pestanya === 'oberts' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}>
+      <div className="tabs">
+        <button onClick={() => setPestanya('oberts')} className={`tab ${pestanya === 'oberts' ? 'tab--active' : ''}`}>
           Oberts
         </button>
-        <button onClick={() => setPestanya('arxivats')} style={pestanya === 'arxivats' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}>
+        <button onClick={() => setPestanya('arxivats')} className={`tab ${pestanya === 'arxivats' ? 'tab--active' : ''}`}>
           Arxivats
         </button>
       </div>
@@ -327,7 +327,7 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
                 <button onClick={() => handleArxivar(s)} style={{ fontSize: 12 }}>
                   {s.arxivat ? 'Desarxivar' : 'Arxivar'}
                 </button>
-                <button onClick={() => handleEliminar(s.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                <button onClick={() => handleEliminar(s.id)} className="btn-danger" style={{ fontSize: 12 }}>
                   Eliminar
                 </button>
               </div>

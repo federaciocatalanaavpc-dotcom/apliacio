@@ -268,7 +268,7 @@ export default function Associacions() {
                     {editantId === a.id ? 'Cancel·lar' : 'Editar'}
                   </button>
                   {esFederacio && (
-                    <button onClick={() => handleEliminar(a.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                    <button onClick={() => handleEliminar(a.id)} className="btn-danger" style={{ fontSize: 12 }}>
                       Eliminar
                     </button>
                   )}

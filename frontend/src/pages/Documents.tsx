@@ -112,12 +112,12 @@ export default function Documents() {
         pendents) es gestionen a Documentació pròpia.
       </p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div className="tabs">
         {PESTANYES.map((p) => (
           <button
             key={p.valor}
             onClick={() => setPestanya(p.valor)}
-            style={p.valor === pestanya ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}
+            className={`tab ${p.valor === pestanya ? 'tab--active' : ''}`}
           >
             {p.etiqueta}
           </button>
@@ -196,7 +196,7 @@ export default function Documents() {
                     </button>
                   )}
                   {esFederacio && (
-                    <button onClick={() => handleEliminar(d.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                    <button onClick={() => handleEliminar(d.id)} className="btn-danger" style={{ fontSize: 12 }}>
                       Eliminar
                     </button>
                   )}

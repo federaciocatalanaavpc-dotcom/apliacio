@@ -125,7 +125,7 @@ export default function FormacioPage() {
                   </a>
                 )}
                 {esFederacio && (
-                  <button onClick={() => handleEliminar(r.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                  <button onClick={() => handleEliminar(r.id)} className="btn-danger" style={{ fontSize: 12 }}>
                     Eliminar
                   </button>
                 )}

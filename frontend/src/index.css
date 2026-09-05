@@ -151,23 +151,27 @@ label {
   margin-bottom: 6px;
 }
 
-/* --- Buttons --- */
+/* --- Buttons ---
+   Estil "ghost" per defecte (sense vora, fons suau tenyit de blau) en lloc
+   de la vora sòlida d'abans; és el patró que fan servir la majoria d'apps
+   modernes per a accions secundàries, reservant el color sòlid ple per a
+   l'acció principal (type="submit"). */
 
 button {
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: var(--c-blue);
-  background: var(--c-surface);
-  border: 1.5px solid var(--c-border);
+  background: rgba(29, 78, 216, 0.08);
+  border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
   padding: 9px 16px;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
 button:hover {
-  border-color: var(--c-blue);
+  background: rgba(29, 78, 216, 0.14);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
@@ -196,6 +200,52 @@ button[type='submit'] {
 button[type='submit']:hover {
   filter: brightness(1.08);
   box-shadow: 0 12px 28px rgba(29, 78, 216, 0.32);
+}
+
+/* Pestanyes tipus "segmented control" (Oberts/Arxivats, Estatuts/Actes...) */
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
+.tab {
+  background: transparent;
+  color: var(--c-text-muted);
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 13px;
+}
+
+.tab:hover {
+  background: rgba(15, 23, 42, 0.05);
+  box-shadow: none;
+  transform: none;
+  color: var(--c-text);
+}
+
+.tab--active,
+.tab--active:hover {
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Acció destructiva (Eliminar...): mateix estil "ghost" però tenyit de
+   vermell en lloc de blau, perquè el fons i el text vagin junts. */
+.btn-danger {
+  color: var(--c-error);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.btn-danger:hover {
+  background: rgba(220, 38, 38, 0.14);
 }
 
 /* --- Shared layout primitives (opt-in via className) --- */

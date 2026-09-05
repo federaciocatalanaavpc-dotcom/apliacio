@@ -22,17 +22,11 @@ export default function Inventari() {
         </p>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button
-          onClick={() => setPestanya('vehicles')}
-          style={pestanya === 'vehicles' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}
-        >
+      <div className="tabs">
+        <button onClick={() => setPestanya('vehicles')} className={`tab ${pestanya === 'vehicles' ? 'tab--active' : ''}`}>
           Vehicles
         </button>
-        <button
-          onClick={() => setPestanya('material')}
-          style={pestanya === 'material' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}
-        >
+        <button onClick={() => setPestanya('material')} className={`tab ${pestanya === 'material' ? 'tab--active' : ''}`}>
           Material
         </button>
       </div>

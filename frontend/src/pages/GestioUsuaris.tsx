@@ -264,7 +264,7 @@ export default function GestioUsuaris() {
                                 <button type="button" onClick={() => { setEditantProvinciaId(p.id); setEditProvinciaNom(p.nom); }} style={{ fontSize: 11 }}>Editar</button>
                               </>
                             )}
-                            <button type="button" onClick={() => handleEliminarProvincia(p.id)} style={{ fontSize: 11, color: 'var(--c-error)' }}>Eliminar</button>
+                            <button type="button" onClick={() => handleEliminarProvincia(p.id)} className="btn-danger" style={{ fontSize: 11 }}>Eliminar</button>
                           </div>
                         ))}
                       </div>
@@ -325,7 +325,7 @@ export default function GestioUsuaris() {
                 <button onClick={() => obrirEdicio(u)} style={{ fontSize: 12 }}>
                   {editantId === u.id ? 'Cancel·lar' : 'Editar'}
                 </button>
-                <button onClick={() => handleEliminar(u.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                <button onClick={() => handleEliminar(u.id)} className="btn-danger" style={{ fontSize: 12 }}>
                   Eliminar
                 </button>
               </div>

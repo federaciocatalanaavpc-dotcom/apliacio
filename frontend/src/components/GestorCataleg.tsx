@@ -78,7 +78,7 @@ export default function GestorCataleg({
               </button>
             )}
             {esFederacio && (
-              <button type="button" onClick={() => handleEliminar(item.id)} style={{ fontSize: 11, color: 'var(--c-error)' }}>
+              <button type="button" onClick={() => handleEliminar(item.id)} className="btn-danger" style={{ fontSize: 11 }}>
                 Eliminar
               </button>
             )}

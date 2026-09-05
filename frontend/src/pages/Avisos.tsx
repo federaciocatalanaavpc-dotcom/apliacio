@@ -152,7 +152,7 @@ export default function Avisos() {
             <p className="text-muted" style={{ margin: '4px 0 8px', fontSize: 12 }}>
               {a.agrupacio ? a.agrupacio.nom : 'Tota la federació'} · {new Date(a.dataEnviament).toLocaleString('ca-ES')}
             </p>
-            <button onClick={() => handleEliminar(a.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+            <button onClick={() => handleEliminar(a.id)} className="btn-danger" style={{ fontSize: 12 }}>
               Eliminar
             </button>
           </div>
