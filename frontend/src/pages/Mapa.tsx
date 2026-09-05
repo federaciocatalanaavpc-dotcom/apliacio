@@ -95,6 +95,7 @@ export default function Mapa() {
             .addTo(mapaRef.current);
         }
         const mapa = mapaRef.current;
+        const marcadorsPerId = new Map<string, L.Marker>();
 
         for (const a of ambUbicacio) {
           const vehiclesAssociacio = vehiclesPerAgrupacio.get(a.id) || [];
@@ -111,16 +112,25 @@ export default function Mapa() {
           const marcador = L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte })
             .addTo(mapa)
             .bindPopup(contingut)
-            .bindTooltip(a.municipi || a.nom, { permanent: true, direction: 'top', offset: [0, -38], className: 'etiqueta-poble' });
-
-          // L'etiqueta amb el nom del poble tapa visualment el marcador (sobretot
-          // al mòbil, on és més fàcil tocar el text que la xinxeta petita), així
-          // que també ha d'obrir el popup en tocar-la. Com que el marcador ja
-          // està afegit al mapa, bindTooltip() amb permanent:true obre l'etiqueta
-          // de seguida (de manera síncrona), així que l'element ja hi és aquí.
-          const elementEtiqueta = marcador.getTooltip()?.getElement();
-          if (elementEtiqueta) elementEtiqueta.onclick = () => marcador.openPopup();
+            .bindTooltip(`<span data-id="${a.id}">${escapeHtml(a.municipi || a.nom)}</span>`, {
+              permanent: true,
+              direction: 'top',
+              offset: [0, -38],
+              className: 'etiqueta-poble',
+            });
+          marcadorsPerId.set(a.id, marcador);
         }
+
+        // L'etiqueta amb el nom del poble tapa visualment el marcador (sobretot
+        // al mòbil, on és més fàcil tocar el text que la xinxeta petita). En
+        // lloc de dependre de quan Leaflet crea el DOM de cada tooltip (té una
+        // finestra de carrera amb bindTooltip), un sol listener delegat al
+        // contenidor cobreix qualsevol etiqueta, present o futura.
+        contenidorRef.current.onclick = (event) => {
+          const target = (event.target as HTMLElement).closest('[data-id]');
+          const id = target?.getAttribute('data-id');
+          if (id) marcadorsPerId.get(id)?.openPopup();
+        };
 
         if (ubicacioDispositiu) {
           L.circleMarker(ubicacioDispositiu, {
