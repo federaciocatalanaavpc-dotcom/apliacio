@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
-import { requireAuth, requireFederacio, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
+import { requireAuth, requireFederacio, AuthRequest, potGestionarAgrupacio, bloquejaVoluntaris } from '../middleware/auth.middleware';
 import { pujadaDocumentsAgrupacio } from '../services/upload.service';
 
 const router = Router();
 router.use(requireAuth);
+router.use(bloquejaVoluntaris);
 
 const SELECCIO_LLISTA = {
   id: true,

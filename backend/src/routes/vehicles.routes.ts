@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
-import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
+import { requireAuth, AuthRequest, potGestionarAgrupacio, bloquejaVoluntaris } from '../middleware/auth.middleware';
 
 const router = Router();
 router.use(requireAuth);
+router.use(bloquejaVoluntaris);
 
 router.get('/', async (req: AuthRequest, res) => {
   const agrupacioId =

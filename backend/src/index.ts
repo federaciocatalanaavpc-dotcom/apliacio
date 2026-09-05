@@ -13,6 +13,10 @@ import documentsRoutes from './routes/documents.routes';
 import formacioRoutes from './routes/formacio.routes';
 import avisosRoutes from './routes/avisos.routes';
 import pushRoutes from './routes/push.routes';
+import voluntarisRoutes from './routes/voluntaris.routes';
+import serveisRoutes from './routes/serveis.routes';
+import tipusServeiRoutes from './routes/tipusServei.routes';
+import categoriaServeiRoutes from './routes/categoriaServei.routes';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -35,6 +39,10 @@ app.use('/api/documents', documentsRoutes);
 app.use('/api/formacio', formacioRoutes);
 app.use('/api/avisos', avisosRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/voluntaris', voluntarisRoutes);
+app.use('/api/serveis', serveisRoutes);
+app.use('/api/tipus-servei', tipusServeiRoutes);
+app.use('/api/categoria-servei', categoriaServeiRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

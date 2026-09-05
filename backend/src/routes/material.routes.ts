@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
-import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
+import { requireAuth, AuthRequest, potGestionarAgrupacio, bloquejaVoluntaris } from '../middleware/auth.middleware';
 
 const router = Router();
 router.use(requireAuth);
+router.use(bloquejaVoluntaris);
 
 // Llista TOT el material de totes les agrupacions (només lectura fora de la
 // pròpia), perquè en cas d'emergència es pugui saber què hi ha disponible a prop.

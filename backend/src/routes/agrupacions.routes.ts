@@ -46,7 +46,7 @@ router.post('/', requireFederacio, async (req, res) => {
 // nom, la classificació territorial ni l'estat actiu/inactiu).
 router.patch('/:id', async (req: AuthRequest, res) => {
   const esFederacio = req.usuari!.rol === 'FEDERACIO';
-  const esPropia = req.usuari!.agrupacioId === req.params.id;
+  const esPropia = req.usuari!.rol === 'AGRUPACIO' && req.usuari!.agrupacioId === req.params.id;
   if (!esFederacio && !esPropia) {
     return res.status(403).json({ error: "No pots editar aquesta associació" });
   }

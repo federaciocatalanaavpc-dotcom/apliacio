@@ -12,6 +12,14 @@ datasource db {
 enum Rol {
   FEDERACIO
   AGRUPACIO
+  VOLUNTARI
+}
+
+enum Disponibilitat {
+  PRESENCIAL
+  IMMEDIATA
+  DIFERIDA
+  NO_DISPONIBLE
 }
 
 enum PropietatVehicle {
@@ -47,6 +55,8 @@ model Usuari {
   subscripcionsPush SubscripcioPush[]
   documentsPujats   Document[]
   recursosFormacio  RecursFormacio[]
+  voluntariPerfil   Voluntari?
+  serveisCreats     Servei[]
 }
 
 // Una agrupació/associació federada dins la Federació Catalana d'AVPC.
@@ -71,6 +81,110 @@ model Agrupacio {
   materials  Material[]
   documents  Document[]
   avisos     Avis[]
+  voluntaris Voluntari[]
+  serveis    Servei[]
+}
+
+// Fitxa d'un voluntari (roster) d'una associació. Opcionalment pot tenir un
+// compte d'accés propi (usuariId) perquè es connecti des del seu mòbil per
+// confirmar assistència als serveis; si no en té, l'associació el gestiona
+// tot des del seu propi compte.
+model Voluntari {
+  id                  String          @id @default(uuid())
+  agrupacio           Agrupacio       @relation(fields: [agrupacioId], references: [id])
+  agrupacioId         String
+  nom                 String
+  cognoms             String
+  telefon             String?
+  dni                 String?
+  genere              String?
+  dataNaixement       DateTime?
+  provincia           String?
+  localitat           String?
+  adreca              String?
+  codiPostal          String?
+  dataIngres          DateTime?
+  dataBaixa           DateTime?
+  numeroIdentificacio String?
+  indicatiu           String?
+  carrec              String?
+  altresEmails        String?
+  altresAgrupacions   String?
+  disponibilitat      Disponibilitat  @default(NO_DISPONIBLE)
+  actiu               Boolean         @default(true)
+  creatEl             DateTime        @default(now())
+
+  usuari              Usuari?         @relation(fields: [usuariId], references: [id])
+  usuariId            String?         @unique
+
+  assistencies        AssistenciaServei[]
+}
+
+// Catàleg de tipus i categories de servei que la federació manté, perquè
+// totes les associacions facin servir la mateixa classificació.
+model TipusServei {
+  id      String   @id @default(uuid())
+  nom     String   @unique
+  creatEl DateTime @default(now())
+}
+
+model CategoriaServei {
+  id      String   @id @default(uuid())
+  nom     String   @unique
+  creatEl DateTime @default(now())
+}
+
+// Un servei (intervenció, assemblea, acte...) d'una associació. Es convoca
+// als voluntaris segons la seva disponibilitat (o a tots) i ells confirmen
+// assistència des del seu compte; l'associació pot marcar hores reals fetes
+// per calcular estadístiques i generar l'informe del servei.
+model Servei {
+  id                     String    @id @default(uuid())
+  agrupacio              Agrupacio @relation(fields: [agrupacioId], references: [id])
+  agrupacioId            String
+  titol                  String
+  numeracio              String?
+  maxAssistents          Int?
+  collaboracioEmergencies Boolean  @default(false)
+  dataInici              DateTime
+  dataFi                 DateTime
+  limitInscripcio        DateTime?
+  horaBase               DateTime?
+  horaSortida            DateTime?
+  tipus                  String?
+  categoria              String?
+  localitat              String?
+  sollicitant            String?
+  latitud                Float?
+  longitud               Float?
+  adreca                 String?
+  descripcio             String?
+  destinataris           String?   // "TOTS" o llista separada per comes: PRESENCIAL,IMMEDIATA,DIFERIDA
+  arxivat                Boolean   @default(false)
+  creatPer               Usuari    @relation(fields: [creatPerId], references: [id])
+  creatPerId             String
+  creatEl                DateTime  @default(now())
+
+  assistencies           AssistenciaServei[]
+}
+
+// Relació entre un servei i un voluntari: si ha confirmat assistència i,
+// un cop fet el servei, les hores reals treballades (per als informes
+// d'estadístiques i el control d'hores de servei).
+model AssistenciaServei {
+  id               String    @id @default(uuid())
+  servei           Servei    @relation(fields: [serveiId], references: [id])
+  serveiId         String
+  voluntari        Voluntari @relation(fields: [voluntariId], references: [id])
+  voluntariId      String
+  confirmat        Boolean   @default(false)
+  horaEntrada      DateTime?
+  horaSortida      DateTime?
+  horesRealitzades Float?
+  notes            String?
+  creatEl          DateTime  @default(now())
+
+  @@unique([serveiId, voluntariId])
 }
 
 // Flota de vehicles de cada agrupació, amb la propera data de revisió
