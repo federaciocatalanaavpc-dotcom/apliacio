@@ -6,6 +6,7 @@ import {
   actualitzarDisponibilitatPropia,
 } from '../services/voluntaris';
 import { Servei, llistarServeis, confirmarAssistencia, cancelarAssistencia } from '../services/serveis';
+import BotoTornar from '../components/BotoTornar';
 
 const DISPONIBILITAT_LABEL: Record<Disponibilitat, string> = {
   PRESENCIAL: 'Presencial',
@@ -68,13 +69,29 @@ export default function PerfilVoluntari() {
     }
   }
 
-  if (carregant) return <p className="text-muted">Carregant...</p>;
-  if (!voluntari) return <p className="text-error">No s'ha trobat la teva fitxa de voluntari.</p>;
+  if (carregant) {
+    return (
+      <div className="page">
+        <BotoTornar />
+        <p className="text-muted">Carregant...</p>
+      </div>
+    );
+  }
+  if (!voluntari) {
+    return (
+      <div className="page">
+        <BotoTornar />
+        <p className="text-error">No s'ha trobat la teva fitxa de voluntari.</p>
+      </div>
+    );
+  }
 
   const totalHores = serveis.reduce((suma, s) => suma + (s.assistenciaPropia?.horesRealitzades || 0), 0);
 
   return (
-    <div>
+    <div className="page">
+      <BotoTornar />
+      <h1>Serveis</h1>
       <div className="card" style={{ marginBottom: 16, maxWidth: 460 }}>
         <p style={{ margin: 0, fontWeight: 700 }}>{voluntari.nom} {voluntari.cognoms}</p>
         {voluntari.indicatiu && <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>Indicatiu: {voluntari.indicatiu}</p>}

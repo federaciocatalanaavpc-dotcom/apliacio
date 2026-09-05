@@ -47,12 +47,30 @@ router.get('/', async (req: AuthRequest, res) => {
   res.json(voluntaris);
 });
 
-// Fitxa pròpia del voluntari connectat (per al seu propi "Gestió AVPC" mòbil).
+// Fitxa pròpia del voluntari connectat (per a la seva pròpia app mòbil).
 router.get('/me', async (req: AuthRequest, res) => {
   if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
   const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id }, select: SELECCIO });
   if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
   res.json(voluntari);
+});
+
+// Estadístiques pròpies: només les assistències del voluntari connectat
+// (no les de tota l'associació), per al seu propi resum d'hores.
+router.get('/me/estadistiques', async (req: AuthRequest, res) => {
+  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
+  const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
+  if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
+  const assistencies = await prisma.assistenciaServei.findMany({
+    where: { voluntariId: voluntari.id },
+    select: {
+      confirmat: true,
+      horesRealitzades: true,
+      servei: { select: { titol: true, tipus: true, dataInici: true } },
+    },
+    orderBy: { servei: { dataInici: 'asc' } },
+  });
+  res.json(assistencies);
 });
 
 router.post('/', async (req: AuthRequest, res) => {

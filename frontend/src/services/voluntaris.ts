@@ -38,6 +38,17 @@ export async function obtenirVoluntariPropi(): Promise<Voluntari> {
   return data;
 }
 
+export interface AssistenciaPropia {
+  confirmat: boolean;
+  horesRealitzades: number | null;
+  servei: { titol: string; tipus: string | null; dataInici: string };
+}
+
+export async function obtenirEstadistiquesPropies(): Promise<AssistenciaPropia[]> {
+  const { data } = await api.get('/voluntaris/me/estadistiques');
+  return data;
+}
+
 export interface DadesVoluntari {
   agrupacioId?: string;
   nom: string;

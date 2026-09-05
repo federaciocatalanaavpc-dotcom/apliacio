@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import BotoTornar from '../components/BotoTornar';
 import Voluntaris from './Voluntaris';
 import Serveis from './Serveis';
 import Estadistiques from './Estadistiques';
-import PerfilVoluntari from './PerfilVoluntari';
 import { getUsuariActual } from '../services/api';
 
 export default function GestioAvpc() {
@@ -11,13 +11,7 @@ export default function GestioAvpc() {
   const [pestanya, setPestanya] = useState<'voluntaris' | 'serveis' | 'estadistiques'>('voluntaris');
 
   if (usuariActual?.rol === 'VOLUNTARI') {
-    return (
-      <div className="page">
-        <BotoTornar />
-        <h1>Gestió AVPC</h1>
-        <PerfilVoluntari />
-      </div>
-    );
+    return <Navigate to="/voluntari/serveis" replace />;
   }
 
   return (

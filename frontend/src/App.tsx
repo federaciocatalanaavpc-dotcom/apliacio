@@ -9,6 +9,9 @@ import Documents from './pages/Documents';
 import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
 import GestioAvpc from './pages/GestioAvpc';
+import PerfilVoluntari from './pages/PerfilVoluntari';
+import EstadistiquesVoluntari from './pages/EstadistiquesVoluntari';
+import AlertesVoluntari from './pages/AlertesVoluntari';
 import Avisos from './pages/Avisos';
 import CanviarContrasenya from './pages/CanviarContrasenya';
 import RutaProtegida from './components/RutaProtegida';
@@ -90,6 +93,30 @@ export default function App() {
           element={
             <RutaProtegida>
               <GestioAvpc />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/voluntari/serveis"
+          element={
+            <RutaProtegida>
+              <PerfilVoluntari />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/voluntari/estadistiques"
+          element={
+            <RutaProtegida>
+              <EstadistiquesVoluntari />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/voluntari/alertes"
+          element={
+            <RutaProtegida>
+              <AlertesVoluntari />
             </RutaProtegida>
           }
         />

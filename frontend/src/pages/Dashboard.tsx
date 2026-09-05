@@ -14,7 +14,7 @@ export default function Dashboard() {
   const usuari = getUsuariActual();
   const navigate = useNavigate();
   const esVoluntari = usuari?.rol === 'VOLUNTARI';
-  const nomMostrat = usuari?.rol === 'FEDERACIO' ? usuari?.nom : usuari?.agrupacioNom || usuari?.nom;
+  const nomMostrat = usuari?.rol === 'FEDERACIO' || esVoluntari ? usuari?.nom : usuari?.agrupacioNom || usuari?.nom;
 
   function handleLogout() {
     logout();
@@ -38,9 +38,19 @@ export default function Dashboard() {
 
       {esVoluntari ? (
         <div className="nav-grid" style={{ marginTop: 16 }}>
-          <Link to="/gestio-avpc" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">🛠️</span>
-            Gestió AVPC
+          <Link to="/voluntari/serveis" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">🚒</span>
+            Serveis
+            <span className="nav-tile__arrow">→</span>
+          </Link>
+          <Link to="/voluntari/estadistiques" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">📊</span>
+            Estadístiques
+            <span className="nav-tile__arrow">→</span>
+          </Link>
+          <Link to="/voluntari/alertes" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">🔔</span>
+            Alertes
             <span className="nav-tile__arrow">→</span>
           </Link>
         </div>
