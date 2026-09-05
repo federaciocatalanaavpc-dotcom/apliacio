@@ -46,6 +46,7 @@ model Usuari {
 
   subscripcionsPush SubscripcioPush[]
   documentsPujats   Document[]
+  recursosFormacio  RecursFormacio[]
 }
 
 // Una agrupació/associació federada dins la Federació Catalana d'AVPC.
@@ -69,7 +70,6 @@ model Agrupacio {
   vehicles   Vehicle[]
   materials  Material[]
   documents  Document[]
-  formacions Formacio[]
   avisos     Avis[]
 }
 
@@ -129,17 +129,20 @@ model Document {
   creatEl         DateTime      @default(now())
 }
 
-// Catàleg de formacions. agrupacioId nul vol dir que és una formació comuna
-// de tota la federació; si té agrupació, és una formació local seva.
-model Formacio {
-  id             String    @id @default(uuid())
-  nom            String
-  descripcio     String?
-  agrupacio      Agrupacio? @relation(fields: [agrupacioId], references: [id])
-  agrupacioId    String?
-  dataProgramada DateTime?
-  obligatoria    Boolean   @default(false)
-  creatEl        DateTime  @default(now())
+// Biblioteca de recursos de formació: la federació hi penja PDFs o enllaços
+// (p.ex. a un vídeo o document extern) perquè les associacions els consultin.
+// No és un catàleg de cursos amb dates ni inscripcions, només material de
+// consulta. Cal tenir com a mínim l'enllaç o el fitxer (poden coexistir).
+model RecursFormacio {
+  id              String   @id @default(uuid())
+  titol           String
+  url             String?
+  fitxerNom       String?
+  fitxerContingut Bytes?
+  fitxerMimeType  String?
+  pujatPer        Usuari   @relation(fields: [pujatPerId], references: [id])
+  pujatPerId      String
+  creatEl         DateTime @default(now())
 }
 
 // Comunicats amb notificació push. agrupacioId nul vol dir que és un avís

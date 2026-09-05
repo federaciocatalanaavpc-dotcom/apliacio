@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Avis, crearAvis, eliminarAvis, llistarAvisos } from '../services/avisos';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
-import { estatNotificacions, activarNotificacions, enviarNotificacioProva } from '../services/push';
+import { estatNotificacions, activarNotificacions, enviarNotificacioProva, esIosSenseInstallar } from '../services/push';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 
@@ -100,7 +100,15 @@ export default function Avisos() {
         <p className="text-muted" style={{ fontSize: 13, margin: '0 0 10px' }}>
           Activa-les per rebre els avisos al mòbil o ordinador encara que no tinguis la web oberta.
         </p>
-        {permis !== 'granted' && <button onClick={handleActivarNotis}>Activar notificacions</button>}
+        {permis !== 'granted' && esIosSenseInstallar() ? (
+          <p style={{ fontSize: 13, color: 'var(--c-warning)', margin: 0 }}>
+            En un iPhone/iPad, per rebre notificacions primer cal afegir aquesta app a la pantalla d'inici:
+            toca el botó de compartir de Safari (⬆️) i tria "Afegeix a la pantalla d'inici". Després obre l'app
+            des d'aquesta icona (no des de Safari) i torna aquí per activar-les.
+          </p>
+        ) : (
+          permis !== 'granted' && <button onClick={handleActivarNotis}>Activar notificacions</button>
+        )}
       </div>
 
       {error && <p className="text-error">{error}</p>}

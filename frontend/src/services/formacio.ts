@@ -1,32 +1,31 @@
 import { api } from './api';
 
-export interface Formacio {
+export interface RecursFormacio {
   id: string;
-  nom: string;
-  descripcio: string | null;
-  agrupacioId: string | null;
-  agrupacio?: { id: string; nom: string } | null;
-  dataProgramada: string | null;
-  obligatoria: boolean;
+  titol: string;
+  url: string | null;
+  fitxerNom: string | null;
+  fitxerUrl: string | null;
+  pujatPer: { id: string; nom: string };
   creatEl: string;
 }
 
-export async function llistarFormacions(): Promise<Formacio[]> {
+export async function llistarRecursosFormacio(): Promise<RecursFormacio[]> {
   const { data } = await api.get('/formacio');
   return data;
 }
 
-export async function crearFormacio(dades: {
-  nom: string;
-  descripcio?: string;
-  agrupacioId?: string | null;
-  dataProgramada?: string;
-  obligatoria?: boolean;
-}): Promise<Formacio> {
-  const { data } = await api.post('/formacio', dades);
+export async function crearRecursFormacio(dades: { titol: string; url?: string; fitxer?: File | null }): Promise<RecursFormacio> {
+  const form = new FormData();
+  form.append('titol', dades.titol);
+  if (dades.url) form.append('url', dades.url);
+  if (dades.fitxer) form.append('fitxer', dades.fitxer);
+  const { data } = await api.post('/formacio', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 }
 
-export async function eliminarFormacio(id: string) {
+export async function eliminarRecursFormacio(id: string) {
   await api.delete(`/formacio/${id}`);
 }

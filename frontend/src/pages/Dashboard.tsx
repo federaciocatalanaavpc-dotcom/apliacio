@@ -6,6 +6,7 @@ const enllacos = [
   { to: '/inventari', icon: '🚗', label: 'Inventari' },
   { to: '/mapa', icon: '🗺️', label: 'Mapa' },
   { to: '/documents', icon: '📄', label: 'Documentació' },
+  { to: '/formacio', icon: '🎓', label: 'Formació' },
   { to: '/avisos', icon: '📢', label: 'Avisos' },
 ];
 
@@ -54,6 +55,13 @@ export default function Dashboard() {
           <Link to="/usuaris" className="card card--clickable nav-tile">
             <span className="nav-tile__icon">👥</span>
             Gestionar usuaris
+            <span className="nav-tile__arrow">→</span>
+          </Link>
+        )}
+        {usuari?.rol === 'FEDERACIO' && (
+          <Link to="/gestio-avpc" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">🛠️</span>
+            Gestió AVPC
             <span className="nav-tile__arrow">→</span>
           </Link>
         )}

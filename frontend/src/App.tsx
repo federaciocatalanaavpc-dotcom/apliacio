@@ -8,6 +8,7 @@ import Mapa from './pages/Mapa';
 import Documents from './pages/Documents';
 import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
+import GestioAvpc from './pages/GestioAvpc';
 import Avisos from './pages/Avisos';
 import CanviarContrasenya from './pages/CanviarContrasenya';
 import RutaProtegida from './components/RutaProtegida';
@@ -81,6 +82,14 @@ export default function App() {
           element={
             <RutaProtegida>
               <Formacio />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/gestio-avpc"
+          element={
+            <RutaProtegida>
+              <GestioAvpc />
             </RutaProtegida>
           }
         />
