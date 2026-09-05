@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { AssistenciaPropia, obtenirEstadistiquesPropies } from '../services/voluntaris';
 import BotoTornar from '../components/BotoTornar';
 
-const COLORS = ['#c2410c', '#f59e0b', '#7c2d12', '#15803d', '#0369a1', '#a5690a', '#6d28d9'];
+const COLORS = ['#1d4ed8', '#3b82f6', '#0ea5e9', '#16a34a', '#f59e0b', '#7c3aed', '#db2777'];
 
 export default function EstadistiquesVoluntari() {
   const [dades, setDades] = useState<AssistenciaPropia[]>([]);
@@ -109,7 +109,7 @@ export default function EstadistiquesVoluntari() {
                   <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="hores" fill="#c2410c" />
+                  <Bar dataKey="hores" fill="#1d4ed8" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -14,7 +14,7 @@ export default defineConfig({
         name: 'AVPC Federació - Gestió d\'Agrupacions',
         short_name: 'AVPC Federació',
         description: 'Gestió de material, vehicles, membres, documentació i formació de les agrupacions',
-        theme_color: '#c2410c',
+        theme_color: '#0f172a',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',

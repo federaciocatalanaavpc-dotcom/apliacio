@@ -18,7 +18,7 @@ import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual } from '../services/api';
 import { svgAPng } from '../services/pdf';
 
-const COLORS = ['#c2410c', '#f59e0b', '#7c2d12', '#15803d', '#0369a1', '#a5690a', '#6d28d9'];
+const COLORS = ['#1d4ed8', '#3b82f6', '#0ea5e9', '#16a34a', '#f59e0b', '#7c3aed', '#db2777'];
 
 export default function Estadistiques({ embedded = false }: { embedded?: boolean } = {}) {
   const usuariActual = getUsuariActual();
@@ -214,7 +214,7 @@ export default function Estadistiques({ embedded = false }: { embedded?: boolean
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="nom" width={140} tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="hores" fill="#c2410c" />
+                  <Bar dataKey="hores" fill="#1d4ed8" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
