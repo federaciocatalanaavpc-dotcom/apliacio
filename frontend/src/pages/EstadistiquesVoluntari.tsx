@@ -39,6 +39,15 @@ export default function EstadistiquesVoluntari() {
     return [...mapa.entries()].map(([tipus, hores]) => ({ tipus, hores })).filter((x) => x.hores > 0);
   }, [confirmades]);
 
+  const horesPerAny = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const a of confirmades) {
+      const any = a.servei.dataInici.slice(0, 4);
+      mapa.set(any, (mapa.get(any) || 0) + (a.horesRealitzades || 0));
+    }
+    return [...mapa.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([any, hores]) => ({ any, hores }));
+  }, [confirmades]);
+
   return (
     <div className="page">
       <BotoTornar />
@@ -75,6 +84,21 @@ export default function EstadistiquesVoluntari() {
               </div>
             </div>
           )}
+
+          <div className="card" style={{ marginBottom: 16, maxWidth: 460 }}>
+            <p style={{ fontWeight: 600, marginBottom: 8 }}>Hores per any</p>
+            <div style={{ height: 220 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={horesPerAny}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="any" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="hores" fill="#15803d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
           <div className="card" style={{ marginBottom: 16, maxWidth: 460 }}>
             <p style={{ fontWeight: 600, marginBottom: 8 }}>Hores per mes</p>

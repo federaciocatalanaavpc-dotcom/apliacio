@@ -33,6 +33,7 @@ export default function Estadistiques({ embedded = false }: { embedded?: boolean
   const refHoresVoluntari = useRef<HTMLDivElement>(null);
   const refServeisPerTipus = useRef<HTMLDivElement>(null);
   const refAssistenciaMes = useRef<HTMLDivElement>(null);
+  const refHoresAny = useRef<HTMLDivElement>(null);
 
   async function carregar() {
     setCarregant(true);
@@ -92,6 +93,16 @@ export default function Estadistiques({ embedded = false }: { embedded?: boolean
     return [...mapa.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([mes, assistents]) => ({ mes, assistents }));
   }, [dades]);
 
+  const horesPerAny = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const s of dades) {
+      const any = s.dataInici.slice(0, 4);
+      const hores = s.assistencies.filter((a) => a.confirmat).reduce((sum, a) => sum + (a.horesRealitzades || 0), 0);
+      mapa.set(any, (mapa.get(any) || 0) + hores);
+    }
+    return [...mapa.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([any, hores]) => ({ any, hores }));
+  }, [dades]);
+
   const totalHores = horesPerVoluntari.reduce((s, v) => s + v.hores, 0);
   const totalServeis = dades.length;
 
@@ -109,7 +120,7 @@ export default function Estadistiques({ embedded = false }: { embedded?: boolean
       doc.text(`Total de serveis: ${totalServeis}   ·   Total d'hores registrades: ${totalHores}`, 14, 34);
 
       let y = 44;
-      for (const ref of [refServeisPerTipus, refHoresVoluntari, refAssistenciaMes]) {
+      for (const ref of [refServeisPerTipus, refHoresVoluntari, refHoresAny, refAssistenciaMes]) {
         const svg = ref.current?.querySelector('svg');
         if (!svg) continue;
         const { dataUrl, width, height } = await svgAPng(svg);
@@ -204,6 +215,21 @@ export default function Estadistiques({ embedded = false }: { embedded?: boolean
                   <YAxis type="category" dataKey="nom" width={140} tick={{ fontSize: 12 }} />
                   <Tooltip />
                   <Bar dataKey="hores" fill="#c2410c" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 16, maxWidth: 640 }}>
+            <p style={{ fontWeight: 600, marginBottom: 8 }}>Hores per any</p>
+            <div ref={refHoresAny} style={{ height: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={horesPerAny}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="any" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="hores" fill="#15803d" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
