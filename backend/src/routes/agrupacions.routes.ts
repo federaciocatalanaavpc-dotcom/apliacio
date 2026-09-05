@@ -29,8 +29,8 @@ router.post('/', requireFederacio, async (req, res) => {
         email: email || undefined,
         president: president || undefined,
         dataFundacio: dataFundacio ? new Date(dataFundacio) : undefined,
-        latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : undefined,
-        longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : undefined,
+        latitud: latitud !== undefined && latitud !== null && latitud !== '' ? Number(latitud) : undefined,
+        longitud: longitud !== undefined && longitud !== null && longitud !== '' ? Number(longitud) : undefined,
       },
     });
     res.status(201).json(agrupacio);
@@ -57,8 +57,8 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     email: email || null,
     president: president || null,
     dataFundacio: dataFundacio ? new Date(dataFundacio) : null,
-    latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : null,
-    longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : null,
+    latitud: latitud !== undefined && latitud !== null && latitud !== '' ? Number(latitud) : null,
+    longitud: longitud !== undefined && longitud !== null && longitud !== '' ? Number(longitud) : null,
   };
   try {
     const agrupacio = await prisma.$transaction(async (tx) => {

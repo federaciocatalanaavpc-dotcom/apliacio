@@ -7,6 +7,7 @@ import {
   llistarAgrupacions,
 } from '../services/agrupacions';
 import { Provincia, llistarProvincies } from '../services/provincies';
+import { geocodificarAdreca } from '../services/geocodificacio';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 import SelectorMapa from '../components/SelectorMapa';
@@ -38,6 +39,7 @@ export default function Associacions() {
 
   const [editantId, setEditantId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(buit);
+  const [geocodificant, setGeocodificant] = useState(false);
 
   async function carregar() {
     setCarregant(true);
@@ -123,6 +125,27 @@ export default function Associacions() {
     }
   }
 
+  async function handleGeocodificar(adreca: string, aplicar: (lat: number, lng: number) => void) {
+    if (!adreca.trim()) {
+      setError('Escriu primer una adreça per poder-la cercar al mapa');
+      return;
+    }
+    setError('');
+    setGeocodificant(true);
+    try {
+      const resultat = await geocodificarAdreca(adreca);
+      if (!resultat) {
+        setError('No s\'ha trobat cap ubicació per a aquesta adreça; marca-la manualment al mapa');
+        return;
+      }
+      aplicar(resultat.lat, resultat.lng);
+    } catch {
+      setError('No s\'ha pogut cercar la ubicació de l\'adreça');
+    } finally {
+      setGeocodificant(false);
+    }
+  }
+
   async function handleEliminar(id: string) {
     try {
       await eliminarAgrupacio(id);
@@ -199,6 +222,14 @@ export default function Associacions() {
           </div>
           <div style={{ marginBottom: 10 }}>
             <label>Ubicació de la seu (opcional)</label>
+            <button
+              type="button"
+              onClick={() => handleGeocodificar(form.adreca, (lat, lng) => setForm({ ...form, latitud: lat, longitud: lng }))}
+              disabled={geocodificant}
+              style={{ fontSize: 12, marginBottom: 6 }}
+            >
+              {geocodificant ? 'Cercant...' : '📍 Situar al mapa a partir de l\'adreça'}
+            </button>
             <SelectorMapa
               latitud={form.latitud}
               longitud={form.longitud}
@@ -295,6 +326,14 @@ export default function Associacions() {
                   </div>
                   <div style={{ marginBottom: 8 }}>
                     <label>Ubicació de la seu</label>
+                    <button
+                      type="button"
+                      onClick={() => handleGeocodificar(editForm.adreca, (lat, lng) => setEditForm({ ...editForm, latitud: lat, longitud: lng }))}
+                      disabled={geocodificant}
+                      style={{ fontSize: 12, marginBottom: 6 }}
+                    >
+                      {geocodificant ? 'Cercant...' : '📍 Situar al mapa a partir de l\'adreça'}
+                    </button>
                     <SelectorMapa
                       latitud={editForm.latitud}
                       longitud={editForm.longitud}
