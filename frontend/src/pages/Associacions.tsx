@@ -26,7 +26,9 @@ const buit = {
 };
 
 export default function Associacions() {
-  const esFederacio = getUsuariActual()?.rol === 'FEDERACIO';
+  const usuariActual = getUsuariActual();
+  const esFederacio = usuariActual?.rol === 'FEDERACIO';
+  const potEditar = (a: Agrupacio) => esFederacio || a.id === usuariActual?.agrupacioId;
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [provincies, setProvincies] = useState<Provincia[]>([]);
   const [carregant, setCarregant] = useState(true);
@@ -229,44 +231,50 @@ export default function Associacions() {
                 </p>
               )}
 
-              {esFederacio && (
+              {potEditar(a) && (
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                   <button onClick={() => obrirEdicio(a)} style={{ fontSize: 12 }}>
                     {editantId === a.id ? 'Cancel·lar' : 'Editar'}
                   </button>
-                  <button onClick={() => handleEliminar(a.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
-                    Eliminar
-                  </button>
+                  {esFederacio && (
+                    <button onClick={() => handleEliminar(a.id)} style={{ fontSize: 12, color: 'var(--c-error)' }}>
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               )}
 
-              {esFederacio && editantId === a.id && (
+              {potEditar(a) && editantId === a.id && (
                 <form onSubmit={handleGuardarEdicio} style={{ borderTop: '1px solid var(--c-border)', marginTop: 10, paddingTop: 10 }}>
-                  <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <label>Nom</label>
-                      <input value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} required style={{ width: '100%' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label>Província</label>
-                      <select value={editForm.provincia} onChange={(e) => setEditForm({ ...editForm, provincia: e.target.value })} style={{ width: '100%' }}>
-                        <option value="">Sense especificar</option>
-                        {provincies.map((p) => (
-                          <option key={p.id} value={p.nom}>{p.nom}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <label>Municipi</label>
-                      <input value={editForm.municipi} onChange={(e) => setEditForm({ ...editForm, municipi: e.target.value })} style={{ width: '100%' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label>Comarca</label>
-                      <input value={editForm.comarca} onChange={(e) => setEditForm({ ...editForm, comarca: e.target.value })} style={{ width: '100%' }} />
-                    </div>
-                  </div>
+                  {esFederacio && (
+                    <>
+                      <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <label>Nom</label>
+                          <input value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} required style={{ width: '100%' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label>Província</label>
+                          <select value={editForm.provincia} onChange={(e) => setEditForm({ ...editForm, provincia: e.target.value })} style={{ width: '100%' }}>
+                            <option value="">Sense especificar</option>
+                            {provincies.map((p) => (
+                              <option key={p.id} value={p.nom}>{p.nom}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <label>Municipi</label>
+                          <input value={editForm.municipi} onChange={(e) => setEditForm({ ...editForm, municipi: e.target.value })} style={{ width: '100%' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label>Comarca</label>
+                          <input value={editForm.comarca} onChange={(e) => setEditForm({ ...editForm, comarca: e.target.value })} style={{ width: '100%' }} />
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <div style={{ marginBottom: 8 }}>
                     <label>President/a</label>
                     <input value={editForm.president} onChange={(e) => setEditForm({ ...editForm, president: e.target.value })} style={{ width: '100%' }} />

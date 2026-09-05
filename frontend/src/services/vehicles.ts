@@ -4,7 +4,7 @@ export interface Vehicle {
   id: string;
   agrupacioId: string;
   agrupacio?: { id: string; nom: string };
-  matricula: string;
+  matricula: string | null;
   tipus: string | null;
   marca: string | null;
   model: string | null;
@@ -22,7 +22,7 @@ export async function llistarVehicles(): Promise<Vehicle[]> {
 
 export async function crearVehicle(dades: {
   agrupacioId?: string;
-  matricula: string;
+  matricula?: string;
   tipus?: string;
   marca?: string;
   model?: string;

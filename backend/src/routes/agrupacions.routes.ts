@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
-import { requireAuth, requireFederacio } from '../middleware/auth.middleware';
+import { requireAuth, requireFederacio, AuthRequest } from '../middleware/auth.middleware';
 
 const router = Router();
 router.use(requireAuth);
@@ -41,28 +41,41 @@ router.post('/', requireFederacio, async (req, res) => {
 
 // El nom de l'associació i el nom dels seus usuaris han d'anar sempre
 // lligats: si es canvia el nom aquí, es sincronitza als seus usuaris.
-router.patch('/:id', requireFederacio, async (req, res) => {
+// La federació pot editar qualsevol associació sencera; una associació
+// només pot editar la seva pròpia informació de contacte i ubicació (no el
+// nom, la classificació territorial ni l'estat actiu/inactiu).
+router.patch('/:id', async (req: AuthRequest, res) => {
+  const esFederacio = req.usuari!.rol === 'FEDERACIO';
+  const esPropia = req.usuari!.agrupacioId === req.params.id;
+  if (!esFederacio && !esPropia) {
+    return res.status(403).json({ error: "No pots editar aquesta associació" });
+  }
   const { nom, provincia, municipi, comarca, adreca, telefon, email, president, dataFundacio, actiu, latitud, longitud } = req.body;
+  const dadesContacte = {
+    adreca: adreca || null,
+    telefon: telefon || null,
+    email: email || null,
+    president: president || null,
+    dataFundacio: dataFundacio ? new Date(dataFundacio) : null,
+    latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : null,
+    longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : null,
+  };
   try {
     const agrupacio = await prisma.$transaction(async (tx) => {
       const actualitzada = await tx.agrupacio.update({
         where: { id: req.params.id },
-        data: {
-          nom,
-          provincia: provincia || null,
-          municipi: municipi || null,
-          comarca: comarca || null,
-          adreca: adreca || null,
-          telefon: telefon || null,
-          email: email || null,
-          president: president || null,
-          dataFundacio: dataFundacio ? new Date(dataFundacio) : null,
-          latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : null,
-          longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : null,
-          actiu,
-        },
+        data: esFederacio
+          ? {
+              ...dadesContacte,
+              nom,
+              provincia: provincia || null,
+              municipi: municipi || null,
+              comarca: comarca || null,
+              actiu,
+            }
+          : dadesContacte,
       });
-      if (nom) {
+      if (esFederacio && nom) {
         await tx.usuari.updateMany({
           where: { agrupacioId: req.params.id, rol: 'AGRUPACIO' },
           data: { nom },

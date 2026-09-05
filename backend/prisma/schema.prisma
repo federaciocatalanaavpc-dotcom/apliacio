@@ -79,7 +79,7 @@ model Vehicle {
   id             String           @id @default(uuid())
   agrupacio      Agrupacio        @relation(fields: [agrupacioId], references: [id])
   agrupacioId    String
-  matricula      String           @unique
+  matricula      String?          @unique
   tipus          String?
   marca          String?
   model          String?

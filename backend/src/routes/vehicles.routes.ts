@@ -19,8 +19,8 @@ router.get('/', async (req: AuthRequest, res) => {
 router.post('/', async (req: AuthRequest, res) => {
   const { agrupacioId, matricula, tipus, marca, model, propietat, empresaRenting, proximaRevisio, notes } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
-  if (!agrupacioFinal || !matricula || !propietat) {
-    return res.status(400).json({ error: "Cal indicar l'associació, la matrícula i la propietat del vehicle" });
+  if (!agrupacioFinal || !propietat) {
+    return res.status(400).json({ error: "Cal indicar l'associació i la propietat del vehicle" });
   }
   if (!potGestionarAgrupacio(req, agrupacioFinal)) {
     return res.status(403).json({ error: "No pots crear vehicles d'una altra associació" });
@@ -29,7 +29,7 @@ router.post('/', async (req: AuthRequest, res) => {
     const vehicle = await prisma.vehicle.create({
       data: {
         agrupacioId: agrupacioFinal,
-        matricula,
+        matricula: matricula || undefined,
         tipus: tipus || undefined,
         marca: marca || undefined,
         model: model || undefined,
@@ -56,7 +56,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     const vehicle = await prisma.vehicle.update({
       where: { id: req.params.id },
       data: {
-        matricula,
+        matricula: matricula || null,
         tipus: tipus || null,
         marca: marca || null,
         model: model || null,

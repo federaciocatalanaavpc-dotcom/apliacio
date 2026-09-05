@@ -77,10 +77,22 @@ export default function Mapa() {
         const ambUbicacio = agrupacions.filter((a): a is Agrupacio & { latitud: number; longitud: number } => a.latitud != null && a.longitud != null);
 
         if (!mapaRef.current) {
-          mapaRef.current = L.map(contenidorRef.current).setView(CENTRE_CATALUNYA, 8);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          const satelit = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
+          );
+          const etiquetes = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+            { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
+          );
+          const carrer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap',
-          }).addTo(mapaRef.current);
+          });
+
+          mapaRef.current = L.map(contenidorRef.current, { layers: [satelit, etiquetes] }).setView(CENTRE_CATALUNYA, 8);
+          L.control
+            .layers({ Satèl·lit: L.layerGroup([satelit, etiquetes]), Carrer: carrer })
+            .addTo(mapaRef.current);
         }
         const mapa = mapaRef.current;
 

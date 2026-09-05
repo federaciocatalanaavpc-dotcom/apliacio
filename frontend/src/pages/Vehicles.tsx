@@ -136,7 +136,7 @@ export default function Vehicles({
     setEditantId(editantId === v.id ? null : v.id);
     setEditForm({
       agrupacioId: v.agrupacioId,
-      matricula: v.matricula,
+      matricula: v.matricula || '',
       tipus: v.tipus || '',
       marca: v.marca || '',
       model: v.model || '',
@@ -213,8 +213,8 @@ export default function Vehicles({
           )}
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <label>Matrícula</label>
-              <input value={form.matricula} onChange={(e) => setForm({ ...form, matricula: e.target.value })} required style={{ width: '100%' }} />
+              <label>Matrícula (opcional)</label>
+              <input value={form.matricula} onChange={(e) => setForm({ ...form, matricula: e.target.value })} style={{ width: '100%' }} />
             </div>
             <div style={{ flex: 1 }}>
               <label>Propietat</label>
@@ -285,7 +285,7 @@ export default function Vehicles({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ display: 'flex', alignItems: 'center' }}>
                     <Led color={revisio.led} />
-                    <strong>{v.matricula}</strong>
+                    <strong>{v.matricula || v.tipus || 'Vehicle sense matrícula'}</strong>
                   </span>
                   <span className="badge badge--role">
                     {v.propietat === 'PROPI' ? 'Propi' : v.propietat === 'RENTING' ? 'Renting' : 'Cedit'}
@@ -320,8 +320,8 @@ export default function Vehicles({
                   <form onSubmit={handleGuardarEdicio} style={{ borderTop: '1px solid var(--c-border)', marginTop: 10, paddingTop: 10 }}>
                     <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
                       <div style={{ flex: 1 }}>
-                        <label>Matrícula</label>
-                        <input value={editForm.matricula} onChange={(e) => setEditForm({ ...editForm, matricula: e.target.value })} required style={{ width: '100%' }} />
+                        <label>Matrícula (opcional)</label>
+                        <input value={editForm.matricula} onChange={(e) => setEditForm({ ...editForm, matricula: e.target.value })} style={{ width: '100%' }} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <label>Propietat</label>
