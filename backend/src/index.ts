@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import authRoutes from './routes/auth.routes';
 import usuarisRoutes from './routes/usuaris.routes';
 import agrupacionsRoutes from './routes/agrupacions.routes';
@@ -14,7 +13,6 @@ import documentsRoutes from './routes/documents.routes';
 import formacioRoutes from './routes/formacio.routes';
 import avisosRoutes from './routes/avisos.routes';
 import pushRoutes from './routes/push.routes';
-import { requireAuth } from './middleware/auth.middleware';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -24,9 +22,6 @@ const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
-
-// Els fitxers pujats (estatuts, actes...) només es poden descarregar amb sessió iniciada.
-app.use('/uploads', requireAuth, express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/usuaris', usuarisRoutes);

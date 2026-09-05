@@ -112,19 +112,23 @@ model Material {
 // comú de la federació; si en té un, és propi d'aquella associació.
 // pendent=true vol dir que és una sol·licitud sense fitxer encara (la
 // federació demana un document concret a una associació, que l'ha de pujar).
+// El fitxer es guarda directament a la base de dades (no al disc del
+// servidor) perquè sobrevisqui als redeploys d'un pla gratuït sense disc
+// persistent.
 model Document {
-  id           String        @id @default(uuid())
-  agrupacio    Agrupacio?    @relation(fields: [agrupacioId], references: [id])
-  agrupacioId  String?
-  tipus        TipusDocument
-  titol        String
-  dataDocument DateTime?
-  pendent      Boolean       @default(false)
-  fitxerUrl    String?
-  fitxerNom    String?
-  pujatPer     Usuari        @relation(fields: [pujatPerId], references: [id])
-  pujatPerId   String
-  creatEl      DateTime      @default(now())
+  id              String        @id @default(uuid())
+  agrupacio       Agrupacio?    @relation(fields: [agrupacioId], references: [id])
+  agrupacioId     String?
+  tipus           TipusDocument
+  titol           String
+  dataDocument    DateTime?
+  pendent         Boolean       @default(false)
+  fitxerNom       String?
+  fitxerContingut Bytes?
+  fitxerMimeType  String?
+  pujatPer        Usuari        @relation(fields: [pujatPerId], references: [id])
+  pujatPerId      String
+  creatEl         DateTime      @default(now())
 }
 
 // Catàleg de formacions. agrupacioId nul vol dir que és una formació comuna

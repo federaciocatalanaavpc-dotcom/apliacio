@@ -46,13 +46,12 @@ export async function canviarContrasenya(contrasenyaActual: string, contrasenyaN
   await api.patch('/auth/contrasenya', { contrasenyaActual, contrasenyaNova });
 }
 
-// Els fitxers pujats (estatuts, actes...) es serveixen
-// darrere d'autenticació, així que no es poden obrir amb un <a href> normal
-// (el navegador no hi afegiria el token). Es descarreguen com a blob amb el
-// token i s'obren amb una URL d'objecte temporal.
+// Els fitxers (desats a la base de dades) es serveixen darrere d'autenticació,
+// així que no es poden obrir amb un <a href> normal (el navegador no hi
+// afegiria el token). Es descarreguen com a blob amb el token i s'obren amb
+// una URL d'objecte temporal.
 export async function obrirFitxerProtegit(urlRelatiu: string) {
-  const base = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
-  const { data } = await api.get(urlRelatiu, { baseURL: base, responseType: 'blob' });
+  const { data } = await api.get(urlRelatiu, { responseType: 'blob' });
   const url = URL.createObjectURL(data);
   window.open(url, '_blank');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
