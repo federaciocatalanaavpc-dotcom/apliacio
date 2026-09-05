@@ -53,14 +53,7 @@ function Led({ color }: { color: string }) {
 }
 
 function propera(v: Vehicle): number {
-  const dates = [v.proximaItv, v.proximaRevisio].filter(Boolean).map((d) => new Date(d as string).getTime());
-  return dates.length > 0 ? Math.min(...dates) : Infinity;
-}
-
-const PRIORITAT_LED = [LED.vermell, LED.taronja, LED.verd, LED.gris];
-
-function pitjorLed(...leds: string[]): string {
-  return leds.sort((a, b) => PRIORITAT_LED.indexOf(a) - PRIORITAT_LED.indexOf(b))[0];
+  return v.proximaRevisio ? new Date(v.proximaRevisio).getTime() : Infinity;
 }
 
 const buit = {
@@ -71,7 +64,6 @@ const buit = {
   model: '',
   propietat: 'PROPI' as 'PROPI' | 'RENTING' | 'CEDIT',
   empresaRenting: '',
-  proximaItv: '',
   proximaRevisio: '',
   notes: '',
 };
@@ -126,7 +118,6 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
         model: form.model || undefined,
         propietat: form.propietat,
         empresaRenting: form.propietat === 'RENTING' ? form.empresaRenting || undefined : undefined,
-        proximaItv: form.proximaItv || undefined,
         proximaRevisio: form.proximaRevisio || undefined,
         notes: form.notes || undefined,
       });
@@ -148,7 +139,6 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
       model: v.model || '',
       propietat: v.propietat,
       empresaRenting: v.empresaRenting || '',
-      proximaItv: aDataInput(v.proximaItv),
       proximaRevisio: aDataInput(v.proximaRevisio),
       notes: v.notes || '',
     });
@@ -166,7 +156,6 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
         model: editForm.model || undefined,
         propietat: editForm.propietat,
         empresaRenting: editForm.propietat === 'RENTING' ? editForm.empresaRenting || undefined : undefined,
-        proximaItv: editForm.proximaItv || undefined,
         proximaRevisio: editForm.proximaRevisio || undefined,
         notes: editForm.notes || undefined,
       } as any);
@@ -199,7 +188,7 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
       </div>
 
       <p className="text-muted" style={{ fontSize: 13 }}>
-        Control de les dates d'ITV i revisió dels vehicles de l'agrupació, propis, de renting o cedits.
+        Control de la data de revisió dels vehicles de l'agrupació, propis, de renting o cedits.
       </p>
 
       {error && <p className="text-error">{error}</p>}
@@ -268,15 +257,9 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
               <input value={form.empresaRenting} onChange={(e) => setForm({ ...form, empresaRenting: e.target.value })} style={{ width: '100%' }} />
             </div>
           )}
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <label>Propera ITV (opcional)</label>
-              <input type="date" value={form.proximaItv} onChange={(e) => setForm({ ...form, proximaItv: e.target.value })} style={{ width: '100%' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Propera revisió (opcional)</label>
-              <input type="date" value={form.proximaRevisio} onChange={(e) => setForm({ ...form, proximaRevisio: e.target.value })} style={{ width: '100%' }} />
-            </div>
+          <div style={{ marginBottom: 10 }}>
+            <label>Propera revisió (opcional)</label>
+            <input type="date" value={form.proximaRevisio} onChange={(e) => setForm({ ...form, proximaRevisio: e.target.value })} style={{ width: '100%' }} />
           </div>
           <div style={{ marginBottom: 10 }}>
             <label>Notes (opcional)</label>
@@ -291,13 +274,12 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {vehicles.map((v) => {
-            const itv = estatData(v.proximaItv);
             const revisio = estatData(v.proximaRevisio);
             return (
               <div key={v.id} className="card" style={{ maxWidth: 480 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ display: 'flex', alignItems: 'center' }}>
-                    <Led color={pitjorLed(itv.led, revisio.led)} />
+                    <Led color={revisio.led} />
                     <strong>{v.matricula}</strong>
                   </span>
                   <span className="badge badge--role">
@@ -314,11 +296,7 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
                     {v.propietat === 'RENTING' && v.empresaRenting ? ` · ${v.empresaRenting}` : ''}
                   </p>
                 )}
-                <p style={{ fontSize: 13, margin: '6px 0 0', display: 'flex', alignItems: 'center' }}>
-                  <Led color={itv.led} />
-                  ITV: <span style={{ color: itv.color, fontWeight: 600, marginLeft: 4 }}>{itv.text}</span>
-                </p>
-                <p style={{ fontSize: 13, margin: '4px 0 8px', display: 'flex', alignItems: 'center' }}>
+                <p style={{ fontSize: 13, margin: '6px 0 8px', display: 'flex', alignItems: 'center' }}>
                   <Led color={revisio.led} />
                   Revisió: <span style={{ color: revisio.color, fontWeight: 600, marginLeft: 4 }}>{revisio.text}</span>
                 </p>
@@ -374,15 +352,9 @@ export default function Vehicles({ embedded = false }: { embedded?: boolean } = 
                         <input value={editForm.empresaRenting} onChange={(e) => setEditForm({ ...editForm, empresaRenting: e.target.value })} style={{ width: '100%' }} />
                       </div>
                     )}
-                    <div style={{ marginBottom: 8, display: 'flex', gap: 10 }}>
-                      <div style={{ flex: 1 }}>
-                        <label>Propera ITV</label>
-                        <input type="date" value={editForm.proximaItv} onChange={(e) => setEditForm({ ...editForm, proximaItv: e.target.value })} style={{ width: '100%' }} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label>Propera revisió</label>
-                        <input type="date" value={editForm.proximaRevisio} onChange={(e) => setEditForm({ ...editForm, proximaRevisio: e.target.value })} style={{ width: '100%' }} />
-                      </div>
+                    <div style={{ marginBottom: 8 }}>
+                      <label>Propera revisió</label>
+                      <input type="date" value={editForm.proximaRevisio} onChange={(e) => setEditForm({ ...editForm, proximaRevisio: e.target.value })} style={{ width: '100%' }} />
                     </div>
                     <div style={{ marginBottom: 8 }}>
                       <label>Notes</label>

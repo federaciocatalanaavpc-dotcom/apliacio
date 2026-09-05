@@ -73,8 +73,8 @@ model Agrupacio {
   avisos     Avis[]
 }
 
-// Flota de vehicles de cada agrupació, amb les properes dates d'ITV i de
-// revisió (mateix control que fa servir AITASA per a la seva pròpia flota).
+// Flota de vehicles de cada agrupació, amb la propera data de revisió
+// (mateix control que fa servir AITASA per a la seva pròpia flota).
 model Vehicle {
   id             String           @id @default(uuid())
   agrupacio      Agrupacio        @relation(fields: [agrupacioId], references: [id])
@@ -85,7 +85,6 @@ model Vehicle {
   model          String?
   propietat      PropietatVehicle
   empresaRenting String?
-  proximaItv     DateTime?
   proximaRevisio DateTime?
   notes          String?
   creatEl        DateTime         @default(now())

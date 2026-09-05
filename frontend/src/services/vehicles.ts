@@ -10,7 +10,6 @@ export interface Vehicle {
   model: string | null;
   propietat: 'PROPI' | 'RENTING' | 'CEDIT';
   empresaRenting: string | null;
-  proximaItv: string | null;
   proximaRevisio: string | null;
   notes: string | null;
   creatEl: string;
@@ -29,7 +28,6 @@ export async function crearVehicle(dades: {
   model?: string;
   propietat: 'PROPI' | 'RENTING' | 'CEDIT';
   empresaRenting?: string;
-  proximaItv?: string;
   proximaRevisio?: string;
   notes?: string;
 }): Promise<Vehicle> {

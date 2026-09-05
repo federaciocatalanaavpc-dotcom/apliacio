@@ -17,7 +17,7 @@ router.get('/', async (req: AuthRequest, res) => {
 });
 
 router.post('/', async (req: AuthRequest, res) => {
-  const { agrupacioId, matricula, tipus, marca, model, propietat, empresaRenting, proximaItv, proximaRevisio, notes } = req.body;
+  const { agrupacioId, matricula, tipus, marca, model, propietat, empresaRenting, proximaRevisio, notes } = req.body;
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
   if (!agrupacioFinal || !matricula || !propietat) {
     return res.status(400).json({ error: "Cal indicar l'associació, la matrícula i la propietat del vehicle" });
@@ -35,7 +35,6 @@ router.post('/', async (req: AuthRequest, res) => {
         model: model || undefined,
         propietat,
         empresaRenting: empresaRenting || undefined,
-        proximaItv: proximaItv ? new Date(proximaItv) : undefined,
         proximaRevisio: proximaRevisio ? new Date(proximaRevisio) : undefined,
         notes: notes || undefined,
       },
@@ -52,7 +51,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
     return res.status(403).json({ error: "No pots editar vehicles d'una altra associació" });
   }
-  const { matricula, tipus, marca, model, propietat, empresaRenting, proximaItv, proximaRevisio, notes } = req.body;
+  const { matricula, tipus, marca, model, propietat, empresaRenting, proximaRevisio, notes } = req.body;
   try {
     const vehicle = await prisma.vehicle.update({
       where: { id: req.params.id },
@@ -63,7 +62,6 @@ router.patch('/:id', async (req: AuthRequest, res) => {
         model: model || null,
         propietat,
         empresaRenting: empresaRenting || null,
-        proximaItv: proximaItv ? new Date(proximaItv) : null,
         proximaRevisio: proximaRevisio ? new Date(proximaRevisio) : null,
         notes: notes || null,
       },
