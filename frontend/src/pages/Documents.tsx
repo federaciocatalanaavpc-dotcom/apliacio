@@ -7,7 +7,6 @@ import {
   pujarDocuments,
   resoldrePendent,
 } from '../services/documents';
-import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual, obrirFitxerProtegit } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 
@@ -21,13 +20,11 @@ export default function Documents() {
   const usuariActual = getUsuariActual();
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [documents, setDocuments] = useState<DocumentAgrupacio[]>([]);
-  const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const [pestanya, setPestanya] = useState<TipusDocument>('ESTATUTS');
   const [mostrarFormulari, setMostrarFormulari] = useState(false);
 
-  const [agrupacioId, setAgrupacioId] = useState('');
   const [titol, setTitol] = useState('');
   const [dataDocument, setDataDocument] = useState('');
   const [pendent, setPendent] = useState(false);
@@ -37,9 +34,8 @@ export default function Documents() {
   async function carregar() {
     setCarregant(true);
     try {
-      const [dades, ags] = await Promise.all([llistarDocuments(), esFederacio ? llistarAgrupacions() : Promise.resolve([])]);
+      const dades = await llistarDocuments();
       setDocuments(dades);
-      setAgrupacions(ags);
     } catch {
       setError('No s\'han pogut carregar els documents');
     } finally {
@@ -61,7 +57,6 @@ export default function Documents() {
     }
     try {
       await pujarDocuments({
-        agrupacioId: agrupacioId || undefined,
         tipus: pestanya,
         titol,
         dataDocument: dataDocument || undefined,
@@ -106,12 +101,16 @@ export default function Documents() {
 
   if (carregant) return <p className="page text-muted">Carregant documents...</p>;
 
-  const llistaPestanya = documents.filter((d) => d.tipus === pestanya);
+  const llistaPestanya = documents.filter((d) => d.tipus === pestanya && !d.agrupacioId);
 
   return (
     <div className="page">
       <BotoTornar />
       <h1>Documentació</h1>
+      <p className="text-muted" style={{ fontSize: 13 }}>
+        Documents comuns de la federació. Els documents propis de cada associació (inclosos els
+        pendents) es gestionen a Documentació pròpia.
+      </p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {PESTANYES.map((p) => (
@@ -137,15 +136,6 @@ export default function Documents() {
 
       {esFederacio && mostrarFormulari && (
         <form onSubmit={handlePujar} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
-          <div style={{ marginBottom: 10 }}>
-            <label>Associació (opcional, buit = comú de la federació)</label>
-            <select value={agrupacioId} onChange={(e) => setAgrupacioId(e.target.value)} style={{ width: '100%' }}>
-              <option value="">Comú de la federació</option>
-              {agrupacions.map((a) => (
-                <option key={a.id} value={a.id}>{a.nom}</option>
-              ))}
-            </select>
-          </div>
           <div style={{ marginBottom: 10 }}>
             <label>Títol {fitxers.length > 1 ? '(opcional, prefix per a cada fitxer)' : ''}</label>
             <input
@@ -195,7 +185,6 @@ export default function Documents() {
                     {d.pendent && <span className="badge" style={{ marginLeft: 8, color: 'var(--c-warning)', background: 'var(--c-warning-bg)' }}>Pendent</span>}
                   </p>
                   <p className="text-muted" style={{ margin: '4px 0 0', fontSize: 12 }}>
-                    {d.agrupacio ? `${d.agrupacio.nom} · ` : 'Comú de la federació · '}
                     {d.dataDocument ? new Date(d.dataDocument).toLocaleDateString('ca-ES') + ' · ' : ''}
                     Creat per {d.pujatPer.nom}
                   </p>
