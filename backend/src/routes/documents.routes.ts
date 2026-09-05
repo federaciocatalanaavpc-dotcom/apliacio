@@ -46,19 +46,25 @@ router.get('/:id/fitxer', async (req: AuthRequest, res) => {
   res.send(doc.fitxerContingut);
 });
 
-// Només la federació puja documents. Si pendent=true, es crea una
-// sol·licitud sense fitxer (l'associació l'haurà de pujar més tard des de
-// "Documentació pròpia"); si no, cal adjuntar el fitxer ja mateix.
-router.post('/', requireFederacio, pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequest, res) => {
+// La federació puja documents comuns o d'una associació concreta, i pot
+// crear-hi sol·licituds pendents (sense fitxer, perquè l'associació el
+// pugi més tard). Una associació només puja documents propis (amb fitxer
+// ja adjuntat de seguida) a la seva pròpia "Documentació pròpia".
+router.post('/', pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequest, res) => {
   const { agrupacioId, tipus, titol, dataDocument, pendent } = req.body;
-  const esPendent = pendent === 'true' || pendent === true;
+  const esFederacio = req.usuari!.rol === 'FEDERACIO';
+  if (!esFederacio && agrupacioId && agrupacioId !== req.usuari!.agrupacioId) {
+    return res.status(403).json({ error: "No pots pujar documents a una altra associació" });
+  }
+  const agrupacioFinal = esFederacio ? agrupacioId || undefined : req.usuari!.agrupacioId!;
+  const esPendent = esFederacio && (pendent === 'true' || pendent === true);
   if (!tipus || !titol || (!esPendent && !req.file)) {
     return res.status(400).json({ error: 'Falten camps obligatoris (tipus, títol i fitxer)' });
   }
   try {
     const document = await prisma.document.create({
       data: {
-        agrupacioId: agrupacioId || undefined,
+        agrupacioId: agrupacioFinal,
         tipus,
         titol,
         dataDocument: dataDocument ? new Date(dataDocument) : undefined,

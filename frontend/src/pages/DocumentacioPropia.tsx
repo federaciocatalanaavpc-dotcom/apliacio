@@ -132,15 +132,13 @@ export default function DocumentacioPropia() {
 
       {agrupacioId && (
         <>
-          {esFederacio && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-              <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
-                {mostrarFormulari ? 'Cancel·lar' : '+ Afegir document'}
-              </button>
-            </div>
-          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+            <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+              {mostrarFormulari ? 'Cancel·lar' : '+ Afegir document'}
+            </button>
+          </div>
 
-          {esFederacio && mostrarFormulari && (
+          {mostrarFormulari && (
             <form onSubmit={handlePujar} className="card" style={{ marginBottom: 20, maxWidth: 460 }}>
               <div style={{ marginBottom: 10 }}>
                 <label>Tipus</label>
@@ -163,12 +161,14 @@ export default function DocumentacioPropia() {
                 <label>Data del document (opcional)</label>
                 <input type="date" value={dataDocument} onChange={(e) => setDataDocument(e.target.value)} style={{ width: '100%' }} />
               </div>
-              <div style={{ marginBottom: 10 }}>
-                <label>
-                  <input type="checkbox" checked={pendent} onChange={(e) => setPendent(e.target.checked)} style={{ width: 'auto', marginRight: 6 }} />
-                  Sol·licitud pendent (sense fitxer encara, l'associació el pujarà)
-                </label>
-              </div>
+              {esFederacio && (
+                <div style={{ marginBottom: 10 }}>
+                  <label>
+                    <input type="checkbox" checked={pendent} onChange={(e) => setPendent(e.target.checked)} style={{ width: 'auto', marginRight: 6 }} />
+                    Sol·licitud pendent (sense fitxer encara, l'associació el pujarà)
+                  </label>
+                </div>
+              )}
               {!pendent && (
                 <div style={{ marginBottom: 10 }}>
                   <label>Fitxer(s) (PDF o imatge, es poden seleccionar diversos)</label>
