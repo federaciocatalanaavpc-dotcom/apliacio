@@ -6,7 +6,6 @@ const enllacos = [
   { to: '/inventari', icon: '🚗', label: 'Inventari' },
   { to: '/mapa', icon: '🗺️', label: 'Mapa' },
   { to: '/documents', icon: '📄', label: 'Documentació' },
-  { to: '/formacio', icon: '🎓', label: 'Formació' },
   { to: '/avisos', icon: '📢', label: 'Avisos' },
 ];
 
