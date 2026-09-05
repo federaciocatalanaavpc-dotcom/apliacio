@@ -108,10 +108,18 @@ export default function Mapa() {
           botoInventari.onclick = () => navigate(`/inventari?agrupacio=${a.id}&nom=${encodeURIComponent(a.nom)}`);
           contingut.appendChild(botoInventari);
 
-          L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte })
+          const marcador = L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte })
             .addTo(mapa)
             .bindPopup(contingut)
             .bindTooltip(a.municipi || a.nom, { permanent: true, direction: 'top', offset: [0, -38], className: 'etiqueta-poble' });
+
+          // L'etiqueta amb el nom del poble tapa visualment el marcador (sobretot
+          // al mòbil, on és més fàcil tocar el text que la xinxeta petita), així
+          // que també ha d'obrir el popup en tocar-la.
+          marcador.on('tooltipopen', () => {
+            const element = marcador.getTooltip()?.getElement();
+            if (element) element.onclick = () => marcador.openPopup();
+          });
         }
 
         if (ubicacioDispositiu) {

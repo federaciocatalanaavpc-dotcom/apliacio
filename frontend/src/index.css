@@ -314,6 +314,8 @@ tbody tr:hover {
   border-radius: var(--radius-sm);
   border: 1px solid var(--c-border);
   box-shadow: var(--shadow-sm);
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .etiqueta-poble::before {
