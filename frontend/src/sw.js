@@ -9,6 +9,14 @@ import { ExpirationPlugin } from 'workbox-expiration';
 // listeners de push de sota (per això les notificacions no funcionaven mai).
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Sense això, un service worker nou només comença a interceptar peticions a
+// partir de la següent navegació completa; amb clients.claim() ho fa de
+// seguida amb les pestanyes que ja estaven obertes quan es va activar.
+self.skipWaiting();
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 // Guarda la darrera resposta bona de cada consulta a l'API (llistats
 // d'associacions, vehicles, material, documents...) perquè si es queda sense
 // connexió es puguin seguir consultant les últimes dades conegudes, en lloc
