@@ -98,6 +98,25 @@ export async function cancelarAssistencia(serveiId: string) {
   await api.post(`/serveis/${serveiId}/cancelar`);
 }
 
+export interface ServeiEstadistiques {
+  id: string;
+  titol: string;
+  tipus: string | null;
+  categoria: string | null;
+  dataInici: string;
+  arxivat: boolean;
+  assistencies: {
+    confirmat: boolean;
+    horesRealitzades: number | null;
+    voluntari: { id: string; nom: string; cognoms: string };
+  }[];
+}
+
+export async function obtenirDadesEstadistiques(agrupacioId?: string): Promise<ServeiEstadistiques[]> {
+  const { data } = await api.get('/serveis/estadistiques/dades', { params: agrupacioId ? { agrupacioId } : undefined });
+  return data;
+}
+
 export async function marcarAssistencia(
   serveiId: string,
   voluntariId: string,

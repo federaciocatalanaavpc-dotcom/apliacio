@@ -2,12 +2,13 @@ import { useState } from 'react';
 import BotoTornar from '../components/BotoTornar';
 import Voluntaris from './Voluntaris';
 import Serveis from './Serveis';
+import Estadistiques from './Estadistiques';
 import PerfilVoluntari from './PerfilVoluntari';
 import { getUsuariActual } from '../services/api';
 
 export default function GestioAvpc() {
   const usuariActual = getUsuariActual();
-  const [pestanya, setPestanya] = useState<'voluntaris' | 'serveis'>('voluntaris');
+  const [pestanya, setPestanya] = useState<'voluntaris' | 'serveis' | 'estadistiques'>('voluntaris');
 
   if (usuariActual?.rol === 'VOLUNTARI') {
     return (
@@ -37,9 +38,17 @@ export default function GestioAvpc() {
         >
           Serveis
         </button>
+        <button
+          onClick={() => setPestanya('estadistiques')}
+          style={pestanya === 'estadistiques' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}
+        >
+          Estadístiques
+        </button>
       </div>
 
-      {pestanya === 'voluntaris' ? <Voluntaris embedded /> : <Serveis embedded />}
+      {pestanya === 'voluntaris' && <Voluntaris embedded />}
+      {pestanya === 'serveis' && <Serveis embedded />}
+      {pestanya === 'estadistiques' && <Estadistiques embedded />}
     </div>
   );
 }

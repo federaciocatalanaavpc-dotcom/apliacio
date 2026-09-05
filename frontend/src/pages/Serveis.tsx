@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Servei, crearServei, editarServei, eliminarServei, llistarServeis, marcarAssistencia } from '../services/serveis';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Servei, crearServei, editarServei, eliminarServei, llistarServeis, obtenirServei, marcarAssistencia } from '../services/serveis';
 import { Voluntari, llistarVoluntaris } from '../services/voluntaris';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { TipusServei, crearTipusServei, editarTipusServei, eliminarTipusServei, llistarTipusServei } from '../services/tipusServei';
@@ -331,7 +333,7 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
               </div>
 
               {gestionantId === s.id && (
-                <GestioAssistents servei={s} voluntaris={voluntaris} onCanvi={carregar} />
+                <GestioAssistents serveiId={s.id} voluntaris={voluntaris} onCanvi={carregar} />
               )}
             </div>
           ))}
@@ -341,24 +343,92 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
   );
 }
 
-function GestioAssistents({ servei, voluntaris, onCanvi }: { servei: Servei; voluntaris: Voluntari[]; onCanvi: () => void }) {
+function GestioAssistents({ serveiId, voluntaris, onCanvi }: { serveiId: string; voluntaris: Voluntari[]; onCanvi: () => void }) {
+  const [servei, setServei] = useState<Servei | null>(null);
   const [error, setError] = useState('');
-  const assistenciesPerVoluntari = new Map((servei.assistencies || []).map((a) => [a.voluntariId, a]));
+  const [generantPdf, setGenerantPdf] = useState(false);
+
+  async function carregar() {
+    try {
+      setServei(await obtenirServei(serveiId));
+    } catch {
+      setError('No s\'ha pogut carregar el servei');
+    }
+  }
+
+  useEffect(() => {
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serveiId]);
 
   async function handleHores(voluntariId: string, hores: string) {
     setError('');
     try {
-      await marcarAssistencia(servei.id, voluntariId, { horesRealitzades: hores === '' ? undefined : Number(hores), confirmat: true });
+      await marcarAssistencia(serveiId, voluntariId, { horesRealitzades: hores === '' ? undefined : Number(hores), confirmat: true });
+      await carregar();
       onCanvi();
     } catch {
       setError('No s\'han pogut desar les hores');
     }
   }
 
+  function handleGenerarInforme() {
+    if (!servei) return;
+    setGenerantPdf(true);
+    setError('');
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text(servei.titol, 14, 18);
+      doc.setFontSize(10);
+      const dades = [
+        `Associació: ${servei.agrupacio?.nom || ''}`,
+        `Inici: ${new Date(servei.dataInici).toLocaleString('ca-ES')}`,
+        `Fi: ${new Date(servei.dataFi).toLocaleString('ca-ES')}`,
+        servei.tipus ? `Tipus: ${servei.tipus}` : '',
+        servei.categoria ? `Categoria: ${servei.categoria}` : '',
+        servei.localitat ? `Localitat: ${servei.localitat}` : '',
+        servei.sollicitant ? `Sol·licitant: ${servei.sollicitant}` : '',
+        servei.adreca ? `Adreça: ${servei.adreca}` : '',
+      ].filter(Boolean);
+      let y = 26;
+      for (const linia of dades) {
+        doc.text(linia, 14, y);
+        y += 6;
+      }
+      if (servei.descripcio) {
+        y += 2;
+        doc.setFontSize(11);
+        doc.text('Descripció', 14, y);
+        y += 6;
+        doc.setFontSize(10);
+        const linies = doc.splitTextToSize(servei.descripcio, 180);
+        doc.text(linies, 14, y);
+        y += linies.length * 5 + 6;
+      }
+      autoTable(doc, {
+        startY: y + 4,
+        head: [['Voluntari', 'Confirmat', 'Hores']],
+        body: (servei.assistencies || []).map((a) => [
+          `${a.voluntari?.nom || ''} ${a.voluntari?.cognoms || ''}`,
+          a.confirmat ? 'Sí' : 'No',
+          a.horesRealitzades != null ? String(a.horesRealitzades) : '—',
+        ]),
+      });
+      doc.save(`informe-servei-${servei.titol.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+    } catch {
+      setError('No s\'ha pogut generar el PDF');
+    } finally {
+      setGenerantPdf(false);
+    }
+  }
+
+  const assistenciesPerVoluntari = new Map((servei?.assistencies || []).map((a) => [a.voluntariId, a]));
+
   return (
     <div style={{ borderTop: '1px solid var(--c-border)', marginTop: 10, paddingTop: 10 }}>
       {error && <p className="text-error" style={{ fontSize: 12 }}>{error}</p>}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
         {voluntaris.map((v) => {
           const assistencia = assistenciesPerVoluntari.get(v.id);
           return (
@@ -380,6 +450,9 @@ function GestioAssistents({ servei, voluntaris, onCanvi }: { servei: Servei; vol
           );
         })}
       </div>
+      <button onClick={handleGenerarInforme} disabled={!servei || generantPdf} style={{ fontSize: 12 }}>
+        {generantPdf ? 'Generant...' : '📄 Generar informe PDF'}
+      </button>
     </div>
   );
 }

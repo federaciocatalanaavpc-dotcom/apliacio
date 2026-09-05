@@ -64,6 +64,37 @@ router.get('/', async (req: AuthRequest, res) => {
   res.json(serveis);
 });
 
+// Dades agregades per a Estadístiques: tots els serveis (oberts i arxivats)
+// d'una associació amb les seves assistències, perquè el frontend pugui
+// construir els gràfics (per tipus, per voluntari, en el temps) i l'informe
+// PDF sense haver de fer una petició per servei.
+router.get('/estadistiques/dades', async (req: AuthRequest, res) => {
+  if (req.usuari!.rol === 'VOLUNTARI') return res.status(403).json({ error: 'No autoritzat' });
+  const agrupacioId =
+    req.usuari!.rol === 'FEDERACIO' ? (req.query.agrupacioId as string | undefined) : req.usuari!.agrupacioId!;
+  if (!agrupacioId) return res.status(400).json({ error: "Cal indicar l'associació" });
+  const serveis = await prisma.servei.findMany({
+    where: { agrupacioId },
+    select: {
+      id: true,
+      titol: true,
+      tipus: true,
+      categoria: true,
+      dataInici: true,
+      arxivat: true,
+      assistencies: {
+        select: {
+          confirmat: true,
+          horesRealitzades: true,
+          voluntari: { select: { id: true, nom: true, cognoms: true } },
+        },
+      },
+    },
+    orderBy: { dataInici: 'asc' },
+  });
+  res.json(serveis);
+});
+
 router.get('/:id', async (req: AuthRequest, res) => {
   const servei = await prisma.servei.findUnique({
     where: { id: req.params.id },
