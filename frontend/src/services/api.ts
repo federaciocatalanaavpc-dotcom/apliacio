@@ -50,9 +50,24 @@ export async function canviarContrasenya(contrasenyaActual: string, contrasenyaN
 // així que no es poden obrir amb un <a href> normal (el navegador no hi
 // afegiria el token). Es descarreguen com a blob amb el token i s'obren amb
 // una URL d'objecte temporal.
+//
+// La finestra s'obre ABANS de fer la petició (de forma síncrona, dins el
+// mateix gestor de clic) perquè els navegadors bloquegen com a popup
+// qualsevol window.open() que arribi després d'un await: un cop resolta la
+// petició ja no compta com a resultat directe del clic de l'usuari.
 export async function obrirFitxerProtegit(urlRelatiu: string) {
-  const { data } = await api.get(urlRelatiu, { responseType: 'blob' });
-  const url = URL.createObjectURL(data);
-  window.open(url, '_blank');
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  const finestra = window.open('', '_blank');
+  try {
+    const { data } = await api.get(urlRelatiu, { responseType: 'blob' });
+    const url = URL.createObjectURL(data);
+    if (finestra) {
+      finestra.location.href = url;
+    } else {
+      window.open(url, '_blank');
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (err) {
+    finestra?.close();
+    throw err;
+  }
 }
