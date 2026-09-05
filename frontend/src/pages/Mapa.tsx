@@ -108,7 +108,10 @@ export default function Mapa() {
           botoInventari.onclick = () => navigate(`/inventari?agrupacio=${a.id}&nom=${encodeURIComponent(a.nom)}`);
           contingut.appendChild(botoInventari);
 
-          L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte }).addTo(mapa).bindPopup(contingut);
+          L.marker([a.latitud, a.longitud], { icon: iconaPerDefecte })
+            .addTo(mapa)
+            .bindPopup(contingut)
+            .bindTooltip(a.municipi || a.nom, { permanent: true, direction: 'top', offset: [0, -38], className: 'etiqueta-poble' });
         }
 
         if (ubicacioDispositiu) {

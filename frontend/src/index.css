@@ -304,3 +304,18 @@ tr:last-child td {
 tbody tr:hover {
   background: var(--c-surface-alt);
 }
+
+.etiqueta-poble {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--c-text);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.etiqueta-poble::before {
+  border-top-color: rgba(255, 255, 255, 0.92);
+}
