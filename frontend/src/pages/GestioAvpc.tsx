@@ -1,13 +1,45 @@
+import { useState } from 'react';
 import BotoTornar from '../components/BotoTornar';
+import Voluntaris from './Voluntaris';
+import Serveis from './Serveis';
+import PerfilVoluntari from './PerfilVoluntari';
+import { getUsuariActual } from '../services/api';
 
-// Placeholder: pàgina pensada per gestionar usuaris de cada associació,
-// serveis i informes de serveis (a definir més endavant amb en Francesc).
 export default function GestioAvpc() {
+  const usuariActual = getUsuariActual();
+  const [pestanya, setPestanya] = useState<'voluntaris' | 'serveis'>('voluntaris');
+
+  if (usuariActual?.rol === 'VOLUNTARI') {
+    return (
+      <div className="page">
+        <BotoTornar />
+        <h1>Gestió AVPC</h1>
+        <PerfilVoluntari />
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <BotoTornar />
       <h1>Gestió AVPC</h1>
-      <p className="text-muted">Aquesta secció encara està en construcció.</p>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => setPestanya('voluntaris')}
+          style={pestanya === 'voluntaris' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}
+        >
+          Voluntaris
+        </button>
+        <button
+          onClick={() => setPestanya('serveis')}
+          style={pestanya === 'serveis' ? { background: 'var(--gradient)', color: '#fff', border: 'none' } : {}}
+        >
+          Serveis
+        </button>
+      </div>
+
+      {pestanya === 'voluntaris' ? <Voluntaris embedded /> : <Serveis embedded />}
     </div>
   );
 }

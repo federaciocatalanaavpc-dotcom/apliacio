@@ -13,6 +13,7 @@ const enllacos = [
 export default function Dashboard() {
   const usuari = getUsuariActual();
   const navigate = useNavigate();
+  const esVoluntari = usuari?.rol === 'VOLUNTARI';
   const nomMostrat = usuari?.rol === 'FEDERACIO' ? usuari?.nom : usuari?.agrupacioNom || usuari?.nom;
 
   function handleLogout() {
@@ -26,7 +27,7 @@ export default function Dashboard() {
         <div>
           <h1 style={{ marginBottom: 6 }}>Hola, {nomMostrat} 👋</h1>
           <span className="badge badge--role">
-            {usuari?.rol === 'FEDERACIO' ? 'Federació' : 'Associació'}
+            {usuari?.rol === 'FEDERACIO' ? 'Federació' : esVoluntari ? 'Voluntari' : 'Associació'}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -35,35 +36,47 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="nav-grid">
-        {enllacos.map((e) => (
-          <Link key={e.to} to={e.to} className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">{e.icon}</span>
-            {e.label}
+      {esVoluntari ? (
+        <div className="nav-grid" style={{ marginTop: 16 }}>
+          <Link to="/gestio-avpc" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">🛠️</span>
+            Gestió AVPC
             <span className="nav-tile__arrow">→</span>
           </Link>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <>
+          <div className="nav-grid">
+            {enllacos.map((e) => (
+              <Link key={e.to} to={e.to} className="card card--clickable nav-tile">
+                <span className="nav-tile__icon">{e.icon}</span>
+                {e.label}
+                <span className="nav-tile__arrow">→</span>
+              </Link>
+            ))}
+          </div>
 
-      <div className="nav-grid" style={{ marginTop: 20 }}>
-        <Link to="/documentacio-propia" className="card card--clickable nav-tile">
-          <span className="nav-tile__icon">📁</span>
-          Documentació pròpia
-          <span className="nav-tile__arrow">→</span>
-        </Link>
-        {usuari?.rol === 'FEDERACIO' && (
-          <Link to="/usuaris" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">👥</span>
-            Gestionar usuaris
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-        )}
-        <Link to="/gestio-avpc" className="card card--clickable nav-tile">
-          <span className="nav-tile__icon">🛠️</span>
-          Gestió AVPC
-          <span className="nav-tile__arrow">→</span>
-        </Link>
-      </div>
+          <div className="nav-grid" style={{ marginTop: 20 }}>
+            <Link to="/documentacio-propia" className="card card--clickable nav-tile">
+              <span className="nav-tile__icon">📁</span>
+              Documentació pròpia
+              <span className="nav-tile__arrow">→</span>
+            </Link>
+            {usuari?.rol === 'FEDERACIO' && (
+              <Link to="/usuaris" className="card card--clickable nav-tile">
+                <span className="nav-tile__icon">👥</span>
+                Gestionar usuaris
+                <span className="nav-tile__arrow">→</span>
+              </Link>
+            )}
+            <Link to="/gestio-avpc" className="card card--clickable nav-tile">
+              <span className="nav-tile__icon">🛠️</span>
+              Gestió AVPC
+              <span className="nav-tile__arrow">→</span>
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }
