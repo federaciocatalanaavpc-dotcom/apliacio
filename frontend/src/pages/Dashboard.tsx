@@ -58,13 +58,11 @@ export default function Dashboard() {
             <span className="nav-tile__arrow">→</span>
           </Link>
         )}
-        {usuari?.rol === 'FEDERACIO' && (
-          <Link to="/gestio-avpc" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">🛠️</span>
-            Gestió AVPC
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-        )}
+        <Link to="/gestio-avpc" className="card card--clickable nav-tile">
+          <span className="nav-tile__icon">🛠️</span>
+          Gestió AVPC
+          <span className="nav-tile__arrow">→</span>
+        </Link>
       </div>
     </div>
   );
