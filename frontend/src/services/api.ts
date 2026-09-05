@@ -32,6 +32,13 @@ export async function login(usuari: string, contrasenya: string): Promise<Usuari
 export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('usuari');
+  // Neteja les respostes de l'API desades pel service worker (mode sense
+  // connexió): en un ordinador compartit, un altre usuari que iniciï sessió
+  // just després i es quedi sense internet no ha de poder veure dades
+  // desades de la sessió anterior.
+  if ('caches' in window) {
+    caches.delete('api-cache').catch(() => {});
+  }
 }
 
 export function getUsuariActual(): UsuariActual | null {

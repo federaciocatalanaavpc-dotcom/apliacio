@@ -12,10 +12,12 @@ import Avisos from './pages/Avisos';
 import CanviarContrasenya from './pages/CanviarContrasenya';
 import RutaProtegida from './components/RutaProtegida';
 import RutaFederacio from './components/RutaFederacio';
+import EstatConnexio from './components/EstatConnexio';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <EstatConnexio />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
