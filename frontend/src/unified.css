@@ -1,0 +1,200 @@
+/* Capa visual comuna per a pantalles interiors. Manté la lògica actual i homogeneïtza l'experiència. */
+
+.page:not(.dashboard-shell):not(.workspace-page) {
+  max-width: 1180px;
+  padding: 34px 28px 56px;
+}
+
+.page:not(.dashboard-shell):not(.workspace-page) > h1,
+.page:not(.dashboard-shell):not(.workspace-page) > div > h1 {
+  margin: 0 0 22px;
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.1;
+}
+
+.page:not(.dashboard-shell):not(.workspace-page) > h2,
+.page:not(.dashboard-shell):not(.workspace-page) > div > h2 {
+  margin-top: 28px;
+  font-size: 22px;
+}
+
+/* Formularis */
+form.card {
+  padding: 22px;
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.07);
+}
+
+form.card > :first-child { margin-top: 0; }
+form.card > :last-child { margin-bottom: 0; }
+
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea {
+  min-height: 42px;
+  border-radius: 11px;
+  background: var(--c-surface);
+  border-color: var(--c-border);
+}
+
+textarea { min-height: 82px; resize: vertical; }
+
+input::placeholder,
+textarea::placeholder { color: color-mix(in srgb, var(--c-text-muted) 75%, transparent); }
+
+label {
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: .01em;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--c-blue);
+}
+
+/* Botons */
+button {
+  min-height: 38px;
+  border-radius: 10px;
+}
+
+button[type='submit'] {
+  padding-inline: 18px;
+}
+
+.btn-danger {
+  border-color: rgba(220, 38, 38, .08);
+}
+
+/* Cards genèriques */
+.card {
+  border-radius: 16px;
+}
+
+.card:not(.workspace-card):not(.shared-tool-card):not(.module-card) {
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+/* Taules */
+.page table,
+.workspace-page table {
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+}
+
+.page th,
+.workspace-page th {
+  padding: 13px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .065em;
+  background: color-mix(in srgb, var(--c-surface-alt) 90%, var(--c-blue) 10%);
+}
+
+.page td,
+.workspace-page td {
+  padding: 13px 14px;
+  vertical-align: middle;
+}
+
+.page tbody tr,
+.workspace-page tbody tr {
+  transition: background .12s ease;
+}
+
+.page tbody tr:hover,
+.workspace-page tbody tr:hover {
+  background: color-mix(in srgb, var(--c-surface-alt) 82%, var(--c-blue) 18%);
+}
+
+/* Qualsevol contenidor horitzontal de taula passa a tenir scroll suau en mòbil */
+.page div[style*='overflowX'],
+.workspace-page div[style*='overflowX'] {
+  border-radius: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Badges i estats */
+.badge {
+  padding: 5px 10px;
+  font-size: 11px;
+  line-height: 1.1;
+  border: 1px solid transparent;
+}
+
+.text-error,
+.text-success {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.text-error {
+  background: var(--c-error-bg);
+  border: 1px solid color-mix(in srgb, var(--c-error) 28%, transparent);
+}
+
+.text-success {
+  background: var(--c-success-bg);
+  border: 1px solid color-mix(in srgb, var(--c-success) 28%, transparent);
+}
+
+/* Enllaç tornar */
+.back-link {
+  margin-bottom: 18px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--c-surface-alt) 92%, transparent);
+}
+
+.back-link:hover {
+  background: color-mix(in srgb, var(--c-blue) 10%, var(--c-surface));
+}
+
+/* Grups d'accions */
+.page td button,
+.workspace-page td button {
+  white-space: nowrap;
+}
+
+/* Millor jerarquia per a blocs informatius */
+.page .card p:first-child strong,
+.workspace-page .card p:first-child strong {
+  color: var(--c-text);
+}
+
+/* Responsive */
+@media (max-width: 760px) {
+  .page:not(.dashboard-shell):not(.workspace-page) {
+    padding: 22px 14px 42px;
+  }
+
+  form.card {
+    padding: 16px;
+  }
+
+  .page table,
+  .workspace-page table {
+    min-width: 680px;
+  }
+
+  .page button,
+  .workspace-page button {
+    min-height: 40px;
+  }
+
+  .page > div[style*='justifyContent: space-between'],
+  .workspace-page > div[style*='justifyContent: space-between'] {
+    align-items: stretch !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  form.card,
+  .page table,
+  .workspace-page table {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .22);
+  }
+}
