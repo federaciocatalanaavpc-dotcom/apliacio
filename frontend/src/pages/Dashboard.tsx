@@ -3,7 +3,6 @@ import { getUsuariActual, logout } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { obtenirVoluntariPropi } from '../services/voluntaris';
 import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/SelectorDisponibilitat';
-import AlertaRapida from '../components/AlertaRapida';
 
 const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
@@ -11,7 +10,6 @@ const enllacos = [
   { to: '/mapa', icon: '🗺️', label: 'Mapa' },
   { to: '/documents', icon: '📄', label: 'Documentació' },
   { to: '/formacio', icon: '🎓', label: 'Formació' },
-  { to: '/avisos', icon: '📢', label: 'Avisos' },
 ];
 
 export default function Dashboard() {
@@ -86,7 +84,44 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="nav-grid">
+          <div className="nav-grid" style={{ marginTop: 16 }}>
+            <Link
+              to="/gestio-avpc"
+              className="card card--clickable"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '18px 20px',
+                background: 'var(--gradient)',
+                border: 'none',
+                color: '#fff',
+              }}
+            >
+              <span style={{ fontSize: 28 }}>🛠️</span>
+              <span style={{ fontSize: 17, fontWeight: 700, flex: 1 }}>Gestió AVPC</span>
+              <span className="nav-tile__arrow">→</span>
+            </Link>
+            <Link
+              to="/avisos"
+              className="card card--clickable"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '18px 20px',
+                background: 'var(--gradient)',
+                border: 'none',
+                color: '#fff',
+              }}
+            >
+              <span style={{ fontSize: 28 }}>📢</span>
+              <span style={{ fontSize: 17, fontWeight: 700, flex: 1 }}>Avisos</span>
+              <span className="nav-tile__arrow">→</span>
+            </Link>
+          </div>
+
+          <div className="nav-grid" style={{ marginTop: 20 }}>
             {enllacos.map((e) => (
               <Link key={e.to} to={e.to} className="card card--clickable nav-tile">
                 <span className="nav-tile__icon">{e.icon}</span>
@@ -109,14 +144,7 @@ export default function Dashboard() {
                 <span className="nav-tile__arrow">→</span>
               </Link>
             )}
-            <Link to="/gestio-avpc" className="card card--clickable nav-tile">
-              <span className="nav-tile__icon">🛠️</span>
-              Gestió AVPC
-              <span className="nav-tile__arrow">→</span>
-            </Link>
           </div>
-
-          <AlertaRapida />
         </>
       )}
     </div>

@@ -12,10 +12,10 @@ function araPerInput(): string {
 
 const buit = { titol: '🚨 Alerta d\'emergència', missatge: '', hora: '' };
 
-export default function AlertaRapida() {
+export default function AlertaRapida({ incrustat = false }: { incrustat?: boolean } = {}) {
   const usuariActual = getUsuariActual();
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
-  const [obert, setObert] = useState(false);
+  const [obert, setObert] = useState(incrustat);
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [agrupacioSeleccionada, setAgrupacioSeleccionada] = useState('');
   const [form, setForm] = useState(buit);
@@ -70,10 +70,12 @@ export default function AlertaRapida() {
   }
 
   return (
-    <form onSubmit={handleEnviar} className="card" style={{ marginTop: 16, borderColor: 'var(--c-error)' }}>
+    <form onSubmit={handleEnviar} className="card" style={incrustat ? { borderColor: 'var(--c-error)', maxWidth: 460 } : { marginTop: 16, borderColor: 'var(--c-error)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
         <strong style={{ color: 'var(--c-error)' }}>🚨 Alerta ràpida</strong>
-        <button type="button" onClick={() => setObert(false)} style={{ fontSize: 12 }}>Tancar</button>
+        {!incrustat && (
+          <button type="button" onClick={() => setObert(false)} style={{ fontSize: 12 }}>Tancar</button>
+        )}
       </div>
       <p className="text-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
         Envia una notificació d'emergència als voluntaris de {esFederacio ? "l'associació seleccionada" : 'la teva associació'}.

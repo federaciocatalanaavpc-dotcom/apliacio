@@ -6,11 +6,13 @@ import Serveis from './Serveis';
 import Estadistiques from './Estadistiques';
 import Proveidors from './Proveidors';
 import Inventari from './Inventari';
+import AlertaRapida from '../components/AlertaRapida';
 import { getUsuariActual } from '../services/api';
 
-type Seccio = 'voluntaris' | 'serveis' | 'estadistiques' | 'proveidors' | 'inventari';
+type Seccio = 'alertaRapida' | 'voluntaris' | 'serveis' | 'estadistiques' | 'proveidors' | 'inventari';
 
 const SECCIONS: { valor: Seccio; icona: string; etiqueta: string }[] = [
+  { valor: 'alertaRapida', icona: '🚨', etiqueta: 'Alerta ràpida' },
   { valor: 'voluntaris', icona: '👤', etiqueta: 'Voluntaris' },
   { valor: 'serveis', icona: '🚒', etiqueta: 'Serveis' },
   { valor: 'estadistiques', icona: '📊', etiqueta: 'Estadístiques' },
@@ -56,6 +58,7 @@ export default function GestioAvpc() {
       </button>
       <h1>{SECCIONS.find((s) => s.valor === seccio)?.etiqueta}</h1>
 
+      {seccio === 'alertaRapida' && <AlertaRapida incrustat />}
       {seccio === 'voluntaris' && <Voluntaris embedded />}
       {seccio === 'serveis' && <Serveis embedded />}
       {seccio === 'estadistiques' && <Estadistiques embedded />}
