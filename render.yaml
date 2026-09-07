@@ -34,6 +34,11 @@ services:
         sync: false
       - key: VAPID_PRIVATE_KEY
         sync: false
+      # Clau API de resend.com per enviar per correu l'"Alerta a Federació".
+      # Sense aquesta variable, l'alerta només s'envia per notificació push
+      # (no falla, simplement no envia el correu).
+      - key: RESEND_API_KEY
+        sync: false
 
   - type: web
     name: avpc-federacio-frontend

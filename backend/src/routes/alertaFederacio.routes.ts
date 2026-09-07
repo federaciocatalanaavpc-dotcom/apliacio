@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../prisma';
 import { requireAuth, AuthRequest, bloquejaVoluntaris } from '../middleware/auth.middleware';
 import { enviarNotificacio } from '../services/push.service';
+import { enviarCorreuFederacio } from '../services/mail.service';
 
 const router = Router();
 router.use(requireAuth);
@@ -17,6 +18,7 @@ router.post('/', async (req: AuthRequest, res) => {
   for (const u of usuarisFederacio) {
     await enviarNotificacio(u.id, titol, missatge);
   }
+  await enviarCorreuFederacio(titol, missatge);
   res.status(201).json({ ok: true, notificats: usuarisFederacio.length });
 });
 

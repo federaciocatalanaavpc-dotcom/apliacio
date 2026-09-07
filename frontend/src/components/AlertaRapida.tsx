@@ -3,14 +3,7 @@ import { crearAvis } from '../services/avisos';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual } from '../services/api';
 
-function araPerInput(): string {
-  const d = new Date();
-  d.setSeconds(0, 0);
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-}
-
-const buit = { titol: '🚨 Alerta d\'emergència', missatge: '', hora: '' };
+const buit = { titol: '🚨 Alerta d\'emergència', missatge: '', horaInici: '' };
 
 export default function AlertaRapida({ incrustat = false }: { incrustat?: boolean } = {}) {
   const usuariActual = getUsuariActual();
@@ -46,11 +39,11 @@ export default function AlertaRapida({ incrustat = false }: { incrustat?: boolea
     }
     setEnviant(true);
     try {
+      const cos = form.horaInici ? `${form.missatge.trim()}\n\nHora d'inici del servei: ${form.horaInici}` : form.missatge.trim();
       await crearAvis({
         titol: form.titol.trim() || buit.titol,
-        cos: form.missatge.trim(),
+        cos,
         agrupacioId: esFederacio ? agrupacioSeleccionada : undefined,
-        dataEnviament: form.hora ? new Date(form.hora).toISOString() : undefined,
       });
       setEnviada(true);
       setForm(buit);
@@ -109,24 +102,20 @@ export default function AlertaRapida({ incrustat = false }: { incrustat?: boolea
         />
       </div>
       <div style={{ marginBottom: 10 }}>
-        <label>Hora d'enviament</label>
+        <label>Hora d'inici del servei (opcional)</label>
         <input
-          type="datetime-local"
-          value={form.hora}
-          min={araPerInput()}
-          onChange={(e) => setForm({ ...form, hora: e.target.value })}
+          type="time"
+          value={form.horaInici}
+          onChange={(e) => setForm({ ...form, horaInici: e.target.value })}
           style={{ width: '100%' }}
         />
-        <p className="text-muted" style={{ fontSize: 12, margin: '4px 0 0' }}>
-          Deixa-ho en blanc per enviar-la immediatament.
-        </p>
       </div>
 
       {error && <p className="text-error" style={{ fontSize: 13 }}>{error}</p>}
       {enviada && <p style={{ color: 'var(--c-success)', fontSize: 13 }}>Alerta enviada.</p>}
 
       <button type="submit" className="btn-danger" disabled={enviant}>
-        {enviant ? 'Enviant...' : form.hora ? 'Programar alerta' : 'Enviar alerta ara'}
+        {enviant ? 'Enviant...' : 'Enviar alerta ara'}
       </button>
     </form>
   );
