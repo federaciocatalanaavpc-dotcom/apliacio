@@ -39,7 +39,11 @@ export default function GestioAvpc() {
               key={s.valor}
               onClick={() => setSeccio(s.valor)}
               className="card card--clickable nav-tile"
-              style={{ textAlign: 'left', width: '100%', border: 'none' }}
+              style={
+                s.valor === 'alertaRapida'
+                  ? { textAlign: 'left', width: '100%', border: 'none', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', color: '#fff', fontWeight: 700 }
+                  : { textAlign: 'left', width: '100%', border: 'none' }
+              }
             >
               <span className="nav-tile__icon">{s.icona}</span>
               {s.etiqueta}

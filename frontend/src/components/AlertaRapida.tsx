@@ -3,7 +3,16 @@ import { crearAvis } from '../services/avisos';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual } from '../services/api';
 
-const buit = { titol: '🚨 Alerta d\'emergència', missatge: '', horaInici: '' };
+const buit = {
+  titol: '🚨 Alerta d\'emergència',
+  missatge: '',
+  horaInici: '',
+  esEmergencia: false,
+  tipusEmergencia: '',
+  efectius: '',
+  vehicles: '',
+  durada: '',
+};
 
 export default function AlertaRapida({ incrustat = false }: { incrustat?: boolean } = {}) {
   const usuariActual = getUsuariActual();
@@ -39,7 +48,13 @@ export default function AlertaRapida({ incrustat = false }: { incrustat?: boolea
     }
     setEnviant(true);
     try {
-      const cos = form.horaInici ? `${form.missatge.trim()}\n\nHora d'inici del servei: ${form.horaInici}` : form.missatge.trim();
+      const detalls: string[] = [];
+      if (form.esEmergencia && form.tipusEmergencia.trim()) detalls.push(`🆘 Tipus d'emergència: ${form.tipusEmergencia.trim()}`);
+      if (form.esEmergencia && form.efectius.trim()) detalls.push(`👥 Efectius necessaris: ${form.efectius.trim()}`);
+      if (form.esEmergencia && form.vehicles.trim()) detalls.push(`🚒 Vehicles necessaris: ${form.vehicles.trim()}`);
+      if (form.esEmergencia && form.durada.trim()) detalls.push(`⏱️ Durada estimada: ${form.durada.trim()}`);
+      if (form.horaInici) detalls.push(`🕐 Hora d'inici del servei: ${form.horaInici}`);
+      const cos = detalls.length > 0 ? `${form.missatge.trim()}\n\n${detalls.join('\n')}` : form.missatge.trim();
       await crearAvis({
         titol: form.titol.trim() || buit.titol,
         cos,
@@ -101,6 +116,59 @@ export default function AlertaRapida({ incrustat = false }: { incrustat?: boolea
           style={{ width: '100%' }}
         />
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <input
+          type="checkbox"
+          checked={form.esEmergencia}
+          onChange={(e) => setForm({ ...form, esEmergencia: e.target.checked })}
+          style={{ width: 'auto' }}
+        />
+        És una emergència (indicar efectius, vehicles i tipus necessaris)
+      </label>
+
+      {form.esEmergencia && (
+        <div className="card" style={{ background: 'var(--c-surface-alt)', marginBottom: 10 }}>
+          <div style={{ marginBottom: 10 }}>
+            <label>Tipus d'emergència</label>
+            <input
+              value={form.tipusEmergencia}
+              onChange={(e) => setForm({ ...form, tipusEmergencia: e.target.value })}
+              placeholder="p.ex. Incendi forestal, accident, inundació..."
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label>Efectius necessaris</label>
+              <input
+                value={form.efectius}
+                onChange={(e) => setForm({ ...form, efectius: e.target.value })}
+                placeholder="p.ex. 6 voluntaris"
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label>Vehicles necessaris</label>
+              <input
+                value={form.vehicles}
+                onChange={(e) => setForm({ ...form, vehicles: e.target.value })}
+                placeholder="p.ex. 2 tot terreny"
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+          <div>
+            <label>Durada estimada</label>
+            <input
+              value={form.durada}
+              onChange={(e) => setForm({ ...form, durada: e.target.value })}
+              placeholder="p.ex. 3 hores"
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      )}
+
       <div style={{ marginBottom: 10 }}>
         <label>Hora d'inici del servei (opcional)</label>
         <input
