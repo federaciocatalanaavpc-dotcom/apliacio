@@ -23,7 +23,6 @@ function aDatetimeLocal(iso: string | null): string {
 
 const buit = {
   titol: '',
-  numeracio: '',
   maxAssistents: '',
   collaboracioEmergencies: false,
   dataInici: '',
@@ -99,7 +98,6 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
       await crearServei({
         agrupacioId: esFederacio ? agrupacioSeleccionada : undefined,
         titol: form.titol,
-        numeracio: form.numeracio || undefined,
         maxAssistents: form.maxAssistents ? Number(form.maxAssistents) : undefined,
         collaboracioEmergencies: form.collaboracioEmergencies,
         dataInici: form.dataInici,
@@ -184,15 +182,12 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
 
       {mostrarFormulari && (
         <form onSubmit={handleCrear} className="card" style={{ marginBottom: 20, maxWidth: 520 }}>
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-            <div style={{ flex: 2 }}>
-              <label>Títol</label>
-              <input value={form.titol} onChange={(e) => setForm({ ...form, titol: e.target.value })} required style={{ width: '100%' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Numeració</label>
-              <input value={form.numeracio} onChange={(e) => setForm({ ...form, numeracio: e.target.value })} style={{ width: '100%' }} />
-            </div>
+          <div style={{ marginBottom: 10 }}>
+            <label>Títol</label>
+            <input value={form.titol} onChange={(e) => setForm({ ...form, titol: e.target.value })} required style={{ width: '100%' }} />
+            <p className="text-muted" style={{ fontSize: 12, margin: '4px 0 0' }}>
+              La numeració s'assigna automàticament (es reinicia cada 1 de gener).
+            </p>
           </div>
           <div style={{ marginBottom: 10, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
@@ -306,38 +301,51 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
       {serveis.length === 0 ? (
         <p className="text-muted">Encara no hi ha cap servei {pestanya === 'arxivats' ? 'arxivat' : 'obert'}.</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {serveis.map((s) => (
-            <div key={s.id} className="card" style={{ maxWidth: 560 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <strong>{s.titol}</strong>
-                <span className="badge badge--role">{s._count?.assistencies || 0} assistents</span>
-              </div>
-              <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
-                {new Date(s.dataInici).toLocaleString('ca-ES')}
-                {s.tipus ? ` · ${s.tipus}` : ''}
-                {s.categoria ? ` · ${s.categoria}` : ''}
-              </p>
-              {s.descripcio && <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>{s.descripcio}</p>}
+        Object.entries(
+          serveis.reduce((grups, s) => {
+            const any = new Date(s.dataInici).getFullYear();
+            (grups[any] = grups[any] || []).push(s);
+            return grups;
+          }, {} as Record<number, Servei[]>)
+        )
+          .sort(([a], [b]) => Number(b) - Number(a))
+          .map(([any, serveisAny]) => (
+            <div key={any} style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: 15, margin: '0 0 10px', color: 'var(--c-text-muted)' }}>{any}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {serveisAny.map((s) => (
+                  <div key={s.id} className="card" style={{ maxWidth: 560 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <strong>{s.numeracio ? `#${s.numeracio} · ` : ''}{s.titol}</strong>
+                      <span className="badge badge--role">{s._count?.assistencies || 0} assistents</span>
+                    </div>
+                    <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
+                      {new Date(s.dataInici).toLocaleString('ca-ES')}
+                      {s.tipus ? ` · ${s.tipus}` : ''}
+                      {s.categoria ? ` · ${s.categoria}` : ''}
+                    </p>
+                    {s.descripcio && <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>{s.descripcio}</p>}
 
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button onClick={() => setGestionantId(gestionantId === s.id ? null : s.id)} style={{ fontSize: 12 }}>
-                  {gestionantId === s.id ? 'Tancar' : 'Gestionar assistents'}
-                </button>
-                <button onClick={() => handleArxivar(s)} style={{ fontSize: 12 }}>
-                  {s.arxivat ? 'Desarxivar' : 'Arxivar'}
-                </button>
-                <button onClick={() => handleEliminar(s.id)} className="btn-danger" style={{ fontSize: 12 }}>
-                  Eliminar
-                </button>
-              </div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button onClick={() => setGestionantId(gestionantId === s.id ? null : s.id)} style={{ fontSize: 12 }}>
+                        {gestionantId === s.id ? 'Tancar' : 'Gestionar assistents'}
+                      </button>
+                      <button onClick={() => handleArxivar(s)} style={{ fontSize: 12 }}>
+                        {s.arxivat ? 'Desarxivar' : 'Arxivar'}
+                      </button>
+                      <button onClick={() => handleEliminar(s.id)} className="btn-danger" style={{ fontSize: 12 }}>
+                        Eliminar
+                      </button>
+                    </div>
 
-              {gestionantId === s.id && (
-                <GestioAssistents serveiId={s.id} voluntaris={voluntaris} onCanvi={carregar} />
-              )}
+                    {gestionantId === s.id && (
+                      <GestioAssistents serveiId={s.id} voluntaris={voluntaris} onCanvi={carregar} />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          ))
       )}
     </div>
   );
@@ -382,6 +390,7 @@ function GestioAssistents({ serveiId, voluntaris, onCanvi }: { serveiId: string;
       doc.text(servei.titol, 14, 18);
       doc.setFontSize(10);
       const dades = [
+        servei.numeracio ? `Núm. servei: ${servei.numeracio}` : '',
         `Associació: ${servei.agrupacio?.nom || ''}`,
         `Inici: ${new Date(servei.dataInici).toLocaleString('ca-ES')}`,
         `Fi: ${new Date(servei.dataFi).toLocaleString('ca-ES')}`,

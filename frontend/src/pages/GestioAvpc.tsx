@@ -4,14 +4,16 @@ import BotoTornar from '../components/BotoTornar';
 import Voluntaris from './Voluntaris';
 import Serveis from './Serveis';
 import Estadistiques from './Estadistiques';
+import Proveidors from './Proveidors';
 import { getUsuariActual } from '../services/api';
 
-type Seccio = 'voluntaris' | 'serveis' | 'estadistiques';
+type Seccio = 'voluntaris' | 'serveis' | 'estadistiques' | 'proveidors';
 
 const SECCIONS: { valor: Seccio; icona: string; etiqueta: string }[] = [
   { valor: 'voluntaris', icona: '👤', etiqueta: 'Voluntaris' },
   { valor: 'serveis', icona: '🚒', etiqueta: 'Serveis' },
   { valor: 'estadistiques', icona: '📊', etiqueta: 'Estadístiques' },
+  { valor: 'proveidors', icona: '🤝', etiqueta: 'Proveïdors' },
 ];
 
 export default function GestioAvpc() {
@@ -55,6 +57,7 @@ export default function GestioAvpc() {
       {seccio === 'voluntaris' && <Voluntaris embedded />}
       {seccio === 'serveis' && <Serveis embedded />}
       {seccio === 'estadistiques' && <Estadistiques embedded />}
+      {seccio === 'proveidors' && <Proveidors embedded />}
     </div>
   );
 }

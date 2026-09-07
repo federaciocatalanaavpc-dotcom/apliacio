@@ -17,6 +17,7 @@ import voluntarisRoutes from './routes/voluntaris.routes';
 import serveisRoutes from './routes/serveis.routes';
 import tipusServeiRoutes from './routes/tipusServei.routes';
 import categoriaServeiRoutes from './routes/categoriaServei.routes';
+import proveidorsRoutes from './routes/proveidors.routes';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -43,6 +44,7 @@ app.use('/api/voluntaris', voluntarisRoutes);
 app.use('/api/serveis', serveisRoutes);
 app.use('/api/tipus-servei', tipusServeiRoutes);
 app.use('/api/categoria-servei', categoriaServeiRoutes);
+app.use('/api/proveidors', proveidorsRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

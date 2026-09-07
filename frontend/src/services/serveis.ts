@@ -55,7 +55,6 @@ export async function obtenirServei(id: string): Promise<Servei> {
 export interface DadesServei {
   agrupacioId?: string;
   titol: string;
-  numeracio?: string;
   maxAssistents?: number;
   collaboracioEmergencies?: boolean;
   dataInici: string;

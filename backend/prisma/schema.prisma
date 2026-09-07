@@ -83,6 +83,24 @@ model Agrupacio {
   avisos     Avis[]
   voluntaris Voluntari[]
   serveis    Servei[]
+  proveidors Proveidor[]
+}
+
+// Proveïdors de cada associació (tallers, subministradors de combustible,
+// material, assegurances...), amb una persona de contacte de referència.
+model Proveidor {
+  id          String    @id @default(uuid())
+  agrupacio   Agrupacio @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String
+  nom         String
+  categoria   String?
+  contacte    String?
+  telefon     String?
+  email       String?
+  adreca      String?
+  notes       String?
+  actiu       Boolean   @default(true)
+  creatEl     DateTime  @default(now())
 }
 
 // Fitxa d'un voluntari (roster) d'una associació. Opcionalment pot tenir un

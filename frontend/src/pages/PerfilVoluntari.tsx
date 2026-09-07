@@ -15,11 +15,41 @@ const DISPONIBILITAT_LABEL: Record<Disponibilitat, string> = {
   NO_DISPONIBLE: 'No disponible',
 };
 
+const DIES_SETMANA = ['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'];
+const MESOS = [
+  'Gener', 'Febrer', 'Març', 'Abril', 'Maig', 'Juny',
+  'Juliol', 'Agost', 'Setembre', 'Octubre', 'Novembre', 'Desembre',
+];
+
+function mateixDia(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function inicioSetmana(d: Date) {
+  const dt = new Date(d);
+  const dow = (dt.getDay() + 6) % 7;
+  dt.setDate(dt.getDate() - dow);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+function graellaDelMes(ancora: Date) {
+  const primerDia = new Date(ancora.getFullYear(), ancora.getMonth(), 1);
+  const inici = inicioSetmana(primerDia);
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(inici);
+    d.setDate(inici.getDate() + i);
+    return d;
+  });
+}
+
 export default function PerfilVoluntari() {
   const [voluntari, setVoluntari] = useState<Voluntari | null>(null);
   const [serveis, setServeis] = useState<Servei[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
+  const [ancora, setAncora] = useState(new Date());
+  const [seleccionat, setSeleccionat] = useState(new Date());
 
   async function carregar() {
     setCarregant(true);
@@ -69,6 +99,18 @@ export default function PerfilVoluntari() {
     }
   }
 
+  function moure(delta: number) {
+    const nova = new Date(ancora);
+    nova.setMonth(nova.getMonth() + delta);
+    setAncora(nova);
+  }
+
+  function anarAvui() {
+    const avui = new Date();
+    setAncora(avui);
+    setSeleccionat(avui);
+  }
+
   if (carregant) {
     return (
       <div className="page">
@@ -87,6 +129,11 @@ export default function PerfilVoluntari() {
   }
 
   const totalHores = serveis.reduce((suma, s) => suma + (s.assistenciaPropia?.horesRealitzades || 0), 0);
+  const avui = new Date();
+  const esAvuiSeleccionat = mateixDia(seleccionat, avui);
+  const diesVisibles = graellaDelMes(ancora);
+  const serveisDe = (d: Date) => serveis.filter((s) => mateixDia(new Date(s.dataInici), d));
+  const serveisDelDia = serveisDe(seleccionat);
 
   return (
     <div className="page">
@@ -108,12 +155,47 @@ export default function PerfilVoluntari() {
 
       {error && <p className="text-error">{error}</p>}
 
-      <h3 style={{ marginBottom: 8 }}>Serveis</h3>
-      {serveis.length === 0 ? (
-        <p className="text-muted">No hi ha cap servei obert per a tu ara mateix.</p>
+      <div className="calendar-toolbar">
+        <button onClick={() => moure(-1)}>‹</button>
+        <span className="calendar-toolbar__label">{MESOS[ancora.getMonth()]} {ancora.getFullYear()}</span>
+        <button onClick={() => moure(1)}>›</button>
+        <button onClick={anarAvui}>Avui</button>
+      </div>
+
+      <div className="calendar-grid">
+        {DIES_SETMANA.map((d) => (
+          <div key={d} className="calendar-weekday">{d}</div>
+        ))}
+        {diesVisibles.map((d, i) => {
+          const esDelMesActual = d.getMonth() === ancora.getMonth();
+          const classes = ['calendar-cell'];
+          if (!esDelMesActual) classes.push('calendar-cell--muted');
+          if (mateixDia(d, avui)) classes.push('calendar-cell--today');
+          if (mateixDia(d, seleccionat)) classes.push('calendar-cell--selected');
+          const teServeis = serveisDe(d).length > 0;
+          return (
+            <div key={i} className={classes.join(' ')} onClick={() => setSeleccionat(d)}>
+              <span>{d.getDate()}</span>
+              {teServeis && (
+                <div className="calendar-dots">
+                  <span className="calendar-dot calendar-dot--servei" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <h2 style={{ fontSize: 18, margin: '24px 0 8px' }}>
+        {seleccionat.toLocaleDateString('ca-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+        {esAvuiSeleccionat && ' (avui)'}
+      </h2>
+
+      {serveisDelDia.length === 0 ? (
+        <p className="text-muted">No hi ha cap servei aquest dia.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {serveis.map((s) => (
+          {serveisDelDia.map((s) => (
             <div key={s.id} className="card" style={{ maxWidth: 460 }}>
               <p style={{ margin: 0, fontWeight: 600 }}>{s.titol}</p>
               <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>

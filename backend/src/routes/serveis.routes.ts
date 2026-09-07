@@ -122,7 +122,6 @@ router.post('/', async (req: AuthRequest, res) => {
   const {
     agrupacioId,
     titol,
-    numeracio,
     maxAssistents,
     collaboracioEmergencies,
     dataInici,
@@ -149,30 +148,38 @@ router.post('/', async (req: AuthRequest, res) => {
     return res.status(403).json({ error: "No pots crear serveis per a una altra associació" });
   }
   try {
-    const servei = await prisma.servei.create({
-      data: {
-        agrupacioId: agrupacioFinal,
-        titol,
-        numeracio: numeracio || undefined,
-        maxAssistents: maxAssistents ? Number(maxAssistents) : undefined,
-        collaboracioEmergencies: !!collaboracioEmergencies,
-        dataInici: new Date(dataInici),
-        dataFi: new Date(dataFi),
-        limitInscripcio: limitInscripcio ? new Date(limitInscripcio) : undefined,
-        horaBase: horaBase ? new Date(horaBase) : undefined,
-        horaSortida: horaSortida ? new Date(horaSortida) : undefined,
-        tipus: tipus || undefined,
-        categoria: categoria || undefined,
-        localitat: localitat || undefined,
-        sollicitant: sollicitant || undefined,
-        latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : undefined,
-        longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : undefined,
-        adreca: adreca || undefined,
-        descripcio: descripcio || undefined,
-        destinataris: destinataris || 'TOTS',
-        creatPerId: req.usuari!.id,
-      },
-      select: SELECCIO,
+    const any = new Date(dataInici).getFullYear();
+    const servei = await prisma.$transaction(async (tx) => {
+      const inici = new Date(any, 0, 1);
+      const fi = new Date(any + 1, 0, 1);
+      const comptador = await tx.servei.count({
+        where: { agrupacioId: agrupacioFinal, dataInici: { gte: inici, lt: fi } },
+      });
+      return tx.servei.create({
+        data: {
+          agrupacioId: agrupacioFinal,
+          titol,
+          numeracio: `${comptador + 1}/${any}`,
+          maxAssistents: maxAssistents ? Number(maxAssistents) : undefined,
+          collaboracioEmergencies: !!collaboracioEmergencies,
+          dataInici: new Date(dataInici),
+          dataFi: new Date(dataFi),
+          limitInscripcio: limitInscripcio ? new Date(limitInscripcio) : undefined,
+          horaBase: horaBase ? new Date(horaBase) : undefined,
+          horaSortida: horaSortida ? new Date(horaSortida) : undefined,
+          tipus: tipus || undefined,
+          categoria: categoria || undefined,
+          localitat: localitat || undefined,
+          sollicitant: sollicitant || undefined,
+          latitud: latitud !== undefined && latitud !== '' ? Number(latitud) : undefined,
+          longitud: longitud !== undefined && longitud !== '' ? Number(longitud) : undefined,
+          adreca: adreca || undefined,
+          descripcio: descripcio || undefined,
+          destinataris: destinataris || 'TOTS',
+          creatPerId: req.usuari!.id,
+        },
+        select: SELECCIO,
+      });
     });
     res.status(201).json(servei);
   } catch {
@@ -188,7 +195,6 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   }
   const {
     titol,
-    numeracio,
     maxAssistents,
     collaboracioEmergencies,
     dataInici,
@@ -207,29 +213,31 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     destinataris,
     arxivat,
   } = req.body;
+  // Numeracio és autonumèrica (assignada en crear-se) i mai s'edita des d'aquí.
+  // Cada camp només es toca si venia al body; si no, es conserva el valor existent
+  // (evita que un PATCH parcial, com el d'arxivar, buidi la resta de dades).
   try {
     const servei = await prisma.servei.update({
       where: { id: req.params.id },
       data: {
-        titol,
-        numeracio: numeracio || null,
-        maxAssistents: maxAssistents ? Number(maxAssistents) : null,
-        collaboracioEmergencies: !!collaboracioEmergencies,
-        dataInici: dataInici ? new Date(dataInici) : undefined,
-        dataFi: dataFi ? new Date(dataFi) : undefined,
-        limitInscripcio: limitInscripcio ? new Date(limitInscripcio) : null,
-        horaBase: horaBase ? new Date(horaBase) : null,
-        horaSortida: horaSortida ? new Date(horaSortida) : null,
-        tipus: tipus || null,
-        categoria: categoria || null,
-        localitat: localitat || null,
-        sollicitant: sollicitant || null,
-        latitud: latitud !== undefined && latitud !== null && latitud !== '' ? Number(latitud) : null,
-        longitud: longitud !== undefined && longitud !== null && longitud !== '' ? Number(longitud) : null,
-        adreca: adreca || null,
-        descripcio: descripcio || null,
-        destinataris: destinataris || 'TOTS',
-        arxivat,
+        titol: titol !== undefined ? titol : existent.titol,
+        maxAssistents: maxAssistents !== undefined ? (maxAssistents ? Number(maxAssistents) : null) : existent.maxAssistents,
+        collaboracioEmergencies: collaboracioEmergencies !== undefined ? !!collaboracioEmergencies : existent.collaboracioEmergencies,
+        dataInici: dataInici ? new Date(dataInici) : existent.dataInici,
+        dataFi: dataFi ? new Date(dataFi) : existent.dataFi,
+        limitInscripcio: limitInscripcio !== undefined ? (limitInscripcio ? new Date(limitInscripcio) : null) : existent.limitInscripcio,
+        horaBase: horaBase !== undefined ? (horaBase ? new Date(horaBase) : null) : existent.horaBase,
+        horaSortida: horaSortida !== undefined ? (horaSortida ? new Date(horaSortida) : null) : existent.horaSortida,
+        tipus: tipus !== undefined ? (tipus || null) : existent.tipus,
+        categoria: categoria !== undefined ? (categoria || null) : existent.categoria,
+        localitat: localitat !== undefined ? (localitat || null) : existent.localitat,
+        sollicitant: sollicitant !== undefined ? (sollicitant || null) : existent.sollicitant,
+        latitud: latitud !== undefined ? (latitud !== null && latitud !== '' ? Number(latitud) : null) : existent.latitud,
+        longitud: longitud !== undefined ? (longitud !== null && longitud !== '' ? Number(longitud) : null) : existent.longitud,
+        adreca: adreca !== undefined ? (adreca || null) : existent.adreca,
+        descripcio: descripcio !== undefined ? (descripcio || null) : existent.descripcio,
+        destinataris: destinataris !== undefined ? (destinataris || 'TOTS') : existent.destinataris,
+        arxivat: arxivat !== undefined ? arxivat : existent.arxivat,
       },
       select: SELECCIO,
     });
