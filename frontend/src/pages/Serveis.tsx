@@ -8,6 +8,7 @@ import { TipusServei, crearTipusServei, editarTipusServei, eliminarTipusServei, 
 import { CategoriaServei, crearCategoriaServei, editarCategoriaServei, eliminarCategoriaServei, llistarCategoriesServei } from '../services/categoriaServei';
 import { LocalitatServei, crearLocalitatServei, editarLocalitatServei, eliminarLocalitatServei, llistarLocalitatsServei } from '../services/localitatServei';
 import { SollicitantServei, crearSollicitantServei, editarSollicitantServei, eliminarSollicitantServei, llistarSollicitantsServei } from '../services/sollicitantServei';
+import { crearAvis } from '../services/avisos';
 import { getUsuariActual } from '../services/api';
 import GestorCataleg from '../components/GestorCataleg';
 import SelectorMapa from '../components/SelectorMapa';
@@ -39,6 +40,7 @@ const buit = {
   adreca: '',
   descripcio: '',
   destinataris: [] as string[],
+  notificar: true,
 };
 
 export default function ServeisPage({ embedded = false }: { embedded?: boolean } = {}) {
@@ -62,6 +64,11 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
   const [mostrarSollicitant, setMostrarSollicitant] = useState(false);
   const [form, setForm] = useState(buit);
   const [gestionantId, setGestionantId] = useState<string | null>(null);
+
+  const [mostrarAlertaRapida, setMostrarAlertaRapida] = useState(false);
+  const [missatgeAlerta, setMissatgeAlerta] = useState('');
+  const [enviantAlerta, setEnviantAlerta] = useState(false);
+  const [alertaEnviada, setAlertaEnviada] = useState(false);
 
   async function carregar() {
     setCarregant(true);
@@ -105,9 +112,10 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
       setError('Selecciona primer una associació');
       return;
     }
+    const agrupacioFinal = esFederacio ? agrupacioSeleccionada : undefined;
     try {
-      await crearServei({
-        agrupacioId: esFederacio ? agrupacioSeleccionada : undefined,
+      const servei = await crearServei({
+        agrupacioId: agrupacioFinal,
         titol: form.titol,
         maxAssistents: form.maxAssistents ? Number(form.maxAssistents) : undefined,
         collaboracioEmergencies: form.collaboracioEmergencies,
@@ -124,11 +132,43 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
         descripcio: form.descripcio || undefined,
         destinataris: form.destinataris.length === 0 ? 'TOTS' : form.destinataris.join(','),
       });
+      if (form.notificar) {
+        try {
+          await crearAvis({
+            titol: `Nou servei: ${servei.titol}`,
+            cos: `S'ha convocat un nou servei el ${new Date(servei.dataInici).toLocaleString('ca-ES')}${servei.localitat ? ` a ${servei.localitat}` : ''}. Consulta l'app per als detalls.`,
+            agrupacioId: agrupacioFinal,
+          });
+        } catch {
+          setError("El servei s'ha creat, però no s'ha pogut enviar la notificació");
+        }
+      }
       setForm(buit);
       setMostrarFormulari(false);
       carregar();
     } catch {
       setError('No s\'ha pogut crear el servei');
+    }
+  }
+
+  async function handleEnviarAlerta(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setAlertaEnviada(false);
+    if (!missatgeAlerta.trim()) return;
+    setEnviantAlerta(true);
+    try {
+      await crearAvis({
+        titol: '🚨 Alerta d\'emergència',
+        cos: missatgeAlerta.trim(),
+        agrupacioId: esFederacio ? agrupacioSeleccionada || null : undefined,
+      });
+      setMissatgeAlerta('');
+      setAlertaEnviada(true);
+    } catch {
+      setError('No s\'ha pogut enviar l\'alerta');
+    } finally {
+      setEnviantAlerta(false);
     }
   }
 
@@ -161,12 +201,43 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
 
   return (
     <div className={embedded ? undefined : 'page'}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         {!embedded && <h1>Serveis</h1>}
-        <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
-          {mostrarFormulari ? 'Cancel·lar' : '+ Nou servei'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => { setMostrarAlertaRapida(!mostrarAlertaRapida); setAlertaEnviada(false); }}
+            className="btn-danger"
+          >
+            🚨 Alerta ràpida
+          </button>
+          <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+            {mostrarFormulari ? 'Cancel·lar' : '+ Nou servei'}
+          </button>
+        </div>
       </div>
+
+      {mostrarAlertaRapida && (
+        <form onSubmit={handleEnviarAlerta} className="card" style={{ marginTop: 10, marginBottom: 20, maxWidth: 460, borderColor: 'var(--c-error)' }}>
+          <p className="text-muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
+            Envia una notificació immediata a tots els voluntaris de {esFederacio ? "l'associació seleccionada" : 'la teva associació'} per a una emergència.
+          </p>
+          <textarea
+            value={missatgeAlerta}
+            onChange={(e) => setMissatgeAlerta(e.target.value)}
+            placeholder="Descriu breument l'emergència..."
+            rows={3}
+            required
+            style={{ width: '100%', marginBottom: 10 }}
+          />
+          <button type="submit" className="btn-danger" disabled={enviantAlerta || (esFederacio && !agrupacioSeleccionada)}>
+            {enviantAlerta ? 'Enviant...' : 'Enviar alerta ara'}
+          </button>
+          {esFederacio && !agrupacioSeleccionada && (
+            <p className="text-muted" style={{ fontSize: 12, margin: '6px 0 0' }}>Selecciona primer una associació.</p>
+          )}
+          {alertaEnviada && <p style={{ color: 'var(--c-success)', fontSize: 13, margin: '8px 0 0' }}>Alerta enviada.</p>}
+        </form>
+      )}
 
       {esFederacio && (
         <div style={{ marginBottom: 14, maxWidth: 320 }}>
@@ -339,6 +410,10 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
               </label>
             ))}
           </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <input type="checkbox" checked={form.notificar} onChange={(e) => setForm({ ...form, notificar: e.target.checked })} style={{ width: 'auto' }} />
+            Envia una notificació confirmant que s'ha creat el servei
+          </label>
           <button type="submit">Crear servei</button>
         </form>
       )}
