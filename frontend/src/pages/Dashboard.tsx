@@ -4,12 +4,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { obtenirVoluntariPropi } from '../services/voluntaris';
 import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/SelectorDisponibilitat';
 
-const enllacos = [
-  { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
-  { to: '/inventari', icon: '🚗', label: 'Inventari' },
-  { to: '/mapa', icon: '🗺️', label: 'Mapa' },
-  { to: '/documents', icon: '📄', label: 'Documentació' },
-  { to: '/formacio', icon: '🎓', label: 'Formació' },
+const BOTONS_GRANS = [
+  { to: '/gestio-avpc', icon: '🛠️', label: 'Gestió AVPC' },
+  { to: '/avisos', icon: '📢', label: 'Avisos' },
+  { to: '/federacio', icon: '🏛️', label: 'Federació' },
 ];
 
 export default function Dashboard() {
@@ -83,10 +81,11 @@ export default function Dashboard() {
           </Link>
         </div>
       ) : (
-        <>
-          <div className="nav-grid" style={{ marginTop: 16 }}>
+        <div className="nav-grid" style={{ marginTop: 16 }}>
+          {BOTONS_GRANS.map((b) => (
             <Link
-              to="/gestio-avpc"
+              key={b.to}
+              to={b.to}
               className="card card--clickable"
               style={{
                 display: 'flex',
@@ -98,54 +97,12 @@ export default function Dashboard() {
                 color: '#fff',
               }}
             >
-              <span style={{ fontSize: 28 }}>🛠️</span>
-              <span style={{ fontSize: 17, fontWeight: 700, flex: 1 }}>Gestió AVPC</span>
+              <span style={{ fontSize: 28 }}>{b.icon}</span>
+              <span style={{ fontSize: 17, fontWeight: 700, flex: 1 }}>{b.label}</span>
               <span className="nav-tile__arrow">→</span>
             </Link>
-            <Link
-              to="/avisos"
-              className="card card--clickable"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '18px 20px',
-                background: 'var(--gradient)',
-                border: 'none',
-                color: '#fff',
-              }}
-            >
-              <span style={{ fontSize: 28 }}>📢</span>
-              <span style={{ fontSize: 17, fontWeight: 700, flex: 1 }}>Avisos</span>
-              <span className="nav-tile__arrow">→</span>
-            </Link>
-          </div>
-
-          <div className="nav-grid" style={{ marginTop: 20 }}>
-            {enllacos.map((e) => (
-              <Link key={e.to} to={e.to} className="card card--clickable nav-tile">
-                <span className="nav-tile__icon">{e.icon}</span>
-                {e.label}
-                <span className="nav-tile__arrow">→</span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="nav-grid" style={{ marginTop: 20 }}>
-            <Link to="/documentacio-propia" className="card card--clickable nav-tile">
-              <span className="nav-tile__icon">📁</span>
-              Documentació pròpia
-              <span className="nav-tile__arrow">→</span>
-            </Link>
-            {usuari?.rol === 'FEDERACIO' && (
-              <Link to="/usuaris" className="card card--clickable nav-tile">
-                <span className="nav-tile__icon">👥</span>
-                Gestionar usuaris
-                <span className="nav-tile__arrow">→</span>
-              </Link>
-            )}
-          </div>
-        </>
+          ))}
+        </div>
       )}
     </div>
   );

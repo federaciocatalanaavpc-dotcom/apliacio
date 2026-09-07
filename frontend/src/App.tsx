@@ -9,6 +9,7 @@ import Documents from './pages/Documents';
 import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
 import GestioAvpc from './pages/GestioAvpc';
+import Federacio from './pages/Federacio';
 import PerfilVoluntari from './pages/PerfilVoluntari';
 import RobaVoluntari from './pages/RobaVoluntari';
 import DisponibilitatVoluntari from './pages/DisponibilitatVoluntari';
@@ -95,6 +96,14 @@ export default function App() {
           element={
             <RutaProtegida>
               <GestioAvpc />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/federacio"
+          element={
+            <RutaProtegida>
+              <Federacio />
             </RutaProtegida>
           }
         />
