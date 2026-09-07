@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './index.css';
+import './unified.css';
 
 // Comprova cada minut si hi ha una versió nova i, quan n'hi ha, l'activa i
 // recarrega la pàgina automàticament — sense això el service worker antic
