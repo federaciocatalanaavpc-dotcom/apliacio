@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 import AlertaAFederacio from '../components/AlertaAFederacio';
-import CorreuAssociacions from '../components/CorreuAssociacions';
+import NotificacioAssociacions from '../components/NotificacioAssociacions';
 
 const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
@@ -19,6 +19,18 @@ export default function Federacio() {
     <div className="page">
       <BotoTornar />
       <h1>Federació</h1>
+
+      {usuari?.rol !== 'FEDERACIO' && (
+        <div style={{ marginBottom: 20 }}>
+          <AlertaAFederacio />
+        </div>
+      )}
+
+      {usuari?.rol === 'FEDERACIO' && (
+        <div style={{ marginBottom: 20 }}>
+          <NotificacioAssociacions />
+        </div>
+      )}
 
       <div className="nav-grid">
         {enllacos.map((e) => (
@@ -44,18 +56,6 @@ export default function Federacio() {
           </Link>
         )}
       </div>
-
-      {usuari?.rol !== 'FEDERACIO' && (
-        <div style={{ marginTop: 20 }}>
-          <AlertaAFederacio />
-        </div>
-      )}
-
-      {usuari?.rol === 'FEDERACIO' && (
-        <div style={{ marginTop: 20 }}>
-          <CorreuAssociacions />
-        </div>
-      )}
     </div>
   );
 }

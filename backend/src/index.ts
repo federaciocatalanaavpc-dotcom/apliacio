@@ -23,7 +23,7 @@ import localitatServeiRoutes from './routes/localitatServei.routes';
 import sollicitantServeiRoutes from './routes/sollicitantServei.routes';
 import nomEquipamentRoutes from './routes/nomEquipament.routes';
 import alertaFederacioRoutes from './routes/alertaFederacio.routes';
-import correuAssociacionsRoutes from './routes/correuAssociacions.routes';
+import notificacioAssociacionsRoutes from './routes/notificacioAssociacions.routes';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -56,7 +56,7 @@ app.use('/api/localitat-servei', localitatServeiRoutes);
 app.use('/api/sollicitant-servei', sollicitantServeiRoutes);
 app.use('/api/nom-equipament', nomEquipamentRoutes);
 app.use('/api/alerta-federacio', alertaFederacioRoutes);
-app.use('/api/correu-associacions', correuAssociacionsRoutes);
+app.use('/api/notificacio-associacions', notificacioAssociacionsRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { enviarCorreuAssociacions } from '../services/correuAssociacions';
+import { enviarNotificacioAssociacions } from '../services/notificacioAssociacions';
 
 const buit = { titol: '', missatge: '' };
 
-export default function CorreuAssociacions() {
+export default function NotificacioAssociacions() {
   const [obert, setObert] = useState(false);
   const [form, setForm] = useState(buit);
   const [enviant, setEnviant] = useState(false);
-  const [resultat, setResultat] = useState<{ total: number; enviats: number } | null>(null);
+  const [enviada, setEnviada] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   function obrir() {
     setObert(true);
-    setResultat(null);
+    setEnviada(null);
     setError('');
     setForm(buit);
   }
@@ -20,14 +20,14 @@ export default function CorreuAssociacions() {
   async function handleEnviar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setResultat(null);
+    setEnviada(null);
     setEnviant(true);
     try {
-      const { total, enviats } = await enviarCorreuAssociacions({ titol: form.titol.trim(), missatge: form.missatge.trim() });
-      setResultat({ total, enviats });
+      const { notificats } = await enviarNotificacioAssociacions({ titol: form.titol.trim(), missatge: form.missatge.trim() });
+      setEnviada(notificats);
       setForm(buit);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "No s'ha pogut enviar el correu");
+    } catch {
+      setError("No s'ha pogut enviar la notificació");
     } finally {
       setEnviant(false);
     }
@@ -36,7 +36,7 @@ export default function CorreuAssociacions() {
   if (!obert) {
     return (
       <button onClick={obrir} className="card card--clickable" style={{ width: '100%', textAlign: 'left', border: 'none' }}>
-        📧 Correu a totes les associacions
+        🔔 Notificar a totes les associacions
       </button>
     );
   }
@@ -44,11 +44,11 @@ export default function CorreuAssociacions() {
   return (
     <form onSubmit={handleEnviar} className="card" style={{ maxWidth: 460 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <strong>📧 Correu a totes les associacions</strong>
+        <strong>🔔 Notificar a totes les associacions</strong>
         <button type="button" onClick={() => setObert(false)} style={{ fontSize: 12 }}>Tancar</button>
       </div>
       <p className="text-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
-        Envia un correu a totes les associacions que tinguin una adreça de correu registrada a la seva fitxa.
+        Envia una notificació push a totes les associacions amb compte a l'app.
       </p>
 
       <div style={{ marginBottom: 10 }}>
@@ -67,10 +67,8 @@ export default function CorreuAssociacions() {
       </div>
 
       {error && <p className="text-error" style={{ fontSize: 13 }}>{error}</p>}
-      {resultat && (
-        <p style={{ color: 'var(--c-success)', fontSize: 13 }}>
-          Enviat a {resultat.enviats} de {resultat.total} associacions amb correu registrat.
-        </p>
+      {enviada !== null && (
+        <p style={{ color: 'var(--c-success)', fontSize: 13 }}>Notificació enviada a {enviada} associacions.</p>
       )}
 
       <button type="submit" disabled={enviant}>
