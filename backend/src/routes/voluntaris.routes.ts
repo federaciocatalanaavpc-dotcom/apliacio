@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../prisma';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
+import { registrarAuditoria } from '../services/auditoria.service';
 
 const router = Router();
 router.use(requireAuth);
@@ -27,10 +28,15 @@ const SELECCIO = {
   altresEmails: true,
   altresAgrupacions: true,
   disponibilitat: true,
+  consentimentDades: true,
   actiu: true,
   creatEl: true,
   usuari: { select: { id: true, usuari: true, actiu: true } },
 } as const;
+
+function nomComplet(v: { nom: string; cognoms: string }) {
+  return `${v.nom} ${v.cognoms}`;
+}
 
 // El roster de voluntaris: la federació el pot veure tot o filtrat per
 // associació; una associació només veu el seu; un voluntari no hi té accés
@@ -73,6 +79,55 @@ router.get('/me/estadistiques', async (req: AuthRequest, res) => {
   res.json(assistencies);
 });
 
+// Exportació completa de les dades personals d'un voluntari (dret d'accés
+// i portabilitat): la seva fitxa, les seves assistències a serveis i
+// l'equipament que té assignat. Es registra a l'auditoria qui l'exporta.
+router.get('/:id/exportar', async (req: AuthRequest, res) => {
+  const voluntari = await prisma.voluntari.findUnique({
+    where: { id: req.params.id },
+    select: { ...SELECCIO, agrupacio: { select: { id: true, nom: true } } },
+  });
+  if (!voluntari) return res.status(404).json({ error: 'Voluntari no trobat' });
+  if (!potGestionarAgrupacio(req, voluntari.agrupacioId)) {
+    return res.status(403).json({ error: 'No pots exportar aquest voluntari' });
+  }
+
+  const [assistencies, equipamentAssignat] = await Promise.all([
+    prisma.assistenciaServei.findMany({
+      where: { voluntariId: req.params.id },
+      select: {
+        confirmat: true,
+        horaEntrada: true,
+        horaSortida: true,
+        horesRealitzades: true,
+        notes: true,
+        servei: { select: { titol: true, dataInici: true, dataFi: true } },
+      },
+    }),
+    prisma.assignacioEquipament.findMany({
+      where: { voluntariId: req.params.id },
+      select: {
+        quantitat: true,
+        dataAssignacio: true,
+        dataRetorn: true,
+        notes: true,
+        article: { select: { tipus: true, nom: true, talla: true } },
+      },
+    }),
+  ]);
+
+  await registrarAuditoria({
+    usuariId: req.usuari!.id,
+    accio: 'EXPORTAR',
+    entitat: 'Voluntari',
+    entitatId: voluntari.id,
+    agrupacioId: voluntari.agrupacioId,
+    detall: `Exportació de dades: ${nomComplet(voluntari)}`,
+  });
+
+  res.json({ voluntari, assistencies, equipamentAssignat, exportatEl: new Date().toISOString() });
+});
+
 router.post('/', async (req: AuthRequest, res) => {
   const {
     agrupacioId,
@@ -93,6 +148,7 @@ router.post('/', async (req: AuthRequest, res) => {
     altresEmails,
     altresAgrupacions,
     disponibilitat,
+    consentimentDades,
     emailAcces,
     contrasenyaAcces,
   } = req.body;
@@ -103,6 +159,9 @@ router.post('/', async (req: AuthRequest, res) => {
   }
   if (!potGestionarAgrupacio(req, agrupacioFinal)) {
     return res.status(403).json({ error: "No pots afegir voluntaris a una altra associació" });
+  }
+  if (!consentimentDades) {
+    return res.status(400).json({ error: "Cal confirmar que el voluntari ha estat informat i dona el seu consentiment" });
   }
   if (emailAcces && (!contrasenyaAcces || contrasenyaAcces.length < 6)) {
     return res.status(400).json({ error: "Cal una contrasenya d'accés d'almenys 6 caràcters" });
@@ -144,10 +203,19 @@ router.post('/', async (req: AuthRequest, res) => {
           altresEmails: altresEmails || undefined,
           altresAgrupacions: altresAgrupacions || undefined,
           disponibilitat: disponibilitat || undefined,
+          consentimentDades: !!consentimentDades,
           usuariId,
         },
         select: SELECCIO,
       });
+    });
+    await registrarAuditoria({
+      usuariId: req.usuari!.id,
+      accio: 'CREAR',
+      entitat: 'Voluntari',
+      entitatId: voluntari.id,
+      agrupacioId: agrupacioFinal,
+      detall: `Fitxa creada: ${nomComplet(voluntari)}`,
     });
     res.status(201).json(voluntari);
   } catch {
@@ -180,6 +248,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     altresEmails,
     altresAgrupacions,
     disponibilitat,
+    consentimentDades,
     actiu,
   } = req.body;
   try {
@@ -204,9 +273,18 @@ router.patch('/:id', async (req: AuthRequest, res) => {
         altresEmails: altresEmails || null,
         altresAgrupacions: altresAgrupacions || null,
         disponibilitat: disponibilitat || undefined,
+        consentimentDades: consentimentDades !== undefined ? !!consentimentDades : existent.consentimentDades,
         actiu,
       },
       select: SELECCIO,
+    });
+    await registrarAuditoria({
+      usuariId: req.usuari!.id,
+      accio: 'EDITAR',
+      entitat: 'Voluntari',
+      entitatId: voluntari.id,
+      agrupacioId: existent.agrupacioId,
+      detall: `Fitxa editada: ${nomComplet(voluntari)}`,
     });
     res.json(voluntari);
   } catch {
@@ -242,6 +320,14 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     await prisma.$transaction(async (tx) => {
       await tx.voluntari.delete({ where: { id: req.params.id } });
       if (existent.usuariId) await tx.usuari.delete({ where: { id: existent.usuariId } });
+    });
+    await registrarAuditoria({
+      usuariId: req.usuari!.id,
+      accio: 'ELIMINAR',
+      entitat: 'Voluntari',
+      entitatId: existent.id,
+      agrupacioId: existent.agrupacioId,
+      detall: `Fitxa eliminada: ${nomComplet(existent)}`,
     });
     res.status(204).send();
   } catch {

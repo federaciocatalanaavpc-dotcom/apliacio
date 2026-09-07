@@ -57,11 +57,29 @@ model Usuari {
   agrupacio   Agrupacio? @relation(fields: [agrupacioId], references: [id])
   agrupacioId String?
 
-  subscripcionsPush SubscripcioPush[]
-  documentsPujats   Document[]
-  recursosFormacio  RecursFormacio[]
-  voluntariPerfil   Voluntari?
-  serveisCreats     Servei[]
+  subscripcionsPush  SubscripcioPush[]
+  documentsPujats    Document[]
+  recursosFormacio   RecursFormacio[]
+  voluntariPerfil    Voluntari?
+  serveisCreats      Servei[]
+  registresAuditoria RegistreAuditoria[]
+}
+
+// Registre de qui crea, edita o elimina fitxes amb dades personals
+// sensibles (de moment, voluntaris), per poder respondre "qui ha tocat
+// aquesta dada i quan" (traçabilitat exigida per protecció de dades).
+// entitatId NO té relació de clau forana perquè el registre ha de
+// sobreviure encara que el registre original s'elimini.
+model RegistreAuditoria {
+  id          String   @id @default(uuid())
+  usuari      Usuari   @relation(fields: [usuariId], references: [id])
+  usuariId    String
+  accio       String
+  entitat     String
+  entitatId   String
+  agrupacioId String?
+  detall      String?
+  creatEl     DateTime @default(now())
 }
 
 // Una agrupació/associació federada dins la Federació Catalana d'AVPC.
@@ -141,6 +159,9 @@ model Voluntari {
   altresAgrupacions   String?
   disponibilitat      Disponibilitat  @default(NO_DISPONIBLE)
   actiu               Boolean         @default(true)
+  // Deixa constància que l'associació ha informat el voluntari i té el
+  // seu consentiment per tractar les seves dades (RGPD/LOPDGDD).
+  consentimentDades   Boolean         @default(false)
   creatEl             DateTime        @default(now())
 
   usuari              Usuari?         @relation(fields: [usuariId], references: [id])

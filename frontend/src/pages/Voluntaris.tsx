@@ -6,9 +6,11 @@ import {
   editarVoluntari,
   eliminarVoluntari,
   llistarVoluntaris,
+  exportarVoluntari,
 } from '../services/voluntaris';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { Provincia, llistarProvincies } from '../services/provincies';
+import { RegistreAuditoria, llistarAuditoria } from '../services/auditoria';
 import { getUsuariActual } from '../services/api';
 
 const DISPONIBILITAT_LABEL: Record<Disponibilitat, string> = {
@@ -43,6 +45,7 @@ const buit = {
   altresEmails: '',
   altresAgrupacions: '',
   disponibilitat: 'NO_DISPONIBLE' as Disponibilitat,
+  consentimentDades: false,
   emailAcces: '',
   contrasenyaAcces: '',
 };
@@ -60,6 +63,8 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
   const [form, setForm] = useState(buit);
   const [editantId, setEditantId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(buit);
+  const [mostrarAuditoria, setMostrarAuditoria] = useState(false);
+  const [auditoria, setAuditoria] = useState<RegistreAuditoria[]>([]);
 
   async function carregar() {
     setCarregant(true);
@@ -111,6 +116,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
         altresEmails: form.altresEmails || undefined,
         altresAgrupacions: form.altresAgrupacions || undefined,
         disponibilitat: form.disponibilitat,
+        consentimentDades: form.consentimentDades,
         emailAcces: form.emailAcces || undefined,
         contrasenyaAcces: form.contrasenyaAcces || undefined,
       });
@@ -142,6 +148,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
       altresEmails: v.altresEmails || '',
       altresAgrupacions: v.altresAgrupacions || '',
       disponibilitat: v.disponibilitat,
+      consentimentDades: v.consentimentDades,
       emailAcces: '',
       contrasenyaAcces: '',
     });
@@ -187,17 +194,72 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
     }
   }
 
+  async function handleExportar(v: Voluntari) {
+    try {
+      const dades = await exportarVoluntari(v.id);
+      const blob = new Blob([JSON.stringify(dades, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const enllac = document.createElement('a');
+      enllac.href = url;
+      enllac.download = `dades-${v.nom}-${v.cognoms}.json`.toLowerCase().replace(/\s+/g, '-');
+      enllac.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('No s\'han pogut exportar les dades');
+    }
+  }
+
+  async function carregarAuditoria() {
+    try {
+      const registres = await llistarAuditoria({
+        agrupacioId: esFederacio ? agrupacioSeleccionada || undefined : undefined,
+        entitat: 'Voluntari',
+      });
+      setAuditoria(registres);
+    } catch {
+      setError('No s\'ha pogut carregar el registre d\'auditoria');
+    }
+  }
+
+  function toggleAuditoria() {
+    const mostrar = !mostrarAuditoria;
+    setMostrarAuditoria(mostrar);
+    if (mostrar) carregarAuditoria();
+  }
+
   const actius = voluntaris.filter((v) => v.actiu);
   const baixes = voluntaris.filter((v) => !v.actiu);
 
   return (
     <div className={embedded ? undefined : 'page'}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         {!embedded && <h1>Voluntaris</h1>}
-        <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
-          {mostrarFormulari ? 'Cancel·lar' : '+ Nou voluntari'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={toggleAuditoria} style={{ fontSize: 13 }}>
+            {mostrarAuditoria ? 'Amagar auditoria' : '🛡️ Registre d\'auditoria'}
+          </button>
+          <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+            {mostrarFormulari ? 'Cancel·lar' : '+ Nou voluntari'}
+          </button>
+        </div>
       </div>
+
+      {mostrarAuditoria && (
+        <div className="card" style={{ marginTop: 10, marginBottom: 20, maxWidth: 640 }}>
+          <p style={{ fontWeight: 600, margin: '0 0 8px' }}>Registre d'auditoria (voluntaris)</p>
+          {auditoria.length === 0 ? (
+            <p className="text-muted" style={{ fontSize: 13 }}>Encara no hi ha cap registre.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
+              {auditoria.map((r) => (
+                <div key={r.id} style={{ fontSize: 12, borderBottom: '1px solid var(--c-border)', paddingBottom: 6 }}>
+                  <strong>{r.accio}</strong> · {r.detall || r.entitat} — <span className="text-muted">{r.usuari.nom}, {new Date(r.creatEl).toLocaleString('ca-ES')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {esFederacio && (
         <div style={{ marginBottom: 14, maxWidth: 320 }}>
@@ -327,6 +389,24 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
               <input type="password" value={form.contrasenyaAcces} onChange={(e) => setForm({ ...form, contrasenyaAcces: e.target.value })} style={{ width: '100%' }} />
             </div>
           </div>
+
+          <div className="card" style={{ background: 'var(--c-surface-alt)', marginTop: 12, marginBottom: 12 }}>
+            <p className="text-muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
+              Aquesta fitxa inclou dades personals (DNI, contacte...). Cal haver informat el voluntari de per què
+              es recullen aquestes dades i tenir el seu consentiment abans de desar-les.
+            </p>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+              <input
+                type="checkbox"
+                checked={form.consentimentDades}
+                onChange={(e) => setForm({ ...form, consentimentDades: e.target.checked })}
+                required
+                style={{ width: 'auto', marginTop: 2 }}
+              />
+              He informat el voluntari sobre el tractament de les seves dades i tinc el seu consentiment
+            </label>
+          </div>
+
           <button type="submit">Crear voluntari</button>
         </form>
       )}
@@ -363,6 +443,9 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => obrirEdicio(v)} style={{ fontSize: 12 }}>
                           {editantId === v.id ? 'Cancel·lar' : 'Editar'}
+                        </button>
+                        <button onClick={() => handleExportar(v)} style={{ fontSize: 12 }} title="Exportar les seves dades (dret d'accés)">
+                          Exportar dades
                         </button>
                         <button onClick={() => handleEliminar(v.id)} className="btn-danger" style={{ fontSize: 12 }}>
                           Eliminar

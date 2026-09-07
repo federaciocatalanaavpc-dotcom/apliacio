@@ -23,6 +23,7 @@ export interface Voluntari {
   altresEmails: string | null;
   altresAgrupacions: string | null;
   disponibilitat: Disponibilitat;
+  consentimentDades: boolean;
   actiu: boolean;
   creatEl: string;
   usuari: { id: string; usuari: string; actiu: boolean } | null;
@@ -69,6 +70,7 @@ export interface DadesVoluntari {
   altresEmails?: string;
   altresAgrupacions?: string;
   disponibilitat?: Disponibilitat;
+  consentimentDades?: boolean;
   actiu?: boolean;
   emailAcces?: string;
   contrasenyaAcces?: string;
@@ -91,4 +93,29 @@ export async function actualitzarDisponibilitatPropia(disponibilitat: Disponibil
 
 export async function eliminarVoluntari(id: string) {
   await api.delete(`/voluntaris/${id}`);
+}
+
+export interface ExportacioVoluntari {
+  voluntari: Voluntari;
+  assistencies: {
+    confirmat: boolean;
+    horaEntrada: string | null;
+    horaSortida: string | null;
+    horesRealitzades: number | null;
+    notes: string | null;
+    servei: { titol: string; dataInici: string; dataFi: string };
+  }[];
+  equipamentAssignat: {
+    quantitat: number;
+    dataAssignacio: string;
+    dataRetorn: string | null;
+    notes: string | null;
+    article: { tipus: string; nom: string; talla: string | null };
+  }[];
+  exportatEl: string;
+}
+
+export async function exportarVoluntari(id: string): Promise<ExportacioVoluntari> {
+  const { data } = await api.get(`/voluntaris/${id}/exportar`);
+  return data;
 }
