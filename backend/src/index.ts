@@ -21,6 +21,7 @@ import proveidorsRoutes from './routes/proveidors.routes';
 import equipamentRoutes from './routes/equipament.routes';
 import localitatServeiRoutes from './routes/localitatServei.routes';
 import sollicitantServeiRoutes from './routes/sollicitantServei.routes';
+import nomEquipamentRoutes from './routes/nomEquipament.routes';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/api/proveidors', proveidorsRoutes);
 app.use('/api/equipament', equipamentRoutes);
 app.use('/api/localitat-servei', localitatServeiRoutes);
 app.use('/api/sollicitant-servei', sollicitantServeiRoutes);
+app.use('/api/nom-equipament', nomEquipamentRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

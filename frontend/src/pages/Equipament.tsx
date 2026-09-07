@@ -12,9 +12,11 @@ import {
   llistarAssignacionsEquipament,
   retornarAssignacioEquipament,
 } from '../services/equipament';
+import { NomEquipament, crearNomEquipament, editarNomEquipament, eliminarNomEquipament, llistarNomsEquipament } from '../services/nomEquipament';
 import { Voluntari, llistarVoluntaris } from '../services/voluntaris';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { getUsuariActual } from '../services/api';
+import GestorCataleg from '../components/GestorCataleg';
 
 const articleBuit = { nom: '', talla: '', estocTotal: '0', notes: '' };
 const assignacioBuida = { voluntariId: '', articleId: '', quantitat: '1', notes: '' };
@@ -42,6 +44,9 @@ export default function Equipament({
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
 
+  const [noms, setNoms] = useState<NomEquipament[]>([]);
+  const [mostrarNoms, setMostrarNoms] = useState(false);
+
   const [mostrarFormArticle, setMostrarFormArticle] = useState(false);
   const [formArticle, setFormArticle] = useState(articleBuit);
   const [editantArticleId, setEditantArticleId] = useState<string | null>(null);
@@ -55,16 +60,18 @@ export default function Equipament({
   async function carregar() {
     setCarregant(true);
     try {
-      const [ags, arts, vols, assigs] = await Promise.all([
+      const [ags, arts, vols, assigs, nomsLlista] = await Promise.all([
         esFederacio ? llistarAgrupacions() : Promise.resolve([]),
         llistarArticlesEquipament({ tipus, agrupacioId: agrupacioActiva }),
         agrupacioActiva || !esFederacio ? llistarVoluntaris(agrupacioActiva) : Promise.resolve([]),
         llistarAssignacionsEquipament({ tipus, agrupacioId: agrupacioActiva, actives: mostrarRetornades ? undefined : true }),
+        llistarNomsEquipament(tipus, agrupacioActiva),
       ]);
       setAgrupacions(ags);
       setArticles(arts);
       setVoluntaris(vols);
       setAssignacions(assigs);
+      setNoms(nomsLlista);
     } catch {
       setError("No s'han pogut carregar les dades");
     } finally {
@@ -211,13 +218,30 @@ export default function Equipament({
               <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
                 <div style={{ flex: 2 }}>
                   <label>Nom</label>
-                  <input value={formArticle.nom} onChange={(e) => setFormArticle({ ...formArticle, nom: e.target.value })} required style={{ width: '100%' }} />
+                  <select value={formArticle.nom} onChange={(e) => setFormArticle({ ...formArticle, nom: e.target.value })} required style={{ width: '100%' }}>
+                    <option value="">Selecciona un nom...</option>
+                    {noms.map((n) => (
+                      <option key={n.id} value={n.nom}>{n.nom}</option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => setMostrarNoms(!mostrarNoms)} style={{ fontSize: 11, marginTop: 4 }}>
+                    {mostrarNoms ? 'Amagar' : 'Gestionar noms'}
+                  </button>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label>Talla (opcional)</label>
                   <input value={formArticle.talla} onChange={(e) => setFormArticle({ ...formArticle, talla: e.target.value })} style={{ width: '100%' }} />
                 </div>
               </div>
+              {mostrarNoms && (
+                <GestorCataleg
+                  items={noms}
+                  placeholder={`Nou nom de ${titol.toLowerCase()} (p.ex. Casc)`}
+                  onAfegir={async (nom) => { await crearNomEquipament(tipus, nom); carregar(); }}
+                  onEditar={async (id, nom) => { await editarNomEquipament(id, nom); carregar(); }}
+                  onEliminar={async (id) => { await eliminarNomEquipament(id); carregar(); }}
+                />
+              )}
               <div style={{ marginBottom: 10 }}>
                 <label>Estoc total (unitats)</label>
                 <input type="number" min={0} value={formArticle.estocTotal} onChange={(e) => setFormArticle({ ...formArticle, estocTotal: e.target.value })} style={{ width: '100%' }} />
@@ -273,7 +297,12 @@ export default function Equipament({
                             <form onSubmit={handleGuardarArticle} style={{ padding: '8px 0', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                               <div>
                                 <label>Nom</label>
-                                <input value={editArticle.nom} onChange={(e) => setEditArticle({ ...editArticle, nom: e.target.value })} required />
+                                <select value={editArticle.nom} onChange={(e) => setEditArticle({ ...editArticle, nom: e.target.value })} required>
+                                  <option value="">Selecciona un nom...</option>
+                                  {noms.map((n) => (
+                                    <option key={n.id} value={n.nom}>{n.nom}</option>
+                                  ))}
+                                </select>
                               </div>
                               <div>
                                 <label>Talla</label>

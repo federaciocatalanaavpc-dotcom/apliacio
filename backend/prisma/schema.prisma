@@ -94,6 +94,7 @@ model Agrupacio {
   categoriesServei   CategoriaServei[]
   localitatsServei   LocalitatServei[]
   sollicitantsServei SollicitantServei[]
+  nomsEquipament     NomEquipament[]
 }
 
 // Proveïdors de cada associació (tallers, subministradors de combustible,
@@ -152,6 +153,22 @@ model Voluntari {
 enum TipusEquipament {
   ROBA
   EPI
+}
+
+// Catàleg de noms d'article (p.ex. "Casc", "Jaqueta impermeable") pel
+// desplegable del formulari d'estoc de roba/EPI. Mateix patró que els
+// catàlegs de servei: agrupacioId nul = comú (creat per la federació,
+// només ella el pot editar/eliminar); si en té un, és propi d'aquella
+// associació.
+model NomEquipament {
+  id          String          @id @default(uuid())
+  tipus       TipusEquipament
+  nom         String
+  agrupacio   Agrupacio?      @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String?
+  creatEl     DateTime        @default(now())
+
+  @@unique([tipus, nom, agrupacioId])
 }
 
 // Estoc de roba i EPI (equip de protecció individual) de cada associació.
