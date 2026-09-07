@@ -15,6 +15,13 @@ const DISPONIBILITAT_LABEL: Record<Disponibilitat, string> = {
   NO_DISPONIBLE: 'No disponible',
 };
 
+const DISPONIBILITAT_COLOR: Record<Disponibilitat, string> = {
+  PRESENCIAL: 'var(--c-success)',
+  IMMEDIATA: 'var(--c-success)',
+  DIFERIDA: 'var(--c-warning)',
+  NO_DISPONIBLE: 'var(--c-error)',
+};
+
 const DIES_SETMANA = ['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'];
 const MESOS = [
   'Gener', 'Febrer', 'Març', 'Abril', 'Maig', 'Juny',
@@ -50,6 +57,7 @@ export default function PerfilVoluntari() {
   const [error, setError] = useState('');
   const [ancora, setAncora] = useState(new Date());
   const [seleccionat, setSeleccionat] = useState(new Date());
+  const [actualitzantDisponibilitat, setActualitzantDisponibilitat] = useState(false);
 
   async function carregar() {
     setCarregant(true);
@@ -69,13 +77,16 @@ export default function PerfilVoluntari() {
   }, []);
 
   async function handleDisponibilitat(disponibilitat: Disponibilitat) {
+    if (voluntari?.disponibilitat === disponibilitat) return;
     setError('');
+    setActualitzantDisponibilitat(true);
     try {
       const v = await actualitzarDisponibilitatPropia(disponibilitat);
       setVoluntari(v);
-      carregar();
     } catch {
       setError('No s\'ha pogut actualitzar la disponibilitat');
+    } finally {
+      setActualitzantDisponibilitat(false);
     }
   }
 
@@ -145,11 +156,29 @@ export default function PerfilVoluntari() {
         <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>Hores acumulades: <strong>{totalHores}</strong></p>
         <div style={{ marginTop: 10 }}>
           <label>La meva disponibilitat</label>
-          <select value={voluntari.disponibilitat} onChange={(e) => handleDisponibilitat(e.target.value as Disponibilitat)} style={{ width: '100%' }}>
-            {Object.entries(DISPONIBILITAT_LABEL).map(([valor, etiqueta]) => (
-              <option key={valor} value={valor}>{etiqueta}</option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+            {(Object.entries(DISPONIBILITAT_LABEL) as [Disponibilitat, string][]).map(([valor, etiqueta]) => {
+              const activa = voluntari.disponibilitat === valor;
+              return (
+                <button
+                  key={valor}
+                  onClick={() => handleDisponibilitat(valor)}
+                  disabled={actualitzantDisponibilitat}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    padding: '8px 12px',
+                    borderRadius: 999,
+                    border: `1.5px solid ${activa ? DISPONIBILITAT_COLOR[valor] : 'var(--c-border)'}`,
+                    background: activa ? DISPONIBILITAT_COLOR[valor] : 'transparent',
+                    color: activa ? '#fff' : 'var(--c-text)',
+                  }}
+                >
+                  {etiqueta}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
