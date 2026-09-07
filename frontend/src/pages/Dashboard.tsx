@@ -3,6 +3,7 @@ import { getUsuariActual, logout } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { obtenirVoluntariPropi } from '../services/voluntaris';
 import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/SelectorDisponibilitat';
+import AlertaRapida from '../components/AlertaRapida';
 
 const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
@@ -114,6 +115,8 @@ export default function Dashboard() {
               <span className="nav-tile__arrow">→</span>
             </Link>
           </div>
+
+          <AlertaRapida />
         </>
       )}
     </div>

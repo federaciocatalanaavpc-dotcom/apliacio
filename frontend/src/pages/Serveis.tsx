@@ -65,11 +65,6 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
   const [form, setForm] = useState(buit);
   const [gestionantId, setGestionantId] = useState<string | null>(null);
 
-  const [mostrarAlertaRapida, setMostrarAlertaRapida] = useState(false);
-  const [missatgeAlerta, setMissatgeAlerta] = useState('');
-  const [enviantAlerta, setEnviantAlerta] = useState(false);
-  const [alertaEnviada, setAlertaEnviada] = useState(false);
-
   async function carregar() {
     setCarregant(true);
     try {
@@ -151,27 +146,6 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
     }
   }
 
-  async function handleEnviarAlerta(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setAlertaEnviada(false);
-    if (!missatgeAlerta.trim()) return;
-    setEnviantAlerta(true);
-    try {
-      await crearAvis({
-        titol: '🚨 Alerta d\'emergència',
-        cos: missatgeAlerta.trim(),
-        agrupacioId: esFederacio ? agrupacioSeleccionada || null : undefined,
-      });
-      setMissatgeAlerta('');
-      setAlertaEnviada(true);
-    } catch {
-      setError('No s\'ha pogut enviar l\'alerta');
-    } finally {
-      setEnviantAlerta(false);
-    }
-  }
-
   async function handleEliminar(id: string) {
     try {
       await eliminarServei(id);
@@ -201,43 +175,12 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
 
   return (
     <div className={embedded ? undefined : 'page'}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         {!embedded && <h1>Serveis</h1>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => { setMostrarAlertaRapida(!mostrarAlertaRapida); setAlertaEnviada(false); }}
-            className="btn-danger"
-          >
-            🚨 Alerta ràpida
-          </button>
-          <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
-            {mostrarFormulari ? 'Cancel·lar' : '+ Nou servei'}
-          </button>
-        </div>
+        <button onClick={() => setMostrarFormulari(!mostrarFormulari)}>
+          {mostrarFormulari ? 'Cancel·lar' : '+ Nou servei'}
+        </button>
       </div>
-
-      {mostrarAlertaRapida && (
-        <form onSubmit={handleEnviarAlerta} className="card" style={{ marginTop: 10, marginBottom: 20, maxWidth: 460, borderColor: 'var(--c-error)' }}>
-          <p className="text-muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
-            Envia una notificació immediata a tots els voluntaris de {esFederacio ? "l'associació seleccionada" : 'la teva associació'} per a una emergència.
-          </p>
-          <textarea
-            value={missatgeAlerta}
-            onChange={(e) => setMissatgeAlerta(e.target.value)}
-            placeholder="Descriu breument l'emergència..."
-            rows={3}
-            required
-            style={{ width: '100%', marginBottom: 10 }}
-          />
-          <button type="submit" className="btn-danger" disabled={enviantAlerta || (esFederacio && !agrupacioSeleccionada)}>
-            {enviantAlerta ? 'Enviant...' : 'Enviar alerta ara'}
-          </button>
-          {esFederacio && !agrupacioSeleccionada && (
-            <p className="text-muted" style={{ fontSize: 12, margin: '6px 0 0' }}>Selecciona primer una associació.</p>
-          )}
-          {alertaEnviada && <p style={{ color: 'var(--c-success)', fontSize: 13, margin: '8px 0 0' }}>Alerta enviada.</p>}
-        </form>
-      )}
 
       {esFederacio && (
         <div style={{ marginBottom: 14, maxWidth: 320 }}>
