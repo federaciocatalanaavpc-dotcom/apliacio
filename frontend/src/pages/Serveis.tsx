@@ -6,6 +6,8 @@ import { Voluntari, llistarVoluntaris } from '../services/voluntaris';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { TipusServei, crearTipusServei, editarTipusServei, eliminarTipusServei, llistarTipusServei } from '../services/tipusServei';
 import { CategoriaServei, crearCategoriaServei, editarCategoriaServei, eliminarCategoriaServei, llistarCategoriesServei } from '../services/categoriaServei';
+import { LocalitatServei, crearLocalitatServei, editarLocalitatServei, eliminarLocalitatServei, llistarLocalitatsServei } from '../services/localitatServei';
+import { SollicitantServei, crearSollicitantServei, editarSollicitantServei, eliminarSollicitantServei, llistarSollicitantsServei } from '../services/sollicitantServei';
 import { getUsuariActual } from '../services/api';
 import GestorCataleg from '../components/GestorCataleg';
 import SelectorMapa from '../components/SelectorMapa';
@@ -46,6 +48,8 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [tipusServei, setTipusServei] = useState<TipusServei[]>([]);
   const [categories, setCategories] = useState<CategoriaServei[]>([]);
+  const [localitats, setLocalitats] = useState<LocalitatServei[]>([]);
+  const [sollicitants, setSollicitants] = useState<SollicitantServei[]>([]);
   const [voluntaris, setVoluntaris] = useState<Voluntari[]>([]);
   const [agrupacioSeleccionada, setAgrupacioSeleccionada] = useState('');
   const [pestanya, setPestanya] = useState<'oberts' | 'arxivats'>('oberts');
@@ -54,20 +58,27 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
   const [mostrarFormulari, setMostrarFormulari] = useState(false);
   const [mostrarTipus, setMostrarTipus] = useState(false);
   const [mostrarCategoria, setMostrarCategoria] = useState(false);
+  const [mostrarLocalitat, setMostrarLocalitat] = useState(false);
+  const [mostrarSollicitant, setMostrarSollicitant] = useState(false);
   const [form, setForm] = useState(buit);
   const [gestionantId, setGestionantId] = useState<string | null>(null);
 
   async function carregar() {
     setCarregant(true);
     try {
-      const [ags, tipus, cats] = await Promise.all([
+      const agrupacioFiltre = esFederacio ? agrupacioSeleccionada || undefined : undefined;
+      const [ags, tipus, cats, locs, sols] = await Promise.all([
         esFederacio ? llistarAgrupacions() : Promise.resolve([]),
-        llistarTipusServei(),
-        llistarCategoriesServei(),
+        llistarTipusServei(agrupacioFiltre),
+        llistarCategoriesServei(agrupacioFiltre),
+        llistarLocalitatsServei(agrupacioFiltre),
+        llistarSollicitantsServei(agrupacioFiltre),
       ]);
       setAgrupacions(ags);
       setTipusServei(tipus);
       setCategories(cats);
+      setLocalitats(locs);
+      setSollicitants(sols);
       const s = await llistarServeis({
         agrupacioId: esFederacio ? agrupacioSeleccionada || undefined : undefined,
         arxivat: pestanya === 'arxivats',
@@ -262,13 +273,47 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
               <label>Localitat</label>
-              <input value={form.localitat} onChange={(e) => setForm({ ...form, localitat: e.target.value })} style={{ width: '100%' }} />
+              <select value={form.localitat} onChange={(e) => setForm({ ...form, localitat: e.target.value })} style={{ width: '100%' }}>
+                <option value="">Sense especificar</option>
+                {localitats.map((l) => (
+                  <option key={l.id} value={l.nom}>{l.nom}</option>
+                ))}
+              </select>
+              <button type="button" onClick={() => setMostrarLocalitat(!mostrarLocalitat)} style={{ fontSize: 11, marginTop: 4 }}>
+                {mostrarLocalitat ? 'Amagar' : 'Gestionar localitats'}
+              </button>
             </div>
             <div style={{ flex: 1 }}>
               <label>Sol·licitant</label>
-              <input value={form.sollicitant} onChange={(e) => setForm({ ...form, sollicitant: e.target.value })} style={{ width: '100%' }} />
+              <select value={form.sollicitant} onChange={(e) => setForm({ ...form, sollicitant: e.target.value })} style={{ width: '100%' }}>
+                <option value="">Sense especificar</option>
+                {sollicitants.map((s) => (
+                  <option key={s.id} value={s.nom}>{s.nom}</option>
+                ))}
+              </select>
+              <button type="button" onClick={() => setMostrarSollicitant(!mostrarSollicitant)} style={{ fontSize: 11, marginTop: 4 }}>
+                {mostrarSollicitant ? 'Amagar' : 'Gestionar sol·licitants'}
+              </button>
             </div>
           </div>
+          {mostrarLocalitat && (
+            <GestorCataleg
+              items={localitats}
+              placeholder="Nova localitat (p.ex. Riba-roja)"
+              onAfegir={async (nom) => { await crearLocalitatServei(nom); carregar(); }}
+              onEditar={async (id, nom) => { await editarLocalitatServei(id, nom); carregar(); }}
+              onEliminar={async (id) => { await eliminarLocalitatServei(id); carregar(); }}
+            />
+          )}
+          {mostrarSollicitant && (
+            <GestorCataleg
+              items={sollicitants}
+              placeholder="Nou sol·licitant (p.ex. Ajuntament)"
+              onAfegir={async (nom) => { await crearSollicitantServei(nom); carregar(); }}
+              onEditar={async (id, nom) => { await editarSollicitantServei(id, nom); carregar(); }}
+              onEliminar={async (id) => { await eliminarSollicitantServei(id); carregar(); }}
+            />
+          )}
           <div style={{ marginBottom: 10 }}>
             <label>Adreça (opcional)</label>
             <input value={form.adreca} onChange={(e) => setForm({ ...form, adreca: e.target.value })} style={{ width: '100%' }} />

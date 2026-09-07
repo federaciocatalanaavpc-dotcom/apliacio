@@ -3,10 +3,11 @@ import { api } from './api';
 export interface CategoriaServei {
   id: string;
   nom: string;
+  agrupacioId: string | null;
 }
 
-export async function llistarCategoriesServei(): Promise<CategoriaServei[]> {
-  const { data } = await api.get('/categoria-servei');
+export async function llistarCategoriesServei(agrupacioId?: string): Promise<CategoriaServei[]> {
+  const { data } = await api.get('/categoria-servei', { params: agrupacioId ? { agrupacioId } : undefined });
   return data;
 }
 

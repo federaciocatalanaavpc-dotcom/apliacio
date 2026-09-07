@@ -4,7 +4,6 @@ import { requireAuth, AuthRequest, potGestionarAgrupacio, bloquejaVoluntaris } f
 
 const router = Router();
 router.use(requireAuth);
-router.use(bloquejaVoluntaris);
 
 const SELECCIO_ARTICLE = {
   id: true,
@@ -35,6 +34,23 @@ const SELECCIO_ASSIGNACIO = {
 function agrupacioSollicitada(req: AuthRequest): string | undefined {
   return req.usuari!.rol === 'FEDERACIO' ? (req.query.agrupacioId as string | undefined) : req.usuari!.agrupacioId!;
 }
+
+// L'equipament (roba i EPI) que el propi voluntari té assignat ara mateix
+// (i, si es demana, també l'historial de retornades).
+router.get('/assignacions/meves', async (req: AuthRequest, res) => {
+  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
+  const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
+  if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
+  const nomesActives = req.query.actives !== 'false';
+  const assignacions = await prisma.assignacioEquipament.findMany({
+    where: { voluntariId: voluntari.id, ...(nomesActives ? { dataRetorn: null } : {}) },
+    select: SELECCIO_ASSIGNACIO,
+    orderBy: { dataAssignacio: 'desc' },
+  });
+  res.json(assignacions);
+});
+
+router.use(bloquejaVoluntaris);
 
 // --- Articles (estoc) ---
 

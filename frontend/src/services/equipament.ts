@@ -76,6 +76,11 @@ export async function crearAssignacioEquipament(dades: {
   return data;
 }
 
+export async function llistarLesMevesAssignacions(actives = true): Promise<AssignacioEquipament[]> {
+  const { data } = await api.get('/equipament/assignacions/meves', { params: { actives } });
+  return data;
+}
+
 export async function retornarAssignacioEquipament(id: string): Promise<AssignacioEquipament> {
   const { data } = await api.patch(`/equipament/assignacions/${id}`, { retornar: true });
   return data;

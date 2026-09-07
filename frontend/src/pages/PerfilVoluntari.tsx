@@ -7,20 +7,7 @@ import {
 } from '../services/voluntaris';
 import { Servei, llistarServeis, confirmarAssistencia, cancelarAssistencia } from '../services/serveis';
 import BotoTornar from '../components/BotoTornar';
-
-const DISPONIBILITAT_LABEL: Record<Disponibilitat, string> = {
-  PRESENCIAL: 'Presencial',
-  IMMEDIATA: 'Immediata',
-  DIFERIDA: 'Diferida',
-  NO_DISPONIBLE: 'No disponible',
-};
-
-const DISPONIBILITAT_COLOR: Record<Disponibilitat, string> = {
-  PRESENCIAL: 'var(--c-success)',
-  IMMEDIATA: 'var(--c-success)',
-  DIFERIDA: 'var(--c-warning)',
-  NO_DISPONIBLE: 'var(--c-error)',
-};
+import SelectorDisponibilitat from '../components/SelectorDisponibilitat';
 
 const DIES_SETMANA = ['Dl', 'Dt', 'Dc', 'Dj', 'Dv', 'Ds', 'Dg'];
 const MESOS = [
@@ -156,28 +143,8 @@ export default function PerfilVoluntari() {
         <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>Hores acumulades: <strong>{totalHores}</strong></p>
         <div style={{ marginTop: 10 }}>
           <label>La meva disponibilitat</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {(Object.entries(DISPONIBILITAT_LABEL) as [Disponibilitat, string][]).map(([valor, etiqueta]) => {
-              const activa = voluntari.disponibilitat === valor;
-              return (
-                <button
-                  key={valor}
-                  onClick={() => handleDisponibilitat(valor)}
-                  disabled={actualitzantDisponibilitat}
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    padding: '8px 12px',
-                    borderRadius: 999,
-                    border: `1.5px solid ${activa ? DISPONIBILITAT_COLOR[valor] : 'var(--c-border)'}`,
-                    background: activa ? DISPONIBILITAT_COLOR[valor] : 'transparent',
-                    color: activa ? '#fff' : 'var(--c-text)',
-                  }}
-                >
-                  {etiqueta}
-                </button>
-              );
-            })}
+          <div style={{ marginTop: 4 }}>
+            <SelectorDisponibilitat valor={voluntari.disponibilitat} onCanviar={handleDisponibilitat} desactivat={actualitzantDisponibilitat} />
           </div>
         </div>
       </div>

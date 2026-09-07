@@ -85,6 +85,10 @@ model Agrupacio {
   serveis            Servei[]
   proveidors         Proveidor[]
   articlesEquipament ArticleEquipament[]
+  tipusServei        TipusServei[]
+  categoriesServei   CategoriaServei[]
+  localitatsServei   LocalitatServei[]
+  sollicitantsServei SollicitantServei[]
 }
 
 // Proveïdors de cada associació (tallers, subministradors de combustible,
@@ -177,18 +181,49 @@ model AssignacioEquipament {
   creatEl        DateTime          @default(now())
 }
 
-// Catàleg de tipus i categories de servei que la federació manté, perquè
-// totes les associacions facin servir la mateixa classificació.
+// Catàlegs de tipus, categoria, localitat i sol·licitant que es fan servir
+// als desplegables del formulari de serveis. agrupacioId nul vol dir que
+// l'ha creat la federació (comú a tothom, només la federació el pot editar
+// o eliminar); si en té un, és propi d'aquella associació i només ella
+// (o la federació) el pot editar o eliminar.
 model TipusServei {
-  id      String   @id @default(uuid())
-  nom     String   @unique
-  creatEl DateTime @default(now())
+  id          String     @id @default(uuid())
+  nom         String
+  agrupacio   Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String?
+  creatEl     DateTime   @default(now())
+
+  @@unique([nom, agrupacioId])
 }
 
 model CategoriaServei {
-  id      String   @id @default(uuid())
-  nom     String   @unique
-  creatEl DateTime @default(now())
+  id          String     @id @default(uuid())
+  nom         String
+  agrupacio   Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String?
+  creatEl     DateTime   @default(now())
+
+  @@unique([nom, agrupacioId])
+}
+
+model LocalitatServei {
+  id          String     @id @default(uuid())
+  nom         String
+  agrupacio   Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String?
+  creatEl     DateTime   @default(now())
+
+  @@unique([nom, agrupacioId])
+}
+
+model SollicitantServei {
+  id          String     @id @default(uuid())
+  nom         String
+  agrupacio   Agrupacio? @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String?
+  creatEl     DateTime   @default(now())
+
+  @@unique([nom, agrupacioId])
 }
 
 // Un servei (intervenció, assemblea, acte...) d'una associació. Es convoca

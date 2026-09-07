@@ -10,6 +10,8 @@ import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
 import GestioAvpc from './pages/GestioAvpc';
 import PerfilVoluntari from './pages/PerfilVoluntari';
+import RobaVoluntari from './pages/RobaVoluntari';
+import DisponibilitatVoluntari from './pages/DisponibilitatVoluntari';
 import EstadistiquesVoluntari from './pages/EstadistiquesVoluntari';
 import AlertesVoluntari from './pages/AlertesVoluntari';
 import Avisos from './pages/Avisos';
@@ -101,6 +103,22 @@ export default function App() {
           element={
             <RutaProtegida>
               <PerfilVoluntari />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/voluntari/roba"
+          element={
+            <RutaProtegida>
+              <RobaVoluntari />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/voluntari/disponibilitat"
+          element={
+            <RutaProtegida>
+              <DisponibilitatVoluntari />
             </RutaProtegida>
           }
         />

@@ -19,6 +19,8 @@ import tipusServeiRoutes from './routes/tipusServei.routes';
 import categoriaServeiRoutes from './routes/categoriaServei.routes';
 import proveidorsRoutes from './routes/proveidors.routes';
 import equipamentRoutes from './routes/equipament.routes';
+import localitatServeiRoutes from './routes/localitatServei.routes';
+import sollicitantServeiRoutes from './routes/sollicitantServei.routes';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -47,6 +49,8 @@ app.use('/api/tipus-servei', tipusServeiRoutes);
 app.use('/api/categoria-servei', categoriaServeiRoutes);
 app.use('/api/proveidors', proveidorsRoutes);
 app.use('/api/equipament', equipamentRoutes);
+app.use('/api/localitat-servei', localitatServeiRoutes);
+app.use('/api/sollicitant-servei', sollicitantServeiRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

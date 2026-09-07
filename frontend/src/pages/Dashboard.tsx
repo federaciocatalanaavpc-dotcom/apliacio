@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { getUsuariActual, logout } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
+import { obtenirVoluntariPropi } from '../services/voluntaris';
+import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/SelectorDisponibilitat';
 
 const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
@@ -15,6 +18,14 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const esVoluntari = usuari?.rol === 'VOLUNTARI';
   const nomMostrat = usuari?.rol === 'FEDERACIO' || esVoluntari ? usuari?.nom : usuari?.agrupacioNom || usuari?.nom;
+  const [disponibilitat, setDisponibilitat] = useState<keyof typeof DISPONIBILITAT_LABEL | null>(null);
+
+  useEffect(() => {
+    if (esVoluntari) {
+      obtenirVoluntariPropi().then((v) => setDisponibilitat(v.disponibilitat)).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleLogout() {
     logout();
@@ -38,9 +49,27 @@ export default function Dashboard() {
 
       {esVoluntari ? (
         <div className="nav-grid" style={{ marginTop: 16 }}>
+          <Link
+            to="/voluntari/disponibilitat"
+            className="card card--clickable nav-tile"
+            style={
+              disponibilitat
+                ? { background: DISPONIBILITAT_COLOR[disponibilitat], borderColor: 'transparent', color: '#fff' }
+                : undefined
+            }
+          >
+            <span className="nav-tile__icon">🟢</span>
+            Disponibilitat{disponibilitat ? `: ${DISPONIBILITAT_LABEL[disponibilitat]}` : ''}
+            <span className="nav-tile__arrow">→</span>
+          </Link>
           <Link to="/voluntari/serveis" className="card card--clickable nav-tile">
             <span className="nav-tile__icon">🚒</span>
             Serveis
+            <span className="nav-tile__arrow">→</span>
+          </Link>
+          <Link to="/voluntari/roba" className="card card--clickable nav-tile">
+            <span className="nav-tile__icon">👕</span>
+            Roba
             <span className="nav-tile__arrow">→</span>
           </Link>
           <Link to="/voluntari/estadistiques" className="card card--clickable nav-tile">

@@ -4,6 +4,7 @@ import { getUsuariActual } from '../services/api';
 interface Item {
   id: string;
   nom: string;
+  agrupacioId?: string | null;
 }
 
 export default function GestorCataleg({
@@ -19,11 +20,21 @@ export default function GestorCataleg({
   onEliminar: (id: string) => Promise<void>;
   placeholder?: string;
 }) {
-  const esFederacio = getUsuariActual()?.rol === 'FEDERACIO';
+  const usuariActual = getUsuariActual();
+  const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [nou, setNou] = useState('');
   const [editantId, setEditantId] = useState<string | null>(null);
   const [editNom, setEditNom] = useState('');
   const [error, setError] = useState('');
+
+  // La federació pot gestionar qualsevol opció; una associació només les
+  // que ha creat ella mateixa (les que tenen el seu agrupacioId). Les
+  // opcions sense agrupacioId (catàlegs comuns com tipus de material o de
+  // vehicle) continuen sent només per a la federació.
+  function potGestionar(item: Item): boolean {
+    if (esFederacio) return true;
+    return !!item.agrupacioId && item.agrupacioId === usuariActual?.agrupacioId;
+  }
 
   async function handleAfegir() {
     if (!nou.trim()) return;
@@ -72,12 +83,12 @@ export default function GestorCataleg({
             ) : (
               <span style={{ flex: 1, fontSize: 13 }}>{item.nom}</span>
             )}
-            {esFederacio && editantId !== item.id && (
+            {potGestionar(item) && editantId !== item.id && (
               <button type="button" onClick={() => { setEditantId(item.id); setEditNom(item.nom); }} style={{ fontSize: 11 }}>
                 Editar
               </button>
             )}
-            {esFederacio && (
+            {potGestionar(item) && (
               <button type="button" onClick={() => handleEliminar(item.id)} className="btn-danger" style={{ fontSize: 11 }}>
                 Eliminar
               </button>
