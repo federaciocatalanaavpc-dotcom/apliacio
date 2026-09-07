@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import '../workspace.css';
 import { getUsuariActual } from '../services/api';
 import AlertaAFederacio from '../components/AlertaAFederacio';
 import NotificacioAssociacions from '../components/NotificacioAssociacions';
