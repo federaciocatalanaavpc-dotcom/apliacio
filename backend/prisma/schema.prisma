@@ -5,8 +5,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon dona una URL amb "pooler" (PgBouncer) pensada per a l'aplicació en
+  // marxa; "prisma migrate deploy" necessita agafar un advisory lock de
+  // sessió que el pooler no suporta bé i acaba fent timeout. DIRECT_URL ha
+  // de ser la mateixa connexió de Neon però SENSE "-pooler" al host.
+  directUrl = env("DIRECT_URL")
 }
 
 enum Rol {

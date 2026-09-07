@@ -22,6 +22,12 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      # Mateixa connexió que DATABASE_URL però SENSE "-pooler" al host. Neon
+      # posa DATABASE_URL darrere d'un pooler (PgBouncer) que no suporta bé
+      # l'advisory lock que "prisma migrate deploy" necessita agafar, i el
+      # deploy queda penjat fent timeout; DIRECT_URL evita això.
+      - key: DIRECT_URL
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: VAPID_PUBLIC_KEY
