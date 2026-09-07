@@ -76,14 +76,15 @@ model Agrupacio {
   actiu        Boolean   @default(true)
   creatEl      DateTime  @default(now())
 
-  usuaris    Usuari[]
-  vehicles   Vehicle[]
-  materials  Material[]
-  documents  Document[]
-  avisos     Avis[]
-  voluntaris Voluntari[]
-  serveis    Servei[]
-  proveidors Proveidor[]
+  usuaris            Usuari[]
+  vehicles           Vehicle[]
+  materials          Material[]
+  documents          Document[]
+  avisos             Avis[]
+  voluntaris         Voluntari[]
+  serveis            Servei[]
+  proveidors         Proveidor[]
+  articlesEquipament ArticleEquipament[]
 }
 
 // Proveïdors de cada associació (tallers, subministradors de combustible,
@@ -136,6 +137,44 @@ model Voluntari {
   usuariId            String?         @unique
 
   assistencies        AssistenciaServei[]
+  equipamentAssignat  AssignacioEquipament[]
+}
+
+enum TipusEquipament {
+  ROBA
+  EPI
+}
+
+// Estoc de roba i EPI (equip de protecció individual) de cada associació.
+// estocTotal és el total d'unitats que té l'associació; les que estan
+// assignades a un voluntari (sense retornar) es resten per saber les lliures.
+model ArticleEquipament {
+  id          String          @id @default(uuid())
+  agrupacio   Agrupacio       @relation(fields: [agrupacioId], references: [id])
+  agrupacioId String
+  tipus       TipusEquipament
+  nom         String
+  talla       String?
+  estocTotal  Int             @default(0)
+  notes       String?
+  creatEl     DateTime        @default(now())
+
+  assignacions AssignacioEquipament[]
+}
+
+// Registre de quina roba/EPI té assignat cada voluntari. dataRetorn nul vol
+// dir que encara ho té; un cop retornat es marca la data i torna a l'estoc lliure.
+model AssignacioEquipament {
+  id             String            @id @default(uuid())
+  article        ArticleEquipament @relation(fields: [articleId], references: [id])
+  articleId      String
+  voluntari      Voluntari         @relation(fields: [voluntariId], references: [id])
+  voluntariId    String
+  quantitat      Int               @default(1)
+  dataAssignacio DateTime          @default(now())
+  dataRetorn     DateTime?
+  notes          String?
+  creatEl        DateTime          @default(now())
 }
 
 // Catàleg de tipus i categories de servei que la federació manté, perquè
