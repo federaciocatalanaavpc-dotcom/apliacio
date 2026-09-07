@@ -2,12 +2,21 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
 import { obtenirVoluntariPropi } from '../services/voluntaris';
-import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/SelectorDisponibilitat';
+import { DISPONIBILITAT_LABEL } from '../components/SelectorDisponibilitat';
+import './volunteer-dashboard.css';
 
 const EINES_COMPARTIDES = [
   { to: '/avisos', icon: '🔔', label: 'Avisos', text: 'Comunicacions i alertes' },
   { to: '/documents', icon: '📄', label: 'Documents', text: 'Documentació compartida' },
   { to: '/formacio', icon: '🎓', label: 'Formació', text: 'Cursos i recursos formatius' },
+];
+
+const ACCESSOS_VOLUNTARI = [
+  { to: '/voluntari/serveis', icon: '🚒', label: 'Serveis', text: 'Consulta el calendari i confirma assistències', className: 'vol-home-card--primary' },
+  { to: '/voluntari/disponibilitat', icon: '●', label: 'Disponibilitat', text: 'Actualitza el teu estat per a nous serveis', className: 'vol-home-card--availability' },
+  { to: '/voluntari/roba', icon: '🦺', label: 'Roba i EPI', text: 'Consulta el material que tens assignat' },
+  { to: '/voluntari/estadistiques', icon: '📊', label: 'Estadístiques', text: 'Revisa hores i activitat acumulada' },
+  { to: '/voluntari/alertes', icon: '🔔', label: 'Alertes', text: 'Avisos operatius del teu espai' },
 ];
 
 export default function Dashboard() {
@@ -20,59 +29,56 @@ export default function Dashboard() {
     if (esVoluntari) {
       obtenirVoluntariPropi().then((v) => setDisponibilitat(v.disponibilitat)).catch(() => {});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [esVoluntari]);
 
   if (esVoluntari) {
     return (
-      <main className="page dashboard-shell">
-        <section className="dashboard-hero dashboard-hero--compact">
-          <div>
-            <span className="dashboard-eyebrow">Espai personal</span>
-            <h1>Hola, {nomMostrat} 👋</h1>
-            <p>Consulta la teva disponibilitat, serveis, roba, estadístiques i alertes.</p>
+      <main className="vol-home">
+        <section className="vol-home-hero">
+          <div className="vol-home-hero__copy">
+            <span className="vol-home-kicker">El meu espai</span>
+            <h1>Hola, {nomMostrat}</h1>
+            <p>Tot el que necessites com a voluntari, en un únic lloc.</p>
           </div>
-          <span className="badge badge--role">Voluntari</span>
+          <div className="vol-home-status">
+            <span className="vol-home-status__label">Disponibilitat actual</span>
+            <strong>{disponibilitat ? DISPONIBILITAT_LABEL[disponibilitat] : 'Consultant...'}</strong>
+            <Link to="/voluntari/disponibilitat">Canviar estat →</Link>
+          </div>
         </section>
 
-        <div className="nav-grid dashboard-volunteer-grid">
-          <Link
-            to="/voluntari/disponibilitat"
-            className="card card--clickable nav-tile"
-            style={
-              disponibilitat
-                ? { background: DISPONIBILITAT_COLOR[disponibilitat], borderColor: 'transparent', color: '#fff' }
-                : undefined
-            }
-          >
-            <span className="nav-tile__icon">●</span>
-            <span>
-              <strong>Disponibilitat</strong>
-              {disponibilitat && <small>{DISPONIBILITAT_LABEL[disponibilitat]}</small>}
-            </span>
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-          <Link to="/voluntari/serveis" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">🚒</span>
-            <strong>Serveis</strong>
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-          <Link to="/voluntari/roba" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">👕</span>
-            <strong>Roba</strong>
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-          <Link to="/voluntari/estadistiques" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">📊</span>
-            <strong>Estadístiques</strong>
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-          <Link to="/voluntari/alertes" className="card card--clickable nav-tile">
-            <span className="nav-tile__icon">🔔</span>
-            <strong>Alertes</strong>
-            <span className="nav-tile__arrow">→</span>
-          </Link>
-        </div>
+        <section className="vol-home-section">
+          <div className="vol-home-section__heading">
+            <div>
+              <span className="vol-home-kicker">Accés ràpid</span>
+              <h2>Què vols fer?</h2>
+            </div>
+          </div>
+
+          <div className="vol-home-grid">
+            {ACCESSOS_VOLUNTARI.map((item) => (
+              <Link key={item.to} to={item.to} className={`vol-home-card ${item.className || ''}`}>
+                <span className="vol-home-card__icon" aria-hidden="true">{item.icon}</span>
+                <span className="vol-home-card__copy">
+                  <strong>{item.label}</strong>
+                  <small>{item.text}</small>
+                  {item.to === '/voluntari/disponibilitat' && disponibilitat && (
+                    <span className="vol-home-card__state">Ara: {DISPONIBILITAT_LABEL[disponibilitat]}</span>
+                  )}
+                </span>
+                <span className="vol-home-card__arrow" aria-hidden="true">→</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="vol-home-tip">
+          <span aria-hidden="true">💡</span>
+          <div>
+            <strong>Mantén la disponibilitat al dia</strong>
+            <p>Així la teva agrupació pot saber ràpidament amb qui comptar quan apareix un servei.</p>
+          </div>
+        </section>
       </main>
     );
   }
