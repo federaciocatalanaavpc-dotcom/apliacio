@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import '../workspace.css';
 import Voluntaris from './Voluntaris';
 import Serveis from './Serveis';
 import Estadistiques from './Estadistiques';
