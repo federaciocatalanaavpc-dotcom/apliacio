@@ -21,13 +21,24 @@ const SELECCIO = {
   agrupacio: { select: { id: true, nom: true, municipi: true } },
 } as const;
 
+// Directori compartit: totes les associacions autenticades poden consultar
+// els proveïdors aportats per la resta d'AVPC. Els permisos d'edició i
+// eliminació continuen limitats a la pròpia associació (o Federació).
 router.get('/', async (req: AuthRequest, res) => {
-  const agrupacioId =
-    req.usuari!.rol === 'FEDERACIO' ? (req.query.agrupacioId as string | undefined) : req.usuari!.agrupacioId!;
+  const agrupacioId = req.query.agrupacioId as string | undefined;
+  const nomesMeus = req.query.nomesMeus === 'true';
+
+  let filtreAgrupacio: string | undefined;
+  if (req.usuari!.rol === 'FEDERACIO') {
+    filtreAgrupacio = agrupacioId;
+  } else if (nomesMeus) {
+    filtreAgrupacio = req.usuari!.agrupacioId || undefined;
+  }
+
   const proveidors = await prisma.proveidor.findMany({
-    where: agrupacioId ? { agrupacioId } : undefined,
+    where: filtreAgrupacio ? { agrupacioId: filtreAgrupacio } : undefined,
     select: SELECCIO,
-    orderBy: { nom: 'asc' },
+    orderBy: [{ nom: 'asc' }, { creatEl: 'desc' }],
   });
   res.json(proveidors);
 });
