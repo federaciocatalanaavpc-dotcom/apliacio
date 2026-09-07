@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
 import AlertaAFederacio from '../components/AlertaAFederacio';
+import CorreuAssociacions from '../components/CorreuAssociacions';
 
 const enllacos = [
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions' },
@@ -47,6 +48,12 @@ export default function Federacio() {
       {usuari?.rol !== 'FEDERACIO' && (
         <div style={{ marginTop: 20 }}>
           <AlertaAFederacio />
+        </div>
+      )}
+
+      {usuari?.rol === 'FEDERACIO' && (
+        <div style={{ marginTop: 20 }}>
+          <CorreuAssociacions />
         </div>
       )}
     </div>
