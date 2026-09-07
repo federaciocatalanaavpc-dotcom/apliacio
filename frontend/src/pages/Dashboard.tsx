@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getUsuariActual, logout } from '../services/api';
-import { useNavigate, Link } from 'react-router-dom';
+import { getUsuariActual } from '../services/api';
+import { Link } from 'react-router-dom';
 import { obtenirVoluntariPropi } from '../services/voluntaris';
 import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/SelectorDisponibilitat';
 
@@ -11,7 +11,6 @@ const BOTONS_GRANS = [
 
 export default function Dashboard() {
   const usuari = getUsuariActual();
-  const navigate = useNavigate();
   const esVoluntari = usuari?.rol === 'VOLUNTARI';
   const nomMostrat = usuari?.rol === 'FEDERACIO' || esVoluntari ? usuari?.nom : usuari?.agrupacioNom || usuari?.nom;
   const [disponibilitat, setDisponibilitat] = useState<keyof typeof DISPONIBILITAT_LABEL | null>(null);
@@ -23,24 +22,13 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
-
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ marginBottom: 6 }}>Hola, {nomMostrat} 👋</h1>
-          <span className="badge badge--role">
-            {usuari?.rol === 'FEDERACIO' ? 'Federació' : esVoluntari ? 'Voluntari' : 'Associació'}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Link to="/canviar-contrasenya" style={{ fontSize: 13 }}>🔑 Contrasenya</Link>
-          <button onClick={handleLogout}>Sortir</button>
-        </div>
+      <div>
+        <h1 style={{ marginBottom: 6 }}>Hola, {nomMostrat} 👋</h1>
+        <span className="badge badge--role">
+          {usuari?.rol === 'FEDERACIO' ? 'Federació' : esVoluntari ? 'Voluntari' : 'Associació'}
+        </span>
       </div>
 
       {esVoluntari ? (
