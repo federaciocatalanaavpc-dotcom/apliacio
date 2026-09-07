@@ -6,7 +6,6 @@ import { DISPONIBILITAT_LABEL, DISPONIBILITAT_COLOR } from '../components/Select
 
 const BOTONS_GRANS = [
   { to: '/gestio-avpc', icon: '🛠️', label: 'Gestió AVPC' },
-  { to: '/avisos', icon: '📢', label: 'Avisos' },
   { to: '/federacio', icon: '🏛️', label: 'Federació' },
 ];
 
