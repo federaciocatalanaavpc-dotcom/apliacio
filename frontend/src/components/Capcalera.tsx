@@ -1,10 +1,25 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getUsuariActual, logout } from '../services/api';
+import './Capcalera.css';
+
+function obtenirContext(pathname: string) {
+  if (pathname.startsWith('/gestio-avpc')) return { label: 'Gestió AVPC', classe: 'app-header--avpc' };
+  if (pathname.startsWith('/federacio') || ['/agrupacions', '/inventari', '/mapa', '/documents', '/formacio', '/documentacio-propia', '/usuaris'].some((p) => pathname.startsWith(p))) {
+    return { label: 'Federació', classe: 'app-header--federacio' };
+  }
+  if (pathname.startsWith('/voluntari')) return { label: 'Espai voluntari', classe: 'app-header--voluntari' };
+  return { label: 'Plataforma', classe: '' };
+}
 
 export default function Capcalera() {
   const usuari = getUsuariActual();
   const navigate = useNavigate();
+  const location = useLocation();
   const esVoluntari = usuari?.rol === 'VOLUNTARI';
+  const context = obtenirContext(location.pathname);
+  const inicial = (usuari?.nom || usuari?.agrupacioNom || 'U').trim().charAt(0).toUpperCase();
+  const nomVisible = usuari?.nom || usuari?.agrupacioNom || 'Usuari';
+  const rolVisible = usuari?.rol === 'FEDERACIO' ? 'Administrador Federació' : usuari?.rol === 'AGRUPACIO' ? 'Associació' : 'Voluntari';
 
   function handleLogout() {
     logout();
@@ -12,22 +27,37 @@ export default function Capcalera() {
   }
 
   return (
-    <div className="topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img src="/logo.png" alt="App Federació" style={{ height: 32, marginRight: 10 }} />
-        <strong style={{ color: '#fff', fontSize: 16, letterSpacing: '-0.01em' }}>
-          App Federació
-        </strong>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        {!esVoluntari && (
-          <Link to="/avisos" style={{ color: '#fff', fontSize: 22, lineHeight: 1, display: 'flex' }} title="Avisos">
-            📢
+    <header className={`topbar app-header ${context.classe}`}>
+      <div className="app-header__inner">
+        <Link to="/" className="app-header__brand" aria-label="Anar a l'inici">
+          <img src="/logo.png" alt="" className="app-header__logo" />
+          <span className="app-header__brand-copy">
+            <strong>App Federació</strong>
+            <small>{context.label}</small>
+          </span>
+        </Link>
+
+        <nav className="app-header__actions" aria-label="Accions d'usuari">
+          {!esVoluntari && (
+            <Link to="/avisos" className="app-header__icon-button" title="Avisos" aria-label="Avisos">
+              <span aria-hidden="true">🔔</span>
+            </Link>
+          )}
+
+          <div className="app-header__user">
+            <span className="app-header__avatar" aria-hidden="true">{inicial}</span>
+            <span className="app-header__user-copy">
+              <strong>{nomVisible}</strong>
+              <small>{rolVisible}</small>
+            </span>
+          </div>
+
+          <Link to="/canviar-contrasenya" className="app-header__secondary-action">
+            Contrasenya
           </Link>
-        )}
-        <Link to="/canviar-contrasenya" style={{ color: '#fff', fontSize: 13, whiteSpace: 'nowrap' }}>🔑 Contrasenya</Link>
-        <button onClick={handleLogout} style={{ fontSize: 13 }}>Sortir</button>
+          <button onClick={handleLogout} className="app-header__logout">Sortir</button>
+        </nav>
       </div>
-    </div>
+    </header>
   );
 }
