@@ -387,7 +387,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
 <div style={{ marginBottom: 10 }}>
               <label>Tipus de compte</label>
               <select aria-label="Tipus de compte" value={form.rolAcces} onChange={(e) => setForm({ ...form, rolAcces: e.target.value as 'VOLUNTARI' | 'ADMIN_AVPC' })}>
-                <option value="VOLUNTARI">Voluntari ras</option>
+                <option value="VOLUNTARI">Voluntari</option>
                 <option value="ADMIN_AVPC">Administrador AVPC</option>
               </select>
               <p className="text-muted" style={{ fontSize: 12 }}>L'administrador gestiona només la seva AVPC: voluntaris, serveis, estadístiques, proveïdors, inventari i alertes.</p>
@@ -450,7 +450,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                     <td className="text-muted">{v.dni || '—'}</td>
                     <td className="text-muted">{v.telefon || '—'}</td>
                     <td><span style={{ color: DISPONIBILITAT_COLOR[v.disponibilitat], fontWeight: 600 }}>{DISPONIBILITAT_LABEL[v.disponibilitat]}</span></td>
-                    <td className="text-muted">{v.usuari ? (v.usuari.rol === 'ADMIN_AVPC' ? 'Administrador AVPC' : 'Voluntari ras') : 'No'}</td>
+                    <td className="text-muted">{v.usuari ? (v.usuari.rol === 'ADMIN_AVPC' ? 'Administrador AVPC' : 'Voluntari') : 'No'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => obrirEdicio(v)} style={{ fontSize: 12 }}>
@@ -504,7 +504,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                           {v.usuari && (<div style={{ marginBottom: 10 }}>
               <label>Tipus de compte</label>
               <select aria-label="Tipus de compte" value={editForm.rolAcces} onChange={(e) => setEditForm({ ...editForm, rolAcces: e.target.value as 'VOLUNTARI' | 'ADMIN_AVPC' })}>
-                <option value="VOLUNTARI">Voluntari ras</option>
+                <option value="VOLUNTARI">Voluntari</option>
                 <option value="ADMIN_AVPC">Administrador AVPC</option>
               </select>
               <p className="text-muted" style={{ fontSize: 12 }}>L'administrador gestiona només la seva AVPC: voluntaris, serveis, estadístiques, proveïdors, inventari i alertes.</p>
