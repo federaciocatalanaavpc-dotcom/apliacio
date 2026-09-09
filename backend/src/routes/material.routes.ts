@@ -8,8 +8,9 @@ router.use(bloquejaVoluntaris);
 
 // Llista TOT el material de totes les agrupacions (només lectura fora de la
 // pròpia), perquè en cas d'emergència es pugui saber què hi ha disponible a prop.
-router.get('/', async (_req, res) => {
+router.get('/', async (req: AuthRequest, res) => {
   const material = await prisma.material.findMany({
+    where: req.usuari!.rol === 'ADMIN_AVPC' ? { agrupacioId: req.usuari!.agrupacioId! } : undefined,
     include: { agrupacio: { select: { id: true, nom: true, municipi: true } } },
     orderBy: { nom: 'asc' },
   });

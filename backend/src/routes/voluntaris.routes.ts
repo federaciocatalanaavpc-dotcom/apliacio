@@ -31,7 +31,7 @@ const SELECCIO = {
   consentimentDades: true,
   actiu: true,
   creatEl: true,
-  usuari: { select: { id: true, usuari: true, actiu: true } },
+  usuari: { select: { id: true, usuari: true, actiu: true, rol: true } },
 } as const;
 
 function nomComplet(v: { nom: string; cognoms: string }) {
@@ -55,7 +55,7 @@ router.get('/', async (req: AuthRequest, res) => {
 
 // Fitxa pròpia del voluntari connectat (per a la seva pròpia app mòbil).
 router.get('/me', async (req: AuthRequest, res) => {
-  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
+  if (!['VOLUNTARI', 'ADMIN_AVPC'].includes(req.usuari!.rol)) return res.status(403).json({ error: 'Només per a comptes de voluntari' });
   const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id }, select: SELECCIO });
   if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
   res.json(voluntari);
@@ -64,7 +64,7 @@ router.get('/me', async (req: AuthRequest, res) => {
 // Estadístiques pròpies: només les assistències del voluntari connectat
 // (no les de tota l'associació), per al seu propi resum d'hores.
 router.get('/me/estadistiques', async (req: AuthRequest, res) => {
-  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
+  if (!['VOLUNTARI', 'ADMIN_AVPC'].includes(req.usuari!.rol)) return res.status(403).json({ error: 'Només per a comptes de voluntari' });
   const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
   if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
   const assistencies = await prisma.assistenciaServei.findMany({
@@ -151,6 +151,7 @@ router.post('/', async (req: AuthRequest, res) => {
     consentimentDades,
     emailAcces,
     contrasenyaAcces,
+    rolAcces,
   } = req.body;
 
   const agrupacioFinal = req.usuari!.rol === 'FEDERACIO' ? agrupacioId : req.usuari!.agrupacioId;
@@ -162,6 +163,12 @@ router.post('/', async (req: AuthRequest, res) => {
   }
   if (!consentimentDades) {
     return res.status(400).json({ error: "Cal confirmar que el voluntari ha estat informat i dona el seu consentiment" });
+  }
+  if (rolAcces !== undefined && !['VOLUNTARI', 'ADMIN_AVPC'].includes(rolAcces)) {
+    return res.status(400).json({ error: "Tipus de compte no vàlid" });
+  }
+  if (rolAcces === 'ADMIN_AVPC' && !emailAcces) {
+    return res.status(400).json({ error: "Cal un email i contrasenya per a l'administrador" });
   }
   if (emailAcces && (!contrasenyaAcces || contrasenyaAcces.length < 6)) {
     return res.status(400).json({ error: "Cal una contrasenya d'accés d'almenys 6 caràcters" });
@@ -177,7 +184,7 @@ router.post('/', async (req: AuthRequest, res) => {
             nom: `${nom} ${cognoms}`,
             usuari: emailAcces.toLowerCase(),
             contrasenya: contrasenyaHash,
-            rol: 'VOLUNTARI',
+            rol: rolAcces || 'VOLUNTARI',
             agrupacioId: agrupacioFinal,
           },
         });
@@ -229,6 +236,13 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
     return res.status(403).json({ error: "No pots editar aquest voluntari" });
   }
+  const { rolAcces } = req.body;
+  if (rolAcces !== undefined && !['VOLUNTARI', 'ADMIN_AVPC'].includes(rolAcces)) {
+    return res.status(400).json({ error: 'Tipus de compte no vàlid' });
+  }
+  if (rolAcces !== undefined && !existent.usuariId) {
+    return res.status(400).json({ error: "Aquest voluntari no té compte d'accés" });
+  }
   const {
     nom,
     cognoms,
@@ -252,31 +266,36 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     actiu,
   } = req.body;
   try {
-    const voluntari = await prisma.voluntari.update({
+    const voluntari = await prisma.$transaction(async (tx) => {
+      if (rolAcces !== undefined && existent.usuariId) {
+        await tx.usuari.update({ where: { id: existent.usuariId }, data: { rol: rolAcces } });
+      }
+      return tx.voluntari.update({
       where: { id: req.params.id },
       data: {
         nom,
         cognoms,
-        telefon: telefon || null,
-        dni: dni || null,
-        genere: genere || null,
-        dataNaixement: dataNaixement ? new Date(dataNaixement) : null,
-        provincia: provincia || null,
-        localitat: localitat || null,
-        adreca: adreca || null,
-        codiPostal: codiPostal || null,
-        dataIngres: dataIngres ? new Date(dataIngres) : null,
-        dataBaixa: dataBaixa ? new Date(dataBaixa) : null,
-        numeroIdentificacio: numeroIdentificacio || null,
-        indicatiu: indicatiu || null,
-        carrec: carrec || null,
-        altresEmails: altresEmails || null,
-        altresAgrupacions: altresAgrupacions || null,
+        telefon: telefon === undefined ? undefined : (telefon || null),
+        dni: dni === undefined ? undefined : (dni || null),
+        genere: genere === undefined ? undefined : (genere || null),
+        dataNaixement: dataNaixement === undefined ? undefined : (dataNaixement ? new Date(dataNaixement) : null),
+        provincia: provincia === undefined ? undefined : (provincia || null),
+        localitat: localitat === undefined ? undefined : (localitat || null),
+        adreca: adreca === undefined ? undefined : (adreca || null),
+        codiPostal: codiPostal === undefined ? undefined : (codiPostal || null),
+        dataIngres: dataIngres === undefined ? undefined : (dataIngres ? new Date(dataIngres) : null),
+        dataBaixa: dataBaixa === undefined ? undefined : (dataBaixa ? new Date(dataBaixa) : null),
+        numeroIdentificacio: numeroIdentificacio === undefined ? undefined : (numeroIdentificacio || null),
+        indicatiu: indicatiu === undefined ? undefined : (indicatiu || null),
+        carrec: carrec === undefined ? undefined : (carrec || null),
+        altresEmails: altresEmails === undefined ? undefined : (altresEmails || null),
+        altresAgrupacions: altresAgrupacions === undefined ? undefined : (altresAgrupacions || null),
         disponibilitat: disponibilitat || undefined,
         consentimentDades: consentimentDades !== undefined ? !!consentimentDades : existent.consentimentDades,
         actiu,
       },
       select: SELECCIO,
+    });
     });
     await registrarAuditoria({
       usuariId: req.usuari!.id,
@@ -295,7 +314,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
 // El propi voluntari pot actualitzar la seva disponibilitat (és l'únic camp
 // que té sentit que canviï ell mateix des del mòbil).
 router.patch('/me/disponibilitat', async (req: AuthRequest, res) => {
-  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
+  if (!['VOLUNTARI', 'ADMIN_AVPC'].includes(req.usuari!.rol)) return res.status(403).json({ error: 'Només per a comptes de voluntari' });
   const { disponibilitat } = req.body;
   if (!disponibilitat) return res.status(400).json({ error: 'Cal indicar la disponibilitat' });
   try {

@@ -38,7 +38,7 @@ function agrupacioSollicitada(req: AuthRequest): string | undefined {
 // L'equipament (roba i EPI) que el propi voluntari té assignat ara mateix
 // (i, si es demana, també l'historial de retornades).
 router.get('/assignacions/meves', async (req: AuthRequest, res) => {
-  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
+  if (!['VOLUNTARI', 'ADMIN_AVPC'].includes(req.usuari!.rol)) return res.status(403).json({ error: 'Només per a comptes de voluntari' });
   const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
   if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
   const nomesActives = req.query.actives !== 'false';

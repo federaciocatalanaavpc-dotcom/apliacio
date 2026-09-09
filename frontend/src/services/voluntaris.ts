@@ -26,7 +26,7 @@ export interface Voluntari {
   consentimentDades: boolean;
   actiu: boolean;
   creatEl: string;
-  usuari: { id: string; usuari: string; actiu: boolean } | null;
+  usuari: { id: string; usuari: string; actiu: boolean; rol: string } | null;
 }
 
 export async function llistarVoluntaris(agrupacioId?: string): Promise<Voluntari[]> {
@@ -72,6 +72,7 @@ export interface DadesVoluntari {
   disponibilitat?: Disponibilitat;
   consentimentDades?: boolean;
   actiu?: boolean;
+  rolAcces?: 'VOLUNTARI' | 'ADMIN_AVPC';
   emailAcces?: string;
   contrasenyaAcces?: string;
 }

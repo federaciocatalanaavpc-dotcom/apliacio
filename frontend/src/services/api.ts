@@ -17,7 +17,7 @@ export interface UsuariActual {
   id: string;
   nom: string;
   usuari: string;
-  rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI';
+  rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC';
   agrupacioId: string | null;
   agrupacioNom: string | null;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
 import { obtenirVoluntariPropi } from '../services/voluntaris';
 import { DISPONIBILITAT_LABEL } from '../components/SelectorDisponibilitat';
@@ -82,6 +82,8 @@ export default function Dashboard() {
       </main>
     );
   }
+
+  if (usuari?.rol === 'ADMIN_AVPC') return <Navigate to="/gestio-avpc" replace />;
 
   return (
     <main className="page dashboard-shell">

@@ -16,10 +16,10 @@ export default function Capcalera() {
   const navigate = useNavigate();
   const location = useLocation();
   const esVoluntari = usuari?.rol === 'VOLUNTARI';
-  const context = obtenirContext(location.pathname);
+  const context = usuari?.rol === 'ADMIN_AVPC' ? { label: 'Gestió AVPC', classe: 'app-header--avpc' } : obtenirContext(location.pathname);
   const inicial = (usuari?.nom || usuari?.agrupacioNom || 'U').trim().charAt(0).toUpperCase();
   const nomVisible = usuari?.nom || usuari?.agrupacioNom || 'Usuari';
-  const rolVisible = usuari?.rol === 'FEDERACIO' ? 'Administrador Federació' : usuari?.rol === 'AGRUPACIO' ? 'Associació' : 'Voluntari';
+  const rolVisible = usuari?.rol === 'ADMIN_AVPC' ? 'Administrador AVPC' : usuari?.rol === 'FEDERACIO' ? 'Administrador Federació' : usuari?.rol === 'AGRUPACIO' ? 'Associació' : 'Voluntari';
 
   function handleLogout() {
     logout();

@@ -1,14 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { prisma } from '../prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'canvia_aquest_secret';
 
 export interface AuthRequest extends Request {
-  usuari?: { id: string; rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI'; agrupacioId: string | null };
+  usuari?: { id: string; rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC'; agrupacioId: string | null };
 }
 
 // Comprova que hi ha un token vàlid i afegeix l'usuari a la request
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const capçalera = req.headers.authorization;
   if (!capçalera || !capçalera.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Token no proporcionat' });
@@ -17,10 +18,25 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   try {
     const payload = jwt.verify(token, JWT_SECRET) as {
       id: string;
-      rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI';
+      rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC';
       agrupacioId: string | null;
     };
-    req.usuari = payload;
+    // Consulta el rol actual: retirar permisos ha de tenir efecte amb tokens antics.
+    const actual = await prisma.usuari.findUnique({
+      where: { id: payload.id }, select: { id: true, rol: true, agrupacioId: true, actiu: true },
+    });
+    if (!actual || !actual.actiu) return res.status(401).json({ error: 'Compte no disponible' });
+    if (actual.rol === 'ADMIN_AVPC') {
+      const seccio = req.baseUrl.split('/').pop();
+      const permeses = ['auth', 'voluntaris', 'serveis', 'proveidors', 'equipament',
+        'vehicles', 'material', 'avisos', 'push', 'auditoria', 'provincies',
+        'tipus-vehicles', 'tipus-material', 'tipus-servei', 'categoria-servei',
+        'localitat-servei', 'sollicitant-servei', 'nom-equipament'];
+      if (!actual.agrupacioId || !permeses.includes(seccio || '')) {
+        return res.status(403).json({ error: 'Accés limitat a Gestió AVPC' });
+      }
+    }
+    req.usuari = actual;
     next();
   } catch {
     return res.status(401).json({ error: 'Token invàlid o caducat' });
@@ -55,5 +71,5 @@ export function bloquejaVoluntaris(req: AuthRequest, res: Response, next: NextFu
 // vehicles, material, documents, etc.
 export function potGestionarAgrupacio(req: AuthRequest, agrupacioId: string): boolean {
   if (req.usuari?.rol === 'FEDERACIO') return true;
-  return req.usuari?.rol === 'AGRUPACIO' && req.usuari.agrupacioId === agrupacioId;
+  return (req.usuari?.rol === 'AGRUPACIO' || req.usuari?.rol === 'ADMIN_AVPC') && req.usuari.agrupacioId === agrupacioId;
 }

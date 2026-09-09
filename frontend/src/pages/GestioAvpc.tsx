@@ -36,7 +36,7 @@ export default function GestioAvpc() {
       <main className="page workspace-page workspace-page--avpc">
         <div className="workspace-subnav">
           <button onClick={() => setSeccio(null)} className="workspace-back-button">← Gestió AVPC</button>
-          <Link to="/federacio" className="workspace-switch-link">Canviar a Federació →</Link>
+          {usuariActual?.rol !== 'ADMIN_AVPC' && (<Link to="/federacio" className="workspace-switch-link">Canviar a Federació →</Link>)}
         </div>
 
         <section className="workspace-inner-hero workspace-inner-hero--avpc">
@@ -64,7 +64,7 @@ export default function GestioAvpc() {
     <main className="page workspace-page workspace-page--avpc">
       <div className="workspace-subnav">
         <Link to="/" className="workspace-back-link">← Inici</Link>
-        <Link to="/federacio" className="workspace-switch-link">Canviar a Federació →</Link>
+        {usuariActual?.rol !== 'ADMIN_AVPC' && (<Link to="/federacio" className="workspace-switch-link">Canviar a Federació →</Link>)}
       </div>
 
       <section className="workspace-home-hero workspace-home-hero--avpc">
@@ -102,7 +102,7 @@ export default function GestioAvpc() {
           <strong>Dades connectades amb la Federació</strong>
           <p>La informació compartida es manté vinculada entre els dos espais segons els permisos de cada usuari.</p>
         </div>
-        <Link to="/federacio">Anar a Federació →</Link>
+        {usuariActual?.rol !== 'ADMIN_AVPC' && (<Link to="/federacio">Anar a Federació →</Link>)}
       </section>
     </main>
   );

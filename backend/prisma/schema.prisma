@@ -18,6 +18,7 @@ enum Rol {
   FEDERACIO
   AGRUPACIO
   VOLUNTARI
+  ADMIN_AVPC
 }
 
 enum Disponibilitat {

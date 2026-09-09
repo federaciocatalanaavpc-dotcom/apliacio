@@ -46,6 +46,7 @@ const buit = {
   altresAgrupacions: '',
   disponibilitat: 'NO_DISPONIBLE' as Disponibilitat,
   consentimentDades: false,
+  rolAcces: 'VOLUNTARI' as 'VOLUNTARI' | 'ADMIN_AVPC',
   emailAcces: '',
   contrasenyaAcces: '',
 };
@@ -117,6 +118,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
         altresAgrupacions: form.altresAgrupacions || undefined,
         disponibilitat: form.disponibilitat,
         consentimentDades: form.consentimentDades,
+        rolAcces: form.rolAcces,
         emailAcces: form.emailAcces || undefined,
         contrasenyaAcces: form.contrasenyaAcces || undefined,
       });
@@ -149,6 +151,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
       altresAgrupacions: v.altresAgrupacions || '',
       disponibilitat: v.disponibilitat,
       consentimentDades: v.consentimentDades,
+      rolAcces: v.usuari?.rol === 'ADMIN_AVPC' ? 'ADMIN_AVPC' : 'VOLUNTARI',
       emailAcces: '',
       contrasenyaAcces: '',
     });
@@ -177,6 +180,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
         altresEmails: editForm.altresEmails || undefined,
         altresAgrupacions: editForm.altresAgrupacions || undefined,
         disponibilitat: editForm.disponibilitat,
+        rolAcces: voluntaris.find((v) => v.id === editantId)?.usuari ? editForm.rolAcces : undefined,
       });
       setEditantId(null);
       carregar();
@@ -380,6 +384,14 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
               Si li dones un email i contrasenya, el voluntari podrà connectar-se ell mateix per confirmar
               assistència als serveis. Si ho deixes en blanc, l'associació gestionarà els seus serveis directament.
             </p>
+<div style={{ marginBottom: 10 }}>
+              <label>Tipus de compte</label>
+              <select aria-label="Tipus de compte" value={form.rolAcces} onChange={(e) => setForm({ ...form, rolAcces: e.target.value as 'VOLUNTARI' | 'ADMIN_AVPC' })}>
+                <option value="VOLUNTARI">Voluntari ras</option>
+                <option value="ADMIN_AVPC">Administrador AVPC</option>
+              </select>
+              <p className="text-muted" style={{ fontSize: 12 }}>L'administrador gestiona només la seva AVPC: voluntaris, serveis, estadístiques, proveïdors, inventari i alertes.</p>
+            </div>
             <div style={{ marginBottom: 10 }}>
               <label>Email d'accés</label>
               <input type="email" value={form.emailAcces} onChange={(e) => setForm({ ...form, emailAcces: e.target.value })} style={{ width: '100%' }} />
@@ -438,7 +450,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                     <td className="text-muted">{v.dni || '—'}</td>
                     <td className="text-muted">{v.telefon || '—'}</td>
                     <td><span style={{ color: DISPONIBILITAT_COLOR[v.disponibilitat], fontWeight: 600 }}>{DISPONIBILITAT_LABEL[v.disponibilitat]}</span></td>
-                    <td className="text-muted">{v.usuari ? 'Sí' : 'No'}</td>
+                    <td className="text-muted">{v.usuari ? (v.usuari.rol === 'ADMIN_AVPC' ? 'Administrador AVPC' : 'Voluntari ras') : 'No'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => obrirEdicio(v)} style={{ fontSize: 12 }}>
@@ -489,6 +501,14 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                               ))}
                             </select>
                           </div>
+                          {v.usuari && (<div style={{ marginBottom: 10 }}>
+              <label>Tipus de compte</label>
+              <select aria-label="Tipus de compte" value={editForm.rolAcces} onChange={(e) => setEditForm({ ...editForm, rolAcces: e.target.value as 'VOLUNTARI' | 'ADMIN_AVPC' })}>
+                <option value="VOLUNTARI">Voluntari ras</option>
+                <option value="ADMIN_AVPC">Administrador AVPC</option>
+              </select>
+              <p className="text-muted" style={{ fontSize: 12 }}>L'administrador gestiona només la seva AVPC: voluntaris, serveis, estadístiques, proveïdors, inventari i alertes.</p>
+            </div>)}
                           <button type="submit">Desar</button>
                         </form>
                       </td>
