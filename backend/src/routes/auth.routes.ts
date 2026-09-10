@@ -3,8 +3,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { prisma } from '../prisma';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
-import { compteDisponible, resultatLogin, repteValid, passwordValida, intentFallat, xifrar, desxifrar, totp, validarMfa, hashToken, tokenPer, prepararInvitacio, urlInvitacio } from '../services/seguretat.service';
-import * as OTPAuth from 'otpauth';
+import { compteDisponible, resultatLogin, repteValid, passwordValida, intentFallat, hashToken, tokenPer, prepararInvitacio, urlInvitacio } from '../services/seguretat.service';
 const router=Router();
 const dummy=bcrypt.hash('dummy-'+crypto.randomBytes(20).toString('hex'),12);
 router.post('/registre', (_req,res)=>res.status(403).json({error:'El registre públic està desactivat. Demana una invitació.'}));
@@ -23,13 +22,13 @@ router.post('/login',async(req,res)=>{
 });
 router.post('/completar-contrasenya',async(req,res)=>{
  const ctx=await repteValid(req.body.repte,'setup');
- if(!ctx||!ctx.u.passwordMustChange||(ctx.u.mfaEnabled&&!ctx.p.mfaPassed)) return res.status(401).json({error:'Torna a iniciar sessió'});
+ if(!ctx||!ctx.u.passwordMustChange) return res.status(401).json({error:'Torna a iniciar sessió'});
  if(!passwordValida(req.body.contrasenya)) return res.status(400).json({error:'Utilitza una contrasenya pròpia de 12 caràcters o més (màxim 72 bytes).'});
  if(await bcrypt.compare(req.body.contrasenya,ctx.u.contrasenya)) return res.status(400).json({error:'Tria una contrasenya diferent de l’anterior.'});
  const hash=await bcrypt.hash(req.body.contrasenya,12);
  const saved=await prisma.usuari.updateMany({where:{id:ctx.u.id,sessionVersion:ctx.u.sessionVersion,passwordMustChange:true},data:{contrasenya:hash,passwordMustChange:false,sessionVersion:{increment:1}}});
  if(!saved.count) return res.status(401).json({error:'El repte ha caducat'});
- res.json(await resultatLogin(await prisma.usuari.findUniqueOrThrow({where:{id:ctx.u.id}}),!!ctx.p.mfaPassed));
+ res.json(await resultatLogin(await prisma.usuari.findUniqueOrThrow({where:{id:ctx.u.id}})));
 });
 router.post('/invitacio',async(req,res)=>{
  const {token,contrasenya}=req.body;
@@ -41,41 +40,15 @@ router.post('/invitacio',async(req,res)=>{
  if(!changed.count) return res.status(400).json({error:'La invitació ja s’ha utilitzat.'});
  res.json(await resultatLogin(await prisma.usuari.findUniqueOrThrow({where:{id:u.id}})));
 });
-router.post('/mfa/iniciar',async(req,res)=>{
- const ctx=await repteValid(req.body.repte,'setup');
- if(!ctx||ctx.u.passwordMustChange||ctx.u.mfaEnabled) return res.status(401).json({error:'Torna a iniciar sessió'});
- let enc=ctx.u.mfaPendingSecret;
- if(!enc){
-  const candidate=xifrar(new OTPAuth.Secret({size:20}).base32);
-  await prisma.usuari.updateMany({where:{id:ctx.u.id,sessionVersion:ctx.u.sessionVersion,mfaPendingSecret:null,mfaEnabled:false},data:{mfaPendingSecret:candidate}});
-  enc=(await prisma.usuari.findUniqueOrThrow({where:{id:ctx.u.id}})).mfaPendingSecret;
- }
- if(!enc)return res.status(409).json({error:'Torna a iniciar sessió'});
- const secret=desxifrar(enc); res.json({secret,uri:totp(ctx.u,secret).toString()});
-});
-router.post('/mfa/activar',async(req,res)=>{
- const ctx=await repteValid(req.body.repte,'setup');
- if(!ctx||ctx.u.passwordMustChange||ctx.u.mfaEnabled) return res.status(401).json({error:'Torna a iniciar sessió'});
- if(!await validarMfa(ctx.u,req.body.codi,true)){await intentFallat(ctx.u.id);return res.status(400).json({error:'Codi incorrecte o ja utilitzat'});}
- const recovery=Array.from({length:8},()=>crypto.randomBytes(12).toString('hex'));
- const changed=await prisma.usuari.updateMany({where:{id:ctx.u.id,sessionVersion:ctx.u.sessionVersion,mfaEnabled:false,mfaPendingSecret:ctx.u.mfaPendingSecret},data:{mfaSecret:ctx.u.mfaPendingSecret,mfaPendingSecret:null,mfaEnabled:true,mfaRecovery:recovery.map(hashToken),sessionVersion:{increment:1},authFailed:0,authLockedUntil:null}});
- if(!changed.count) return res.status(409).json({error:'Configuració ja completada'});
- res.json({...await resultatLogin(await prisma.usuari.findUniqueOrThrow({where:{id:ctx.u.id}}),true),recovery});
-});
-router.post('/mfa/verificar',async(req,res)=>{
- const ctx=await repteValid(req.body.repte,'mfa');
- if(!ctx||!ctx.u.mfaEnabled) return res.status(401).json({error:'Torna a iniciar sessió'});
- if(!await validarMfa(ctx.u,req.body.codi)){await intentFallat(ctx.u.id);return res.status(400).json({error:'Codi incorrecte o ja utilitzat'});}
- await prisma.usuari.update({where:{id:ctx.u.id},data:{authFailed:0,authLockedUntil:null}});
- res.json(await resultatLogin(ctx.u,true));
-});
+// Pantalles antigues han de tornar al login. Un repte MFA mai dona accés.
+router.post('/mfa/:accio',(_req,res)=>res.status(410).json({error:'La doble verificació s’ha retirat. Recarrega la pàgina i entra amb la contrasenya.'}));
 router.patch('/contrasenya',requireAuth,async(req:AuthRequest,res)=>{
  const {contrasenyaActual,contrasenyaNova}=req.body;
  const u=await prisma.usuari.findUniqueOrThrow({where:{id:req.usuari!.id}});
  if(typeof contrasenyaActual!=='string'||!await bcrypt.compare(contrasenyaActual,u.contrasenya))return res.status(401).json({error:'Contrasenya actual incorrecta'});
  if(!passwordValida(contrasenyaNova))return res.status(400).json({error:'La nova contrasenya ha de tenir almenys 12 caràcters.'});
  const updated=await prisma.usuari.update({where:{id:u.id},data:{contrasenya:await bcrypt.hash(contrasenyaNova,12),sessionVersion:{increment:1},passwordMustChange:false,accessTokenHash:null,accessExpires:null}});
- res.json({ok:true,token:tokenPer(updated,'access',u.mfaEnabled)});
+ res.json({ok:true,token:tokenPer(updated,'access')});
 });
 router.post('/sortir',requireAuth,async(req:AuthRequest,res)=>{
  await prisma.$transaction([
@@ -85,7 +58,7 @@ router.post('/sortir',requireAuth,async(req:AuthRequest,res)=>{
 });
 router.get('/me',requireAuth,async(req:AuthRequest,res)=>{
  const u=await prisma.usuari.findUniqueOrThrow({where:{id:req.usuari!.id}});
- res.json((await resultatLogin(u,u.mfaEnabled)).usuari);
+ res.json((await resultatLogin(u)).usuari);
 });
 router.post('/invitacions/:id',requireAuth,async(req:AuthRequest,res)=>{
  const u=await prisma.usuari.findUnique({where:{id:req.params.id}});

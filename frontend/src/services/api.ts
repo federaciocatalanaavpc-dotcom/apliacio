@@ -22,7 +22,7 @@ export interface UsuariActual {
   agrupacioNom: string | null;
 }
 
-export interface RespostaAcces { token?:string; usuari?:UsuariActual; pas?:'password'|'enrol'|'mfa'; repte?:string; recovery?:string[]; }
+export interface RespostaAcces { token?:string; usuari?:UsuariActual; pas?:'password'; repte?:string; }
 export function desarSessio(data:RespostaAcces) {
   if(!data.token || !data.usuari) throw new Error('Accés incomplet');
   sessionStorage.setItem('token',data.token); sessionStorage.setItem('usuari',JSON.stringify(data.usuari));

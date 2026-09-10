@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { llegirToken, compteDisponible, esAdministrador } from '../services/seguretat.service';
+import { llegirToken, compteDisponible } from '../services/seguretat.service';
 import { prisma } from '../prisma';
 
 
@@ -21,7 +21,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
     const actual = await prisma.usuari.findUnique({
       where: { id: payload.id },
     });
-    if (!actual || actual.sessionVersion !== payload.sv || actual.passwordMustChange || actual.accessTokenHash || !await compteDisponible(actual) || (esAdministrador(actual.rol) && (!actual.mfaEnabled || !payload.mfaPassed))) return res.status(401).json({ error: 'Compte no disponible' });
+    if (!actual || actual.sessionVersion !== payload.sv || actual.passwordMustChange || actual.accessTokenHash || !await compteDisponible(actual)) return res.status(401).json({ error: 'Compte no disponible' });
     if (actual.rol === 'VOLUNTARI') {
       const seccio=req.baseUrl.split('/').pop();
       if (!['auth','voluntaris','serveis','equipament','push'].includes(seccio || '')) return res.status(403).json({error:'Accés limitat al teu espai de voluntari'});

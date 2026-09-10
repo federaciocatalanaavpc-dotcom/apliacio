@@ -15,10 +15,9 @@ let server;
 (async()=>{
  const suffix=crypto.randomBytes(6).toString('hex');
  const [a,b]=await Promise.all(['A','B'].map(x=>prisma.agrupacio.create({data:{nom:'Prova '+x+suffix}})));
- const secret='JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
- const fed=await prisma.usuari.create({data:{nom:'Prova federacio',usuari:'fed-'+suffix,rol:'FEDERACIO',contrasenya:await bcrypt.hash(password,12),passwordMustChange:false,mfaEnabled:true,mfaSecret:security.xifrar(secret)}});
- const manager=await prisma.usuari.create({data:{nom:'Prova associacio',usuari:'manager-'+suffix,rol:'AGRUPACIO',agrupacioId:a.id,contrasenya:await bcrypt.hash(password,12),passwordMustChange:false,mfaEnabled:true,mfaSecret:security.xifrar(secret)}});
- const fedToken=security.tokenPer(fed,'access',true),mgrToken=security.tokenPer(manager,'access',true);
+ const fed=await prisma.usuari.create({data:{nom:'Prova federacio',usuari:'fed-'+suffix,rol:'FEDERACIO',contrasenya:await bcrypt.hash(password,12),passwordMustChange:false,mfaEnabled:true,mfaSecret:'legacy-encrypted-fixture'}});
+ const manager=await prisma.usuari.create({data:{nom:'Prova associacio',usuari:'manager-'+suffix,rol:'AGRUPACIO',agrupacioId:a.id,contrasenya:await bcrypt.hash(password,12),passwordMustChange:false,mfaEnabled:true,mfaSecret:'legacy-encrypted-fixture'}});
+ const fedToken=security.tokenPer(fed,'access'),mgrToken=security.tokenPer(manager,'access');
  server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const base='http://127.0.0.1:'+server.address().port+'/api/';
  async function call(path,method='GET',body,token){
@@ -52,30 +51,37 @@ let server;
  const file=await fetch(base+'documents/'+docs[0].id+'/fitxer',{headers:{Authorization:'Bearer '+mgrToken}});assert.equal(file.status,200);assert.match(file.headers.get('cache-control'),/no-store/);assert.equal(await file.text(),'%PDF-1.4\nFictici');
  const promote=await call('voluntaris/'+vid,'PATCH',{rolAcces:'ADMIN_AVPC'},mgrToken);assert.equal(promote.status,200,JSON.stringify(promote.data));
  assert.equal((await call('voluntaris/me','GET',undefined,vToken)).status,401);
- const login=await call('auth/login','POST',{usuari:create.data.usuari.usuari,contrasenya:password});assert.equal(login.data.pas,'enrol');assert.equal(login.data.token,undefined);
- assert.equal((await call('voluntaris','GET',undefined,login.data.repte)).status,401);
- const enrol=await call('auth/mfa/iniciar','POST',{repte:login.data.repte});assert.ok(enrol.data.secret);
- const current=await prisma.usuari.findUniqueOrThrow({where:{id:uid}});
- const code=security.totp(current,enrol.data.secret).generate();
- const activated=await call('auth/mfa/activar','POST',{repte:login.data.repte,codi:code});assert.equal(activated.status,200,JSON.stringify(activated.data));assert.equal(activated.data.recovery.length,8);
- const adminToken=activated.data.token;
+ const login=await call('auth/login','POST',{usuari:create.data.usuari.usuari,contrasenya:password});
+ assert.equal(login.status,200);assert.ok(login.data.token);assert.equal(login.data.pas,undefined);
+ const adminToken=login.data.token;
  assert.equal((await call('documents','GET',undefined,adminToken)).status,403);
  assert.equal((await call('voluntaris?agrupacioId='+b.id,'GET',undefined,adminToken)).data.every(v=>v.agrupacioId===a.id),true);
- const login2=await call('auth/login','POST',{usuari:create.data.usuari.usuari,contrasenya:password});assert.equal(login2.data.pas,'mfa');
- assert.equal((await call('auth/mfa/verificar','POST',{repte:login2.data.repte,codi:code})).status,400,'el codi TOTP no es pot reutilitzar');
- const recovered=await call('auth/mfa/verificar','POST',{repte:login2.data.repte,codi:activated.data.recovery[0]});assert.equal(recovered.status,200);
- assert.equal((await call('auth/mfa/verificar','POST',{repte:login2.data.repte,codi:activated.data.recovery[0]})).status,400);
+ // Comptes amb segon factor configurat anteriorment també entren només amb contrasenya.
+ for(const account of [fed,manager]) {
+   const result=await call('auth/login','POST',{usuari:account.usuari,contrasenya:password});
+   assert.equal(result.status,200);assert.ok(result.data.token);assert.equal(result.data.pas,undefined);
+   assert.equal((await call('auth/me','GET',undefined,result.data.token)).status,200);
+ }
+ for(const action of ['iniciar','activar','verificar']) {
+   const retired=await call('auth/mfa/'+action,'POST',{repte:'old-challenge',codi:'123456'});
+   assert.equal(retired.status,410);assert.equal(retired.data.token,undefined);
+ }
  const issue=await call('auth/invitacions/'+uid,'POST',{},mgrToken);assert.equal(issue.status,200);
  assert.equal((await call('voluntaris','GET',undefined,adminToken)).status,401);
  const reset=new URLSearchParams(new URL(issue.data.invitacioUrl).hash.slice(1)).get('invitacio');
- const resetResult=await call('auth/invitacio','POST',{token:reset,contrasenya:password+'X'});assert.equal(resetResult.data.pas,'mfa','restablir contrasenya no desactiva MFA');
- const fresh=await call('auth/mfa/verificar','POST',{repte:resetResult.data.repte,codi:activated.data.recovery[1]});assert.ok(fresh.data.token);
+ const resetResult=await call('auth/invitacio','POST',{token:reset,contrasenya:password+'X'});assert.ok(resetResult.data.token);assert.equal(resetResult.data.pas,undefined);
+ const fresh=resetResult;
  await prisma.voluntari.update({where:{id:vid},data:{actiu:false}});
  assert.equal((await call('voluntaris','GET',undefined,fresh.data.token)).status,401,'la baixa invalida accés immediatament');
  const old=await prisma.usuari.create({data:{nom:'Llegat',usuari:'legacy-'+suffix,rol:'AGRUPACIO',agrupacioId:a.id,contrasenya:await bcrypt.hash('123456',10)}});
  const legacy=await call('auth/login','POST',{usuari:old.usuari,contrasenya:'123456'});assert.equal(legacy.data.pas,'password');assert.equal((await call('documents','GET',undefined,legacy.data.repte)).status,401);
- assert.equal((await call('auth/completar-contrasenya','POST',{repte:legacy.data.repte,contrasenya:password})).data.pas,'enrol');
+ const completed=await call('auth/completar-contrasenya','POST',{repte:legacy.data.repte,contrasenya:password});
+ assert.ok(completed.data.token);assert.equal(completed.data.pas,undefined);
+ assert.equal((await call('documents','GET',undefined,completed.data.token)).status,200);
+ assert.equal((await call('auth/completar-contrasenya','POST',{repte:legacy.data.repte,contrasenya:password})).status,401);
+ assert.equal((await call('auth/login','POST',{usuari:old.usuari,contrasenya:'123456'})).status,401);
+ const returning=await call('auth/login','POST',{usuari:old.usuari,contrasenya:password});assert.ok(returning.data.token);assert.equal(returning.data.pas,undefined);
  const form=new FormData();form.append('fitxer',new Blob(['<script>alert(1)</script>'],{type:'application/pdf'}),'fake.pdf');form.append('tipus','ALTRES');form.append('titol','No vàlid');
  assert.equal((await fetch(base+'documents',{method:'POST',headers:{Authorization:'Bearer '+mgrToken},body:form})).status,400);
- console.log('OK: PostgreSQL real; invitacions d’un sol ús, MFA/replay/recuperació, baixes, sessions, mínimes dades, aïllament AVPC i fitxers.');
+ console.log('OK: PostgreSQL real; invitacions d’un sol ús, accés sense MFA per a tots els rols, baixes, sessions, mínimes dades, aïllament AVPC i fitxers.');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(server){server.closeAllConnections();server.close();}await prisma.$disconnect();});

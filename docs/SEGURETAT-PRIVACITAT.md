@@ -8,7 +8,7 @@ Aquest document descriu controls tècnics i tasques pendents. No és una certifi
 - Les columnes històriques segueixen a PostgreSQL. El seu esborrat definitiu està pendent d'autorització específica. Amagar camps no elimina els valors antics ni les còpies anteriors.
 - Invitacions privades d'un sol ús amb caducitat de 24 hores. L'administrador comparteix l'enllaç individualment; l'aplicació no envia missatges automàtics en aquest flux.
 - Contrasenya individual de mínim 12 caràcters, màxim 72 bytes UTF-8; emmagatzemada amb bcrypt. L'administrador no pot consultar contrasenyes.
-- Segon factor obligatori per a Federació, associacions i administradors AVPC, amb autenticador TOTP i vuit codis de recuperació d'un sol ús. No necessita SMS de pagament.
+- Accés amb contrasenya per a tots els rols, inclosos Federació i administradors AVPC. El segon factor s’ha retirat a petició expressa confirmada per l’usuari.
 - Sessions de vuit hores amb versió revocable i comprovació de compte, rol i associació en cada petició. Baixa, canvi de rol, recuperació i sortida invaliden sessions. Sortir també elimina les subscripcions push del compte.
 - Tokens en sessionStorage; retirada de tokens antics de localStorage. La informació privada de l'API no es guarda a la cache offline, i s'eliminen les caches antigues api-cache. Sense connexió, es bloquegen les pantalles privades. sessionStorage segueix sent accessible al JavaScript de l'aplicació: no equival a immunitat davant XSS.
 - Documents privats limitats a la seva AVPC i Federació. El voluntari només rep la seva assistència, no la llista d'altres persones. Les notificacions de pantalla bloquejada mostren un avís genèric.
@@ -17,16 +17,18 @@ Aquest document descriu controls tècnics i tasques pendents. No és una certifi
 
 ## Primer accés després de publicar
 
-Totes les sessions anteriors caduquen. Cada compte existent inicia sessió amb la contrasenya actual i crea una contrasenya pròpia abans d'accedir a dades. Un administrador configura després un autenticador i guarda els codis de recuperació fora de l'app. Els comptes nous entren amb una invitació.
+Els comptes que encara tenen pendent canviar la contrasenya inicial han de crear-ne una de pròpia abans d’accedir a dades. Després entren directament, sense autenticador. Si ja l’havien canviat, no cal repetir el canvi. Els comptes nous entren amb una invitació.
 
 Aquest canvi no converteix retroactivament una contrasenya compartida en una prova d'identitat: abans de comunicar el canvi, cada AVPC ha de comprovar qui controla el seu compte i qui pot rebre invitacions. Un atacant que ja conegui una contrasenya antiga podria intentar configurar el compte primer. Per comptes dubtosos, desactivar-los i verificar personalment el titular abans de reactivar i generar una invitació.
 
-Si es perd l'autenticador, usar un codi de recuperació. Una invitació per canviar contrasenya NO desactiva el segon factor. Si també es perden tots els codis, cal un procediment d'identificació del titular i recuperació supervisada; no hi ha una porta d'accés universal.
+Si s’oblida la contrasenya, l’administrador genera una invitació privada de recuperació, d’un sol ús i amb caducitat. Els comptes que ja havien configurat el segon factor també entren només amb contrasenya. Les rutes antigues de verificació no emeten sessions i demanen tornar al login.
+
+Retirar el segon factor redueix la protecció davant el robatori de contrasenyes. Aquesta decisió s’ha d’incloure a l’avaluació de riscos. Les columnes MFA anteriors es mantenen sense ús per evitar una migració destructiva; no s’exposen als clients ni s’utilitzen per donar accés.
 
 ## Configuració de producció
 
 - Node 22.12 o posterior, preferiblement última revisió mantinguda de la versió 22.
-- JWT_SECRET aleatori d'almenys 32 caràcters. No reutilitzar els exemples. La mateixa clau protegeix els secrets MFA mitjançant AES-256-GCM: no canviar-la sense un pla per migrar els secrets xifrats o tornar a configurar MFA.
+- JWT_SECRET aleatori d'almenys 32 caràcters. No reutilitzar els exemples.
 - DATABASE_URL i DIRECT_URL privades, connexió TLS al proveïdor. FRONTEND_URL ha de ser l'origen públic exacte, sense barra final. VITE_API_URL és públic i no pot contenir secrets.
 - Revisar a Render les capçaleres de render.yaml. Si el servei no està vinculat a aquest Blueprint, la configuració no s'aplica automàticament. La CSP inclosa a index.html sí que viatja amb la compilació.
 - Revocar i substituir credencials de proveïdors que s'hagin compartit en missatges o dispositius no controlats, amb canvi coordinat a Render per evitar interrupcions. No guardar secrets en el repositori.
@@ -61,8 +63,8 @@ Fonts oficials consultades: [AEPD: protecció per defecte](https://www.aepd.es/d
 ## Verificació executada abans de publicar
 
 - Compilació TypeScript del servidor i compilació de la PWA.
-- PostgreSQL real amb dades fictícies: permisos entre AVPC, documents, assistència pròpia, invitacions, MFA i recuperació, revocació de sessions i camps rebutjats.
-- Edge aïllat, pantalla de 390 × 844: inici de sessió amb canvi de contrasenya i MFA, formulari mínim, bloqueig offline, eliminació de cache antiga i revocació en sortir.
+- PostgreSQL real amb dades fictícies: permisos entre AVPC, documents, assistència pròpia, invitacions, canvi de contrasenya i recuperació, revocació de sessions i camps rebutjats.
+- Edge aïllat, pantalla de 390 × 844: inici de sessió amb canvi de contrasenya, sense segon factor, formulari mínim, bloqueig offline, eliminació de cache antiga i revocació en sortir.
 - Còpia xifrada i restauració fictícia: recomptes i documents idèntics; rebuig de destí ocupat i xifrat manipulat.
 
 Aquestes comprovacions no equivalen a una auditoria independent ni cobreixen la configuració real de tots els proveïdors.
