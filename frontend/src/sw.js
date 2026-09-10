@@ -1,7 +1,7 @@
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { NetworkFirst } from 'workbox-strategies';
-import { ExpirationPlugin } from 'workbox-expiration';
+import { NetworkOnly } from 'workbox-strategies';
+
 
 // Aquesta línia és substituïda per vite-plugin-pwa (mode injectManifest) amb
 // la llista de fitxers a precarxar. Sense strategies:'injectManifest', el
@@ -14,24 +14,14 @@ precacheAndRoute(self.__WB_MANIFEST);
 // seguida amb les pestanyes que ja estaven obertes quan es va activar.
 self.skipWaiting();
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k.startsWith('api-cache')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
 });
 
-// Guarda la darrera resposta bona de cada consulta a l'API (llistats
-// d'associacions, vehicles, material, documents...) perquè si es queda sense
-// connexió es puguin seguir consultant les últimes dades conegudes, en lloc
-// de quedar-se la pantalla carregant per sempre. Sempre intenta la xarxa
-// primer (dades fresques quan n'hi ha); només cau al cau si no hi ha resposta
-// en 5 segons. Es descarta la baixada del contingut real dels fitxers
-// (poden pesar molt i l'espai del navegador és limitat).
-registerRoute(
-  ({ request, url }) => request.method === 'GET' && url.pathname.startsWith('/api/') && !url.pathname.includes('/fitxer'),
-  new NetworkFirst({
-    cacheName: 'api-cache',
-    networkTimeoutSeconds: 5,
-    plugins: [new ExpirationPlugin({ maxEntries: 300, maxAgeSeconds: 7 * 24 * 60 * 60 })],
-  })
-);
+// Les dades de l'API són privades: mai es desen al dispositiu.
+registerRoute(({url}) => url.pathname.startsWith('/api/'), new NetworkOnly());
+self.addEventListener('message', event => {
+  if(event.data?.type === 'CLEAR_PRIVATE_CACHE') event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k.startsWith('api-cache')).map(k=>caches.delete(k)))));
+});
 
 self.addEventListener('push', (event) => {
   let dades = { title: 'AVPC Federació', body: 'Tens un avís nou' };
@@ -41,8 +31,8 @@ self.addEventListener('push', (event) => {
     // si el payload no és JSON, es fa servir el missatge per defecte
   }
   event.waitUntil(
-    self.registration.showNotification(dades.title, {
-      body: dades.body,
+    self.registration.showNotification('App Federació', {
+      body: 'Tens un avís nou. Obre l’app per consultar-lo.',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
     })

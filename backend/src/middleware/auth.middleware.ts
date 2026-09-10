@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { llegirToken, compteDisponible, esAdministrador } from '../services/seguretat.service';
 import { prisma } from '../prisma';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'canvia_aquest_secret';
 
 export interface AuthRequest extends Request {
   usuari?: { id: string; rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC'; agrupacioId: string | null };
@@ -16,16 +15,17 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
   }
   const token = capçalera.split(' ')[1];
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as {
-      id: string;
-      rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC';
-      agrupacioId: string | null;
-    };
+    const payload = llegirToken(token);
+    if (payload.purpose !== 'access') return res.status(401).json({ error: 'Completa la verificació d’accés' });
     // Consulta el rol actual: retirar permisos ha de tenir efecte amb tokens antics.
     const actual = await prisma.usuari.findUnique({
-      where: { id: payload.id }, select: { id: true, rol: true, agrupacioId: true, actiu: true },
+      where: { id: payload.id },
     });
-    if (!actual || !actual.actiu) return res.status(401).json({ error: 'Compte no disponible' });
+    if (!actual || actual.sessionVersion !== payload.sv || actual.passwordMustChange || actual.accessTokenHash || !await compteDisponible(actual) || (esAdministrador(actual.rol) && (!actual.mfaEnabled || !payload.mfaPassed))) return res.status(401).json({ error: 'Compte no disponible' });
+    if (actual.rol === 'VOLUNTARI') {
+      const seccio=req.baseUrl.split('/').pop();
+      if (!['auth','voluntaris','serveis','equipament','push'].includes(seccio || '')) return res.status(403).json({error:'Accés limitat al teu espai de voluntari'});
+    }
     if (actual.rol === 'ADMIN_AVPC') {
       const seccio = req.baseUrl.split('/').pop();
       const permeses = ['auth', 'voluntaris', 'serveis', 'proveidors', 'equipament',
@@ -36,7 +36,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
         return res.status(403).json({ error: 'Accés limitat a Gestió AVPC' });
       }
     }
-    req.usuari = actual;
+    req.usuari = {id:actual.id,rol:actual.rol,agrupacioId:actual.agrupacioId};
     next();
   } catch {
     return res.status(401).json({ error: 'Token invàlid o caducat' });

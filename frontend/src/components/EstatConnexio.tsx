@@ -34,7 +34,7 @@ export default function EstatConnexio() {
         textAlign: 'center',
       }}
     >
-      📡 Sense connexió — mostrant les últimes dades desades. No es podran pujar ni desar canvis fins que tornis a tenir internet.
+      📡 Sense connexió. Per protegir les dades personals, cal internet per consultar o modificar informació.
     </div>
   );
 }

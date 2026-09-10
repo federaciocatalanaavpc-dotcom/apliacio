@@ -29,7 +29,7 @@ router.get('/', async (req: AuthRequest, res) => {
     orderBy: { creatEl: 'desc' },
     take: 200,
   });
-  res.json(registres);
+  res.json(registres.map(r=>({...r,detall:r.entitat==='Voluntari'?null:r.detall})));
 });
 
 export default router;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import bcrypt from 'bcrypt';
+import { prepararInvitacio, urlInvitacio, passwordAleatoria } from '../services/seguretat.service';
 import { prisma } from '../prisma';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 import { registrarAuditoria } from '../services/auditoria.service';
@@ -13,20 +13,11 @@ const SELECCIO = {
   nom: true,
   cognoms: true,
   telefon: true,
-  dni: true,
-  genere: true,
-  dataNaixement: true,
-  provincia: true,
-  localitat: true,
-  adreca: true,
-  codiPostal: true,
   dataIngres: true,
   dataBaixa: true,
   numeroIdentificacio: true,
   indicatiu: true,
   carrec: true,
-  altresEmails: true,
-  altresAgrupacions: true,
   disponibilitat: true,
   consentimentDades: true,
   actiu: true,
@@ -122,7 +113,7 @@ router.get('/:id/exportar', async (req: AuthRequest, res) => {
     entitat: 'Voluntari',
     entitatId: voluntari.id,
     agrupacioId: voluntari.agrupacioId,
-    detall: `Exportació de dades: ${nomComplet(voluntari)}`,
+    detall: undefined,
   });
 
   res.json({ voluntari, assistencies, equipamentAssignat, exportatEl: new Date().toISOString() });
@@ -134,19 +125,10 @@ router.post('/', async (req: AuthRequest, res) => {
     nom,
     cognoms,
     telefon,
-    dni,
-    genere,
-    dataNaixement,
-    provincia,
-    localitat,
-    adreca,
-    codiPostal,
     dataIngres,
     numeroIdentificacio,
     indicatiu,
     carrec,
-    altresEmails,
-    altresAgrupacions,
     disponibilitat,
     consentimentDades,
     emailAcces,
@@ -162,28 +144,28 @@ router.post('/', async (req: AuthRequest, res) => {
     return res.status(403).json({ error: "No pots afegir voluntaris a una altra associació" });
   }
   if (!consentimentDades) {
-    return res.status(400).json({ error: "Cal confirmar que el voluntari ha estat informat i dona el seu consentiment" });
+    return res.status(400).json({ error: "Cal confirmar que s’ha facilitat la informació al voluntari" });
   }
   if (rolAcces !== undefined && !['VOLUNTARI', 'ADMIN_AVPC'].includes(rolAcces)) {
     return res.status(400).json({ error: "Tipus de compte no vàlid" });
   }
   if (rolAcces === 'ADMIN_AVPC' && !emailAcces) {
-    return res.status(400).json({ error: "Cal un email i contrasenya per a l'administrador" });
-  }
-  if (emailAcces && (!contrasenyaAcces || contrasenyaAcces.length < 6)) {
-    return res.status(400).json({ error: "Cal una contrasenya d'accés d'almenys 6 caràcters" });
+    return res.status(400).json({ error: "Cal un email per convidar l'administrador" });
   }
 
+
   try {
+    const invitacio = emailAcces ? prepararInvitacio() : null;
     const voluntari = await prisma.$transaction(async (tx) => {
       let usuariId: string | undefined;
       if (emailAcces) {
-        const contrasenyaHash = await bcrypt.hash(contrasenyaAcces, 10);
+        const contrasenyaHash = await passwordAleatoria();
         const usuariNou = await tx.usuari.create({
           data: {
             nom: `${nom} ${cognoms}`,
             usuari: emailAcces.toLowerCase(),
             contrasenya: contrasenyaHash,
+            ...invitacio!.data,
             rol: rolAcces || 'VOLUNTARI',
             agrupacioId: agrupacioFinal,
           },
@@ -196,19 +178,10 @@ router.post('/', async (req: AuthRequest, res) => {
           nom,
           cognoms,
           telefon: telefon || undefined,
-          dni: dni || undefined,
-          genere: genere || undefined,
-          dataNaixement: dataNaixement ? new Date(dataNaixement) : undefined,
-          provincia: provincia || undefined,
-          localitat: localitat || undefined,
-          adreca: adreca || undefined,
-          codiPostal: codiPostal || undefined,
           dataIngres: dataIngres ? new Date(dataIngres) : undefined,
           numeroIdentificacio: numeroIdentificacio || undefined,
           indicatiu: indicatiu || undefined,
           carrec: carrec || undefined,
-          altresEmails: altresEmails || undefined,
-          altresAgrupacions: altresAgrupacions || undefined,
           disponibilitat: disponibilitat || undefined,
           consentimentDades: !!consentimentDades,
           usuariId,
@@ -222,9 +195,9 @@ router.post('/', async (req: AuthRequest, res) => {
       entitat: 'Voluntari',
       entitatId: voluntari.id,
       agrupacioId: agrupacioFinal,
-      detall: `Fitxa creada: ${nomComplet(voluntari)}`,
+      detall: undefined,
     });
-    res.status(201).json(voluntari);
+    res.status(201).json({...voluntari, invitacioUrl: invitacio ? urlInvitacio(invitacio.token) : undefined});
   } catch {
     res.status(400).json({ error: "No s'ha pogut crear el voluntari (potser l'email d'accés ja existeix)" });
   }
@@ -247,20 +220,11 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     nom,
     cognoms,
     telefon,
-    dni,
-    genere,
-    dataNaixement,
-    provincia,
-    localitat,
-    adreca,
-    codiPostal,
     dataIngres,
     dataBaixa,
     numeroIdentificacio,
     indicatiu,
     carrec,
-    altresEmails,
-    altresAgrupacions,
     disponibilitat,
     consentimentDades,
     actiu,
@@ -268,7 +232,11 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   try {
     const voluntari = await prisma.$transaction(async (tx) => {
       if (rolAcces !== undefined && existent.usuariId) {
-        await tx.usuari.update({ where: { id: existent.usuariId }, data: { rol: rolAcces } });
+        await tx.usuari.update({ where: { id: existent.usuariId }, data: { rol: rolAcces, sessionVersion:{increment:1} } });
+      }
+      if (typeof actiu === 'boolean' && existent.usuariId) {
+        await tx.usuari.update({where:{id:existent.usuariId},data:{actiu,sessionVersion:{increment:1}}});
+        await tx.subscripcioPush.deleteMany({where:{usuariId:existent.usuariId}});
       }
       return tx.voluntari.update({
       where: { id: req.params.id },
@@ -276,20 +244,11 @@ router.patch('/:id', async (req: AuthRequest, res) => {
         nom,
         cognoms,
         telefon: telefon === undefined ? undefined : (telefon || null),
-        dni: dni === undefined ? undefined : (dni || null),
-        genere: genere === undefined ? undefined : (genere || null),
-        dataNaixement: dataNaixement === undefined ? undefined : (dataNaixement ? new Date(dataNaixement) : null),
-        provincia: provincia === undefined ? undefined : (provincia || null),
-        localitat: localitat === undefined ? undefined : (localitat || null),
-        adreca: adreca === undefined ? undefined : (adreca || null),
-        codiPostal: codiPostal === undefined ? undefined : (codiPostal || null),
         dataIngres: dataIngres === undefined ? undefined : (dataIngres ? new Date(dataIngres) : null),
         dataBaixa: dataBaixa === undefined ? undefined : (dataBaixa ? new Date(dataBaixa) : null),
         numeroIdentificacio: numeroIdentificacio === undefined ? undefined : (numeroIdentificacio || null),
         indicatiu: indicatiu === undefined ? undefined : (indicatiu || null),
         carrec: carrec === undefined ? undefined : (carrec || null),
-        altresEmails: altresEmails === undefined ? undefined : (altresEmails || null),
-        altresAgrupacions: altresAgrupacions === undefined ? undefined : (altresAgrupacions || null),
         disponibilitat: disponibilitat || undefined,
         consentimentDades: consentimentDades !== undefined ? !!consentimentDades : existent.consentimentDades,
         actiu,
@@ -303,7 +262,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
       entitat: 'Voluntari',
       entitatId: voluntari.id,
       agrupacioId: existent.agrupacioId,
-      detall: `Fitxa editada: ${nomComplet(voluntari)}`,
+      detall: undefined,
     });
     res.json(voluntari);
   } catch {
@@ -346,7 +305,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       entitat: 'Voluntari',
       entitatId: existent.id,
       agrupacioId: existent.agrupacioId,
-      detall: `Fitxa eliminada: ${nomComplet(existent)}`,
+      detall: undefined,
     });
     res.status(204).send();
   } catch {

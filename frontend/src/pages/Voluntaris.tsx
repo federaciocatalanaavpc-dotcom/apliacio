@@ -1,3 +1,5 @@
+import Invitacio from '../components/Invitacio';
+import { generarInvitacio } from '../services/api';
 import { Fragment, useEffect, useState } from 'react';
 import {
   Voluntari,
@@ -31,24 +33,14 @@ const buit = {
   nom: '',
   cognoms: '',
   telefon: '',
-  dni: '',
-  genere: '',
-  dataNaixement: '',
-  provincia: '',
-  localitat: '',
-  adreca: '',
-  codiPostal: '',
   dataIngres: '',
   numeroIdentificacio: '',
   indicatiu: '',
   carrec: '',
-  altresEmails: '',
-  altresAgrupacions: '',
   disponibilitat: 'NO_DISPONIBLE' as Disponibilitat,
   consentimentDades: false,
   rolAcces: 'VOLUNTARI' as 'VOLUNTARI' | 'ADMIN_AVPC',
   emailAcces: '',
-  contrasenyaAcces: '',
 };
 
 export default function VoluntarisPage({ embedded = false }: { embedded?: boolean } = {}) {
@@ -56,8 +48,9 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
   const esFederacio = usuariActual?.rol === 'FEDERACIO';
   const [voluntaris, setVoluntaris] = useState<Voluntari[]>([]);
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
-  const [provincies, setProvincies] = useState<Provincia[]>([]);
   const [agrupacioSeleccionada, setAgrupacioSeleccionada] = useState('');
+  const [invitacioUrl,setInvitacioUrl]=useState('');
+  async function recuperar(id:string) {try {setInvitacioUrl(await generarInvitacio(id));}catch(e:any){setError(e.response?.data?.error || 'No s’ha pogut generar l’enllaç');}}
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const [mostrarFormulari, setMostrarFormulari] = useState(false);
@@ -70,12 +63,8 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
   async function carregar() {
     setCarregant(true);
     try {
-      const [ags, provs] = await Promise.all([
-        esFederacio ? llistarAgrupacions() : Promise.resolve([]),
-        llistarProvincies(),
-      ]);
+      const ags = esFederacio ? await llistarAgrupacions() : [];
       setAgrupacions(ags);
-      setProvincies(provs);
       const v = await llistarVoluntaris(esFederacio ? agrupacioSeleccionada || undefined : undefined);
       setVoluntaris(v);
     } catch {
@@ -98,30 +87,21 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
       return;
     }
     try {
-      await crearVoluntari({
+      const creat = await crearVoluntari({
         agrupacioId: esFederacio ? agrupacioSeleccionada : undefined,
         nom: form.nom,
         cognoms: form.cognoms,
         telefon: form.telefon || undefined,
-        dni: form.dni || undefined,
-        genere: form.genere || undefined,
-        dataNaixement: form.dataNaixement || undefined,
-        provincia: form.provincia || undefined,
-        localitat: form.localitat || undefined,
-        adreca: form.adreca || undefined,
-        codiPostal: form.codiPostal || undefined,
         dataIngres: form.dataIngres || undefined,
         numeroIdentificacio: form.numeroIdentificacio || undefined,
         indicatiu: form.indicatiu || undefined,
         carrec: form.carrec || undefined,
-        altresEmails: form.altresEmails || undefined,
-        altresAgrupacions: form.altresAgrupacions || undefined,
         disponibilitat: form.disponibilitat,
         consentimentDades: form.consentimentDades,
         rolAcces: form.rolAcces,
         emailAcces: form.emailAcces || undefined,
-        contrasenyaAcces: form.contrasenyaAcces || undefined,
       });
+      setInvitacioUrl(creat.invitacioUrl || '');
       setForm(buit);
       setMostrarFormulari(false);
       carregar();
@@ -136,24 +116,14 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
       nom: v.nom,
       cognoms: v.cognoms,
       telefon: v.telefon || '',
-      dni: v.dni || '',
-      genere: v.genere || '',
-      dataNaixement: v.dataNaixement ? v.dataNaixement.slice(0, 10) : '',
-      provincia: v.provincia || '',
-      localitat: v.localitat || '',
-      adreca: v.adreca || '',
-      codiPostal: v.codiPostal || '',
       dataIngres: v.dataIngres ? v.dataIngres.slice(0, 10) : '',
       numeroIdentificacio: v.numeroIdentificacio || '',
       indicatiu: v.indicatiu || '',
       carrec: v.carrec || '',
-      altresEmails: v.altresEmails || '',
-      altresAgrupacions: v.altresAgrupacions || '',
       disponibilitat: v.disponibilitat,
       consentimentDades: v.consentimentDades,
       rolAcces: v.usuari?.rol === 'ADMIN_AVPC' ? 'ADMIN_AVPC' : 'VOLUNTARI',
       emailAcces: '',
-      contrasenyaAcces: '',
     });
   }
 
@@ -166,19 +136,10 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
         nom: editForm.nom,
         cognoms: editForm.cognoms,
         telefon: editForm.telefon || undefined,
-        dni: editForm.dni || undefined,
-        genere: editForm.genere || undefined,
-        dataNaixement: editForm.dataNaixement || undefined,
-        provincia: editForm.provincia || undefined,
-        localitat: editForm.localitat || undefined,
-        adreca: editForm.adreca || undefined,
-        codiPostal: editForm.codiPostal || undefined,
         dataIngres: editForm.dataIngres || undefined,
         numeroIdentificacio: editForm.numeroIdentificacio || undefined,
         indicatiu: editForm.indicatiu || undefined,
         carrec: editForm.carrec || undefined,
-        altresEmails: editForm.altresEmails || undefined,
-        altresAgrupacions: editForm.altresAgrupacions || undefined,
         disponibilitat: editForm.disponibilitat,
         rolAcces: voluntaris.find((v) => v.id === editantId)?.usuari ? editForm.rolAcces : undefined,
       });
@@ -189,7 +150,14 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
     }
   }
 
+  async function canviarEstat(v: Voluntari) {
+    if (!window.confirm(v.actiu ? 'Donar de baixa i tancar l’accés d’aquest voluntari?' : 'Reactivar aquest voluntari i el seu accés?')) return;
+    try { await editarVoluntari(v.id, { actiu: !v.actiu, dataBaixa: null }); await carregar(); }
+    catch { setError('No s’ha pogut canviar l’estat'); }
+  }
+
   async function handleEliminar(id: string) {
+    if (!window.confirm('Eliminar definitivament aquesta fitxa? Si cal conservar-ne l’historial, dona-la de baixa.')) return;
     try {
       await eliminarVoluntari(id);
       carregar();
@@ -277,6 +245,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
         </div>
       )}
 
+      {invitacioUrl && <Invitacio url={invitacioUrl} onClose={()=>setInvitacioUrl('')}/>}
       {error && <p className="text-error">{error}</p>}
 
       {mostrarFormulari && (
@@ -296,51 +265,11 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
               <label>Telèfon</label>
               <input value={form.telefon} onChange={(e) => setForm({ ...form, telefon: e.target.value })} style={{ width: '100%' }} />
             </div>
-            <div style={{ flex: 1 }}>
-              <label>DNI/NIE</label>
-              <input value={form.dni} onChange={(e) => setForm({ ...form, dni: e.target.value })} style={{ width: '100%' }} />
-            </div>
+
           </div>
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <label>Gènere</label>
-              <select value={form.genere} onChange={(e) => setForm({ ...form, genere: e.target.value })} style={{ width: '100%' }}>
-                <option value="">Sense especificar</option>
-                <option value="Home">Home</option>
-                <option value="Dona">Dona</option>
-                <option value="Altre">Altre</option>
-              </select>
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Data de naixement</label>
-              <input type="date" value={form.dataNaixement} onChange={(e) => setForm({ ...form, dataNaixement: e.target.value })} style={{ width: '100%' }} />
-            </div>
-          </div>
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <label>Província</label>
-              <select value={form.provincia} onChange={(e) => setForm({ ...form, provincia: e.target.value })} style={{ width: '100%' }}>
-                <option value="">Sense especificar</option>
-                {provincies.map((p) => (
-                  <option key={p.id} value={p.nom}>{p.nom}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Localitat</label>
-              <input value={form.localitat} onChange={(e) => setForm({ ...form, localitat: e.target.value })} style={{ width: '100%' }} />
-            </div>
-          </div>
-          <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-            <div style={{ flex: 2 }}>
-              <label>Adreça</label>
-              <input value={form.adreca} onChange={(e) => setForm({ ...form, adreca: e.target.value })} style={{ width: '100%' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Codi postal</label>
-              <input value={form.codiPostal} onChange={(e) => setForm({ ...form, codiPostal: e.target.value })} style={{ width: '100%' }} />
-            </div>
-          </div>
+
+
+
           <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}>
               <label>Data d'ingrés</label>
@@ -369,19 +298,13 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
               ))}
             </select>
           </div>
-          <div style={{ marginBottom: 10 }}>
-            <label>Altres emails (opcional)</label>
-            <textarea value={form.altresEmails} onChange={(e) => setForm({ ...form, altresEmails: e.target.value })} rows={2} style={{ width: '100%' }} />
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label>Altres agrupacions a les que pertany (opcional)</label>
-            <textarea value={form.altresAgrupacions} onChange={(e) => setForm({ ...form, altresAgrupacions: e.target.value })} rows={2} style={{ width: '100%' }} />
-          </div>
+
+
 
           <div style={{ borderTop: '1px solid var(--c-border)', marginTop: 6, paddingTop: 12 }}>
             <p style={{ fontWeight: 600, margin: '0 0 4px' }}>Accés a l'app (opcional)</p>
             <p className="text-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
-              Si li dones un email i contrasenya, el voluntari podrà connectar-se ell mateix per confirmar
+              Si li dones un email, es generarà una invitació perquè creï la seva contrasenya i pugui confirmar
               assistència als serveis. Si ho deixes en blanc, l'associació gestionarà els seus serveis directament.
             </p>
 <div style={{ marginBottom: 10 }}>
@@ -396,16 +319,12 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
               <label>Email d'accés</label>
               <input type="email" value={form.emailAcces} onChange={(e) => setForm({ ...form, emailAcces: e.target.value })} style={{ width: '100%' }} />
             </div>
-            <div style={{ marginBottom: 10 }}>
-              <label>Contrasenya</label>
-              <input type="password" value={form.contrasenyaAcces} onChange={(e) => setForm({ ...form, contrasenyaAcces: e.target.value })} style={{ width: '100%' }} />
-            </div>
+
           </div>
 
           <div className="card" style={{ background: 'var(--c-surface-alt)', marginTop: 12, marginBottom: 12 }}>
             <p className="text-muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
-              Aquesta fitxa inclou dades personals (DNI, contacte...). Cal haver informat el voluntari de per què
-              es recullen aquestes dades i tenir el seu consentiment abans de desar-les.
+              Només es recullen les dades necessàries per gestionar l'activitat del voluntari. Facilita-li la informació de protecció de dades de la seva AVPC abans de crear la fitxa.
             </p>
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
               <input
@@ -415,7 +334,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                 required
                 style={{ width: 'auto', marginTop: 2 }}
               />
-              He informat el voluntari sobre el tractament de les seves dades i tinc el seu consentiment
+              He facilitat al voluntari la informació sobre el tractament de les seves dades
             </label>
           </div>
 
@@ -434,7 +353,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
               <tr>
                 <th>Indicatiu</th>
                 <th>Nom</th>
-                <th>DNI</th>
+
                 <th>Telèfon</th>
                 <th>Disponibilitat</th>
                 <th>Accés app</th>
@@ -447,18 +366,20 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                   <tr>
                     <td>{v.indicatiu || '—'}</td>
                     <td>{v.nom} {v.cognoms}{!v.actiu && <span className="badge" style={{ marginLeft: 6, color: 'var(--c-error)', background: 'var(--c-error-bg)' }}>Baixa</span>}</td>
-                    <td className="text-muted">{v.dni || '—'}</td>
+
                     <td className="text-muted">{v.telefon || '—'}</td>
                     <td><span style={{ color: DISPONIBILITAT_COLOR[v.disponibilitat], fontWeight: 600 }}>{DISPONIBILITAT_LABEL[v.disponibilitat]}</span></td>
                     <td className="text-muted">{v.usuari ? (v.usuari.rol === 'ADMIN_AVPC' ? 'Administrador AVPC' : 'Voluntari') : 'No'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
+                        {v.usuari && <button onClick={()=>recuperar(v.usuari!.id)}>Generar enllaç d’accés</button>}
                         <button onClick={() => obrirEdicio(v)} style={{ fontSize: 12 }}>
                           {editantId === v.id ? 'Cancel·lar' : 'Editar'}
                         </button>
                         <button onClick={() => handleExportar(v)} style={{ fontSize: 12 }} title="Exportar les seves dades (dret d'accés)">
                           Exportar dades
                         </button>
+                        <button onClick={() => canviarEstat(v)} style={{fontSize:12}}>{v.actiu ? 'Donar de baixa' : 'Reactivar'}</button>
                         <button onClick={() => handleEliminar(v.id)} className="btn-danger" style={{ fontSize: 12 }}>
                           Eliminar
                         </button>
@@ -467,7 +388,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                   </tr>
                   {editantId === v.id && (
                     <tr>
-                      <td colSpan={7}>
+                      <td colSpan={6}>
                         <form onSubmit={handleGuardarEdicio} style={{ padding: '10px 0', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                           <div>
                             <label>Nom</label>
@@ -481,10 +402,7 @@ export default function VoluntarisPage({ embedded = false }: { embedded?: boolea
                             <label>Telèfon</label>
                             <input value={editForm.telefon} onChange={(e) => setEditForm({ ...editForm, telefon: e.target.value })} />
                           </div>
-                          <div>
-                            <label>DNI/NIE</label>
-                            <input value={editForm.dni} onChange={(e) => setEditForm({ ...editForm, dni: e.target.value })} />
-                          </div>
+
                           <div>
                             <label>Indicatiu</label>
                             <input value={editForm.indicatiu} onChange={(e) => setEditForm({ ...editForm, indicatiu: e.target.value })} style={{ width: 90 }} />

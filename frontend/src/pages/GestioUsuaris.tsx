@@ -1,3 +1,5 @@
+import Invitacio from '../components/Invitacio';
+import { generarInvitacio } from '../services/api';
 import { useEffect, useState } from 'react';
 import { Usuari, crearUsuari, crearUsuariNovaAssociacio, editarUsuari, eliminarUsuari, llistarUsuaris } from '../services/usuaris';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
@@ -5,7 +7,7 @@ import { Provincia, crearProvincia, editarProvincia, eliminarProvincia, llistarP
 import BotoTornar from '../components/BotoTornar';
 
 const buit = {
-  rol: 'AGRUPACIO' as 'FEDERACIO' | 'AGRUPACIO',
+  rol: 'AGRUPACIO' as Usuari['rol'],
   mode: 'nova' as 'nova' | 'existent',
   // usuari de federació, o usuari d'una associació ja existent
   nom: '',
@@ -23,6 +25,8 @@ export default function GestioUsuaris() {
   const [usuaris, setUsuaris] = useState<Usuari[]>([]);
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [provincies, setProvincies] = useState<Provincia[]>([]);
+  const [invitacioUrl,setInvitacioUrl]=useState('');
+  async function recuperar(id:string) {try {setInvitacioUrl(await generarInvitacio(id));}catch(e:any){setError(e.response?.data?.error || 'No s’ha pogut generar l’enllaç');}}
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
   const [ultimLogin, setUltimLogin] = useState<{ associacio: string; login: string } | null>(null);
@@ -36,7 +40,7 @@ export default function GestioUsuaris() {
   const [editProvinciaNom, setEditProvinciaNom] = useState('');
 
   const [editantId, setEditantId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nom: '', rol: 'AGRUPACIO' as 'FEDERACIO' | 'AGRUPACIO', agrupacioId: '', actiu: true, contrasenya: '' });
+  const [editForm, setEditForm] = useState({ nom: '', rol: 'AGRUPACIO' as Usuari['rol'], agrupacioId: '', actiu: true, contrasenya: '' });
 
   async function carregar() {
     setCarregant(true);
@@ -62,29 +66,29 @@ export default function GestioUsuaris() {
     setUltimLogin(null);
     try {
       if (form.rol === 'FEDERACIO') {
-        await crearUsuari({
+        const creat = await crearUsuari({
           nom: form.nom,
           usuari: form.usuari.toLowerCase(),
-          contrasenya: form.contrasenya,
           rol: 'FEDERACIO',
         });
+        setInvitacioUrl(creat.invitacioUrl || '');
       } else if (form.mode === 'nova') {
         const resultat = await crearUsuariNovaAssociacio({
           nomAssociacio: form.nomAssociacio,
           usuari: form.usuariNova || undefined,
           email: form.email || undefined,
           provincia: form.provincia || undefined,
-          contrasenya: form.contrasenya,
         });
+        setInvitacioUrl(resultat.invitacioUrl || '');
         setUltimLogin({ associacio: resultat.agrupacio.nom, login: resultat.usuari.usuari });
       } else {
-        await crearUsuari({
+        const creat = await crearUsuari({
           nom: form.nom,
           usuari: form.usuari.toLowerCase(),
-          contrasenya: form.contrasenya,
           rol: 'AGRUPACIO',
           agrupacioId: form.agrupacioId,
         });
+        setInvitacioUrl(creat.invitacioUrl || '');
       }
       setForm(buit);
       setMostrarFormulari(false);
@@ -109,7 +113,6 @@ export default function GestioUsuaris() {
         rol: editForm.rol,
         agrupacioId: editForm.rol === 'AGRUPACIO' ? editForm.agrupacioId : undefined,
         actiu: editForm.actiu,
-        contrasenya: editForm.contrasenya || undefined,
       });
       setEditantId(null);
       carregar();
@@ -170,6 +173,7 @@ export default function GestioUsuaris() {
         </button>
       </div>
 
+      {invitacioUrl && <Invitacio url={invitacioUrl} onClose={()=>setInvitacioUrl('')}/>}
       {error && <p className="text-error">{error}</p>}
 
       {ultimLogin && (
@@ -189,7 +193,7 @@ export default function GestioUsuaris() {
           <div style={{ marginBottom: 10 }}>
             <label>Rol</label>
             <select value={form.rol} onChange={(e) => setForm({ ...form, rol: e.target.value as any })} style={{ width: '100%' }}>
-              <option value="AGRUPACIO">Associació</option>
+              <option value="AGRUPACIO">Associació</option><option value="VOLUNTARI" disabled>Voluntari (gestionar des de Gestió AVPC)</option><option value="ADMIN_AVPC" disabled>Administrador AVPC</option>
               <option value="FEDERACIO">Federació</option>
             </select>
           </div>
@@ -299,10 +303,7 @@ export default function GestioUsuaris() {
             </>
           )}
 
-          <div style={{ marginBottom: 10 }}>
-            <label>Contrasenya</label>
-            <input type="password" value={form.contrasenya} onChange={(e) => setForm({ ...form, contrasenya: e.target.value })} required minLength={6} style={{ width: '100%' }} />
-          </div>
+
           <button type="submit">Crear usuari</button>
         </form>
       )}
@@ -322,7 +323,8 @@ export default function GestioUsuaris() {
               </p>
 
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button onClick={() => obrirEdicio(u)} style={{ fontSize: 12 }}>
+                <button onClick={()=>recuperar(u.id)}>Generar enllaç d’accés</button>
+                  <button onClick={() => obrirEdicio(u)} style={{ fontSize: 12 }}>
                   {editantId === u.id ? 'Cancel·lar' : 'Editar'}
                 </button>
                 <button onClick={() => handleEliminar(u.id)} className="btn-danger" style={{ fontSize: 12 }}>
@@ -360,10 +362,7 @@ export default function GestioUsuaris() {
                       Actiu
                     </label>
                   </div>
-                  <div style={{ marginBottom: 8 }}>
-                    <label>Restableix la contrasenya (opcional)</label>
-                    <input type="password" value={editForm.contrasenya} onChange={(e) => setEditForm({ ...editForm, contrasenya: e.target.value })} minLength={6} style={{ width: '100%' }} />
-                  </div>
+
                   <button type="submit">Desar canvis</button>
                 </form>
               )}

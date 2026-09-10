@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { prisma } from '../prisma';
+import { compteDisponible } from './seguretat.service';
 
 // Claus VAPID: identifiquen el servidor davant dels navegadors.
 // Es generen UNA VEGADA amb `npx web-push generate-vapid-keys` i es guarden a .env.
@@ -19,6 +20,8 @@ export function clauPublicaVapid() {
 // Si alguna subscripció ha caducat (l'usuari va desinstal·lar o revocar permisos),
 // s'elimina automàticament de la base de dades.
 export async function enviarNotificacio(usuariId: string, titol: string, cos: string) {
+  const u=await prisma.usuari.findUnique({where:{id:usuariId}});
+  if(!await compteDisponible(u))return;
   const subscripcions = await prisma.subscripcioPush.findMany({ where: { usuariId } });
 
   for (const sub of subscripcions) {

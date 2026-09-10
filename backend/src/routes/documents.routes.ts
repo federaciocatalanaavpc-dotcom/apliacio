@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { requireAuth, requireFederacio, AuthRequest, potGestionarAgrupacio, bloquejaVoluntaris } from '../middleware/auth.middleware';
-import { pujadaDocumentsAgrupacio } from '../services/upload.service';
+import { pujadaDocumentsAgrupacio, validarFitxer } from '../services/upload.service';
 
 const router = Router();
 router.use(requireAuth);
@@ -25,11 +25,11 @@ function ambUrlFitxer<T extends { id: string; fitxerMimeType: string | null }>(d
   return { ...doc, fitxerUrl: doc.fitxerMimeType ? `/documents/${doc.id}/fitxer` : null };
 }
 
-// Estatuts, llibre d'actes i altres documents oficials. Tothom veu tots els
-// documents (comuns i de qualsevol associació). No es retorna el contingut
-// del fitxer aquí (seria molt pesat); només si n'hi ha un via fitxerUrl.
-router.get('/', async (_req: AuthRequest, res) => {
+// Documents comuns i propis; Federació pot gestionar totes les associacions.
+// El llistat no retorna el contingut binari del fitxer.
+router.get('/', async (req: AuthRequest, res) => {
   const documents = await prisma.document.findMany({
+    where: req.usuari!.rol === 'FEDERACIO' ? undefined : { OR: [{agrupacioId:null},{agrupacioId:req.usuari!.agrupacioId!}] },
     select: SELECCIO_LLISTA,
     orderBy: { creatEl: 'desc' },
   });
@@ -39,11 +39,12 @@ router.get('/', async (_req: AuthRequest, res) => {
 // Descarrega el contingut real del fitxer (desat a la base de dades).
 router.get('/:id/fitxer', async (req: AuthRequest, res) => {
   const doc = await prisma.document.findUnique({ where: { id: req.params.id } });
+  if (doc?.agrupacioId && !potGestionarAgrupacio(req,doc.agrupacioId)) return res.status(404).json({error:'Fitxer no trobat'});
   if (!doc || !doc.fitxerContingut) {
     return res.status(404).json({ error: 'Fitxer no trobat' });
   }
-  res.setHeader('Content-Type', doc.fitxerMimeType || 'application/octet-stream');
-  res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.fitxerNom || 'document')}"`);
+  res.setHeader('Content-Type', ['application/pdf','image/png','image/jpeg','image/webp'].includes(doc.fitxerMimeType || '') ? doc.fitxerMimeType! : 'application/octet-stream');
+  res.setHeader('Content-Disposition', `${['application/pdf','image/png','image/jpeg','image/webp'].includes(doc.fitxerMimeType || '') ? 'inline' : 'attachment'}; filename="${encodeURIComponent(doc.fitxerNom || 'document')}"`);
   res.send(doc.fitxerContingut);
 });
 
@@ -51,7 +52,7 @@ router.get('/:id/fitxer', async (req: AuthRequest, res) => {
 // crear-hi sol·licituds pendents (sense fitxer, perquè l'associació el
 // pugi més tard). Una associació només puja documents propis (amb fitxer
 // ja adjuntat de seguida) a la seva pròpia "Documentació pròpia".
-router.post('/', pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequest, res) => {
+router.post('/', pujadaDocumentsAgrupacio.single('fitxer'), validarFitxer, async (req: AuthRequest, res) => {
   const { agrupacioId, tipus, titol, dataDocument, pendent } = req.body;
   const esFederacio = req.usuari!.rol === 'FEDERACIO';
   if (!esFederacio && agrupacioId && agrupacioId !== req.usuari!.agrupacioId) {
@@ -85,7 +86,7 @@ router.post('/', pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequ
 
 // Puja el fitxer que resol una sol·licitud pendent. Ho pot fer la federació
 // o la mateixa associació a qui s'ha demanat el document.
-router.patch('/:id', pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequest, res) => {
+router.patch('/:id', pujadaDocumentsAgrupacio.single('fitxer'), validarFitxer, async (req: AuthRequest, res) => {
   const existent = await prisma.document.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Document no trobat' });
   if (existent.agrupacioId ? !potGestionarAgrupacio(req, existent.agrupacioId) : req.usuari!.rol !== 'FEDERACIO') {

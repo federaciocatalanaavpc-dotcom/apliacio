@@ -120,7 +120,7 @@ export default function FormacioPage() {
                   </button>
                 )}
                 {r.url && (
-                  <a href={r.url} target="_blank" rel="noreferrer">
+                  <a href={/^https?:\/\//i.test(r.url) ? r.url : undefined} target="_blank" rel="noreferrer">
                     <button type="button" style={{ fontSize: 13 }}>Obrir enllaç</button>
                   </a>
                 )}

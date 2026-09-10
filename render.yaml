@@ -4,22 +4,12 @@ services:
     env: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm start
-    # NOTA: el pla free de Render no permet discos persistents. Els fitxers
-    # pujats (estatuts, actes, documentació) es guarden al disc efímer del
-    # contenidor i es poden perdre en cada redeploy o reinici del servei.
-    # Si cal persistència real, cal passar a un pla de pagament i afegir:
-    #   disk:
-    #     name: avpc-federacio-uploads
-    #     mountPath: /opt/render/project/src/backend/src/uploads
-    #     sizeGB: 1
-    #
-    # NOTA: la base de dades ja no és el Postgres gratuït de Render (limitat
-    # a 1GB i que caduca) sinó un projecte de Neon (neon.tech, 3GB gratuïts,
-    # sense caducitat). DATABASE_URL es gestiona manualment des del dashboard
-    # de Render (Environment), no amb fromDatabase.
+    # Documents guardats a PostgreSQL. Connexions gestionades a Render.
     envVars:
+      - key: NODE_VERSION
+        value: '22'
       - key: DATABASE_URL
         sync: false
       # Mateixa connexió que DATABASE_URL però SENSE "-pooler" al host. Neon
@@ -44,13 +34,34 @@ services:
     name: avpc-federacio-frontend
     env: static
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     staticPublishPath: dist
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), camera=(), microphone=()
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
+      - key: NODE_VERSION
+        value: '22'
       # Després del primer deploy, edita aquest valor al dashboard de Render
       # amb la URL real del backend, p.ex. https://avpc-federacio-backend.onrender.com/api
       - key: VITE_API_URL

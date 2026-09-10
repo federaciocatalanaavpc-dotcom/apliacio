@@ -1,0 +1,42 @@
+name: Backend security
+on:
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend-security.yml']
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/backend-security.yml']
+permissions:
+  contents: read
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: avpc_test
+          POSTGRES_PASSWORD: fixture-only
+          POSTGRES_DB: avpc_security_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U avpc_test -d avpc_security_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql://avpc_test:fixture-only@localhost:5432/avpc_security_test
+      DIRECT_URL: postgresql://avpc_test:fixture-only@localhost:5432/avpc_security_test
+      TEST_DATABASE_URL: postgresql://avpc_test:fixture-only@localhost:5432/avpc_security_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - run: npm run test:security
+      - run: npm audit --omit=dev --audit-level=high

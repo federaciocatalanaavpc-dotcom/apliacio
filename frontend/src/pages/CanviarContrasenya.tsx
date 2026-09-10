@@ -54,7 +54,7 @@ export default function CanviarContrasenya() {
             value={contrasenyaNova}
             onChange={(e) => setContrasenyaNova(e.target.value)}
             required
-            minLength={6}
+            minLength={12}
             style={{ width: '100%' }}
           />
         </div>
@@ -65,7 +65,7 @@ export default function CanviarContrasenya() {
             value={confirmacio}
             onChange={(e) => setConfirmacio(e.target.value)}
             required
-            minLength={6}
+            minLength={12}
             style={{ width: '100%' }}
           />
         </div>

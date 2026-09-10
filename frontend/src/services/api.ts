@@ -6,7 +6,7 @@ export const api = axios.create({
 
 // Afegeix el token a totes les peticions si hi és
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,35 +22,48 @@ export interface UsuariActual {
   agrupacioNom: string | null;
 }
 
-export async function login(usuari: string, contrasenya: string): Promise<UsuariActual> {
-  const { data } = await api.post('/auth/login', { usuari, contrasenya });
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('usuari', JSON.stringify(data.usuari));
-  return data.usuari;
+export interface RespostaAcces { token?:string; usuari?:UsuariActual; pas?:'password'|'enrol'|'mfa'; repte?:string; recovery?:string[]; }
+export function desarSessio(data:RespostaAcces) {
+  if(!data.token || !data.usuari) throw new Error('Accés incomplet');
+  sessionStorage.setItem('token',data.token); sessionStorage.setItem('usuari',JSON.stringify(data.usuari));
 }
-
+export async function login(usuari:string,contrasenya:string):Promise<RespostaAcces> {
+  const {data}=await api.post('/auth/login',{usuari,contrasenya}); return data;
+}
+function netejarSessio() {
+ sessionStorage.removeItem('token'); sessionStorage.removeItem('usuari');
+ localStorage.removeItem('token'); localStorage.removeItem('usuari');
+ if('caches' in window) caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('api-cache')).map(k=>caches.delete(k)))).catch(()=>{});
+ navigator.serviceWorker?.controller?.postMessage({type:'CLEAR_PRIVATE_CACHE'});
+}
+// Les sessions anteriors persistents no es reutilitzen.
+localStorage.removeItem('token'); localStorage.removeItem('usuari');
 export function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('usuari');
-  // Neteja les respostes de l'API desades pel service worker (mode sense
-  // connexió): en un ordinador compartit, un altre usuari que iniciï sessió
-  // just després i es quedi sense internet no ha de poder veure dades
-  // desades de la sessió anterior.
-  if ('caches' in window) {
-    caches.delete('api-cache').catch(() => {});
-  }
+ const token=sessionStorage.getItem('token');
+ const revoke=token ? api.post('/auth/sortir',{}, {headers:{Authorization:'Bearer '+token}}).catch(()=>{}) : Promise.resolve();
+ netejarSessio();
+ navigator.serviceWorker?.getRegistration().then(r=>r?.pushManager.getSubscription()).then(s=>s?.unsubscribe()).catch(()=>{});
+ return revoke;
+}
+api.interceptors.response.use(r=>r,err=>{
+ if(err.response?.status===401 && !err.config?.url?.startsWith('/auth/')) { netejarSessio(); window.location.replace('/login'); }
+ return Promise.reject(err);
+});
+export async function generarInvitacio(id:string):Promise<string> {
+ const {data}=await api.post('/auth/invitacions/'+id); return data.invitacioUrl;
 }
 
 export function getUsuariActual(): UsuariActual | null {
-  const raw = localStorage.getItem('usuari');
-  return raw ? JSON.parse(raw) : null;
+  const raw = sessionStorage.getItem('usuari');
+  try {return raw ? JSON.parse(raw) : null;} catch {return null;}
 }
 
 // Cada usuari pot canviar la seva pròpia contrasenya (cal saber l'actual).
 // La federació mai veu les contrasenyes en clar; només les pot restablir
 // des de Gestionar usuaris.
 export async function canviarContrasenya(contrasenyaActual: string, contrasenyaNova: string) {
-  await api.patch('/auth/contrasenya', { contrasenyaActual, contrasenyaNova });
+  const {data}=await api.patch('/auth/contrasenya', { contrasenyaActual, contrasenyaNova });
+  sessionStorage.setItem('token',data.token);
 }
 
 // Els fitxers (desats a la base de dades) es serveixen darrere d'autenticació,

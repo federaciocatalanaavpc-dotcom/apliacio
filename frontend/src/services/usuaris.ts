@@ -1,10 +1,11 @@
 import { api } from './api';
 
 export interface Usuari {
+  invitacioUrl?: string;
   id: string;
   nom: string;
   usuari: string;
-  rol: 'FEDERACIO' | 'AGRUPACIO';
+  rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC';
   agrupacioId: string | null;
   agrupacio: { id: string; nom: string } | null;
   actiu: boolean;
@@ -19,8 +20,8 @@ export async function llistarUsuaris(): Promise<Usuari[]> {
 export async function crearUsuari(dades: {
   nom: string;
   usuari: string;
-  contrasenya: string;
-  rol: 'FEDERACIO' | 'AGRUPACIO';
+  contrasenya?: string;
+  rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC';
   agrupacioId?: string;
 }): Promise<Usuari> {
   const { data } = await api.post('/usuaris', dades);
@@ -29,7 +30,7 @@ export async function crearUsuari(dades: {
 
 export async function editarUsuari(
   id: string,
-  dades: Partial<{ nom: string; rol: 'FEDERACIO' | 'AGRUPACIO'; agrupacioId: string; actiu: boolean; contrasenya: string }>
+  dades: Partial<{ nom: string; rol: 'FEDERACIO' | 'AGRUPACIO' | 'VOLUNTARI' | 'ADMIN_AVPC'; agrupacioId: string; actiu: boolean; contrasenya: string }>
 ): Promise<Usuari> {
   const { data } = await api.patch(`/usuaris/${id}`, dades);
   return data;
@@ -46,8 +47,8 @@ export async function crearUsuariNovaAssociacio(dades: {
   usuari?: string;
   email?: string;
   provincia?: string;
-  contrasenya: string;
-}): Promise<{ agrupacio: { id: string; nom: string }; usuari: Usuari }> {
+  contrasenya?: string;
+}): Promise<{ agrupacio: { id: string; nom: string }; usuari: Usuari; invitacioUrl:string }> {
   const { data } = await api.post('/usuaris/nova-associacio', dades);
   return data;
 }

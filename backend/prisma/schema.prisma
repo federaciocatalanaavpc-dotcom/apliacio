@@ -50,6 +50,17 @@ model Usuari {
   id          String   @id @default(uuid())
   nom         String
   usuari      String   @unique
+  sessionVersion Int @default(0)
+  passwordMustChange Boolean @default(true)
+  mfaSecret String?
+  mfaPendingSecret String?
+  mfaEnabled Boolean @default(false)
+  mfaLastStep Int @default(-1)
+  mfaRecovery String[] @default([])
+  accessTokenHash String? @unique
+  accessExpires DateTime?
+  authFailed Int @default(0)
+  authLockedUntil DateTime?
   contrasenya String
   rol         Rol
   actiu       Boolean  @default(true)

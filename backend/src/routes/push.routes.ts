@@ -17,6 +17,10 @@ router.post('/subscriure', async (req: AuthRequest, res) => {
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return res.status(400).json({ error: 'Subscripció incompleta' });
   }
+  try {
+    const u=new URL(endpoint);
+    if(u.protocol!=='https:' || u.port || !['fcm.googleapis.com','updates.push.services.mozilla.com','web.push.apple.com','wns2-par02p.notify.windows.com'].includes(u.hostname) && !u.hostname.endsWith('.push.apple.com') && !u.hostname.endsWith('.notify.windows.com')) return res.status(400).json({error:'Servei push no admès'});
+  } catch {return res.status(400).json({error:'Subscripció no vàlida'});}
   await prisma.subscripcioPush.upsert({
     where: { endpoint },
     update: { p256dh: keys.p256dh, auth: keys.auth, usuariId: req.usuari!.id },

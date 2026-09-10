@@ -26,20 +26,6 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
-// Demana la ubicació del dispositiu amb un límit de temps; si l'usuari la
-// denega o triga massa, es continua sense (el mapa cau al comportament
-// anterior de centrar-se segons les associacions).
-function obtenirUbicacioDispositiu(): Promise<[number, number] | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve([pos.coords.latitude, pos.coords.longitude]),
-      () => resolve(null),
-      { timeout: 6000, maximumAge: 60000 }
-    );
-  });
-}
-
 export default function Mapa() {
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
@@ -53,11 +39,10 @@ export default function Mapa() {
     async function carregar() {
       setCarregant(true);
       try {
-        const [agrupacions, material, vehicles, ubicacioDispositiu] = await Promise.all([
+        const [agrupacions, material, vehicles] = await Promise.all([
           llistarAgrupacions(),
           llistarMaterial(),
           llistarVehicles(),
-          obtenirUbicacioDispositiu(),
         ]);
         if (cancelat || !contenidorRef.current) return;
 
@@ -132,18 +117,7 @@ export default function Mapa() {
           if (id) marcadorsPerId.get(id)?.openPopup();
         };
 
-        if (ubicacioDispositiu) {
-          L.circleMarker(ubicacioDispositiu, {
-            radius: 8,
-            color: '#1a73e8',
-            fillColor: '#1a73e8',
-            fillOpacity: 0.8,
-            weight: 2,
-          })
-            .addTo(mapa)
-            .bindPopup('La teva ubicació');
-          mapa.setView(ubicacioDispositiu, 13);
-        } else if (ambUbicacio.length > 0) {
+        if (ambUbicacio.length > 0) {
           const bounds = L.latLngBounds(ambUbicacio.map((a) => [a.latitud, a.longitud] as [number, number]));
           mapa.fitBounds(bounds, { padding: [30, 30] });
         }

@@ -101,6 +101,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
     select: {
       ...SELECCIO,
       assistencies: {
+        where: req.usuari!.rol === 'VOLUNTARI' ? {voluntari:{usuariId:req.usuari!.id}} : undefined,
         include: { voluntari: { select: { id: true, nom: true, cognoms: true, indicatiu: true } } },
       },
     },
@@ -292,6 +293,8 @@ router.patch('/:id/assistencies/:voluntariId', async (req: AuthRequest, res) => 
   if (!potGestionarAgrupacio(req, servei.agrupacioId)) {
     return res.status(403).json({ error: 'No pots editar les assistències d\'aquest servei' });
   }
+  const membre=await prisma.voluntari.findUnique({where:{id:req.params.voluntariId},select:{agrupacioId:true}});
+  if (!membre || membre.agrupacioId !== servei.agrupacioId) return res.status(403).json({error:'El voluntari no pertany a aquesta AVPC'});
   const { horaEntrada, horaSortida, horesRealitzades, notes, confirmat } = req.body;
   const assistencia = await prisma.assistenciaServei.upsert({
     where: { serveiId_voluntariId: { serveiId: req.params.id, voluntariId: req.params.voluntariId } },

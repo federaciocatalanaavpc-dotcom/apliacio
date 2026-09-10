@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { requireAuth, requireFederacio, AuthRequest } from '../middleware/auth.middleware';
-import { pujadaDocumentsAgrupacio } from '../services/upload.service';
+import { pujadaDocumentsAgrupacio, validarFitxer } from '../services/upload.service';
 
 const router = Router();
 router.use(requireAuth);
@@ -35,16 +35,17 @@ router.get('/:id/fitxer', async (req: AuthRequest, res) => {
   if (!recurs || !recurs.fitxerContingut) {
     return res.status(404).json({ error: 'Fitxer no trobat' });
   }
-  res.setHeader('Content-Type', recurs.fitxerMimeType || 'application/octet-stream');
+  res.setHeader('Content-Type', ['application/pdf','image/png','image/jpeg','image/webp'].includes(recurs.fitxerMimeType || '') ? recurs.fitxerMimeType! : 'application/octet-stream');
   res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(recurs.fitxerNom || 'document')}"`);
   res.send(recurs.fitxerContingut);
 });
 
-router.post('/', requireFederacio, pujadaDocumentsAgrupacio.single('fitxer'), async (req: AuthRequest, res) => {
+router.post('/', requireFederacio, pujadaDocumentsAgrupacio.single('fitxer'), validarFitxer, async (req: AuthRequest, res) => {
   const { titol, url } = req.body;
   if (!titol || (!url && !req.file)) {
     return res.status(400).json({ error: "Cal indicar el títol i almenys un enllaç o un fitxer" });
   }
+  if (url) { try { const parsed=new URL(url); if(!['https:','http:'].includes(parsed.protocol))return res.status(400).json({error:'Enllaç no admès'}); }catch{return res.status(400).json({error:'Enllaç no vàlid'});} }
   try {
     const recurs = await prisma.recursFormacio.create({
       data: {

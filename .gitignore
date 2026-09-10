@@ -1,0 +1,16 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Local dependencies and build output
+node_modules/
+dist/
+# Backups and test artifacts must never be committed
+*.avpc
+*.dump
+*.backup
+*.partial
+playwright-report/
+test-results/
