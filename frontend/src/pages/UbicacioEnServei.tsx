@@ -5,13 +5,14 @@ import {Servei,llistarServeis} from '../services/serveis';
 import {Voluntari,llistarVoluntaris} from '../services/voluntaris';
 import {obtenirUbicacions,assignarPunt,UbicacionsServei,ESTATS} from '../services/ubicacions';
 import SelectorMapa from '../components/SelectorMapa';
+import {TILE_URL,TILE_SUBDOMAINS,TILE_ATTRIBUTION,TILE_MAX_ZOOM} from '../utils/mapTiles';
 const buit={voluntariId:'',puntNom:'',puntLatitud:null as number|null,puntLongitud:null as number|null,puntRadi:100};
 const colors:Record<string,string>={DINS:'#15803d',FORA:'#b91c1c',INCERTA:'#b45309',PRECISIO_BAIXA:'#b45309',ANTIGA:'#64748b',SENSE_PUNT:'#1d4ed8'};
 export default function UbicacioEnServei(){
   const [serveis,setServeis]=useState<Servei[]>([]),[id,setId]=useState(''),[dades,setDades]=useState<UbicacionsServei|null>(null),[voluntaris,setVoluntaris]=useState<Voluntari[]>([]),[form,setForm]=useState(buit),[editar,setEditar]=useState(false),[error,setError]=useState(''),[desant,setDesant]=useState(false);
   const ref=useRef<HTMLDivElement>(null),mapa=useRef<L.Map|null>(null),capa=useRef<L.LayerGroup|null>(null),centrat=useRef('');
   useEffect(()=>{llistarServeis().then(setServeis).catch(()=>setError('No s’han pogut carregar els serveis'));},[]);
-  useEffect(()=>{if(!ref.current)return;const m=L.map(ref.current).setView([41.6,1.5],8);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);mapa.current=m;capa.current=L.layerGroup().addTo(m);return()=>{m.remove();mapa.current=null;};},[]);
+  useEffect(()=>{if(!ref.current)return;const m=L.map(ref.current).setView([41.6,1.5],8);L.tileLayer(TILE_URL,{attribution:TILE_ATTRIBUTION,subdomains:TILE_SUBDOMAINS,maxZoom:TILE_MAX_ZOOM}).addTo(m);mapa.current=m;capa.current=L.layerGroup().addTo(m);return()=>{m.remove();mapa.current=null;};},[]);
   useEffect(()=>{
     let cancelat=false;setDades(null);setVoluntaris([]);setEditar(false);setForm(buit);setError('');centrat.current='';
     if(!id)return;

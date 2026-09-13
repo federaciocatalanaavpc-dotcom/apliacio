@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION, TILE_MAX_ZOOM } from '../utils/mapTiles';
 
 // Vite no resol bé les URL per defecte de les icones de Leaflet; cal
 // apuntar-les manualment als fitxers importats.
@@ -36,8 +37,10 @@ export default function SelectorMapa({
     if (!contenidorRef.current || mapaRef.current) return;
     const centreInicial: [number, number] = latitud != null && longitud != null ? [latitud, longitud] : CENTRE_CATALUNYA;
     const mapa = L.map(contenidorRef.current).setView(centreInicial, latitud != null && longitud != null ? 13 : 8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
+    L.tileLayer(TILE_URL, {
+      attribution: TILE_ATTRIBUTION,
+      subdomains: TILE_SUBDOMAINS,
+      maxZoom: TILE_MAX_ZOOM,
     }).addTo(mapa);
     mapa.on('click', (e: L.LeafletMouseEvent) => {
       onCanviar(e.latlng.lat, e.latlng.lng);

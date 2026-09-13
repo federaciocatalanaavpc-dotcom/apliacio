@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const apiUrl = loadEnv(mode, process.cwd(), 'VITE_').VITE_API_URL || 'https://avpc-federacio-backend.onrender.com/api';
   const apiOrigin = apiUrl.startsWith('/') ? "'self'" : new URL(apiUrl).origin;
-  const csp = ["default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com", "connect-src 'self' " + apiOrigin + " https://nominatim.openstreetmap.org", "frame-src blob:", "object-src 'none'", "base-uri 'self'", "form-action 'self'"].join('; ');
+  const csp = ["default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://server.arcgisonline.com", "connect-src 'self' " + apiOrigin + " https://nominatim.openstreetmap.org", "frame-src blob:", "object-src 'none'", "base-uri 'self'", "form-action 'self'"].join('; ');
   return {
   plugins: [
     react(),

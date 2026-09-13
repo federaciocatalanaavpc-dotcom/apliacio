@@ -9,6 +9,7 @@ import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
 import { Material, llistarMaterial } from '../services/material';
 import { Vehicle, llistarVehicles } from '../services/vehicles';
 import BotoTornar from '../components/BotoTornar';
+import { TILE_URL, TILE_SUBDOMAINS, TILE_ATTRIBUTION, TILE_MAX_ZOOM } from '../utils/mapTiles';
 
 const iconaPerDefecte = L.icon({
   iconUrl: markerIcon,
@@ -70,8 +71,10 @@ export default function Mapa() {
             'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
             { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
           );
-          const carrer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap',
+          const carrer = L.tileLayer(TILE_URL, {
+            attribution: TILE_ATTRIBUTION,
+            subdomains: TILE_SUBDOMAINS,
+            maxZoom: TILE_MAX_ZOOM,
           });
 
           mapaRef.current = L.map(contenidorRef.current, { layers: [satelit, etiquetes] }).setView(CENTRE_CATALUNYA, 8);
