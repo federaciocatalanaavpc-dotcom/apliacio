@@ -4,7 +4,7 @@ Aquest document descriu controls tècnics i tasques pendents. No és una certifi
 
 ## Canvis implementats
 
-- Les fitxes de voluntaris ja no demanen, accepten ni retornen DNI/NIE, domicili, codi postal, província/localitat personal, data de naixement, gènere, altres correus ni altres associacions. Les seus de les AVPC i els llocs de servei es mantenen. El mapa no demana la ubicació del dispositiu.
+- Les fitxes de voluntaris ja no demanen, accepten ni retornen DNI/NIE, domicili, codi postal, província/localitat personal, data de naixement, gènere, altres correus ni altres associacions. Les seus de les AVPC i els llocs de servei es mantenen. El mapa de seus no demana la ubicació del dispositiu; el GPS opcional durant el servei es descriu més avall.
 - Les columnes històriques segueixen a PostgreSQL. El seu esborrat definitiu està pendent d'autorització específica. Amagar camps no elimina els valors antics ni les còpies anteriors.
 - Invitacions privades d'un sol ús amb caducitat de 24 hores. L'administrador comparteix l'enllaç individualment; l'aplicació no envia missatges automàtics en aquest flux.
 - Contrasenya individual de mínim 12 caràcters, màxim 72 bytes UTF-8; emmagatzemada amb bcrypt. L'administrador no pot consultar contrasenyes.
