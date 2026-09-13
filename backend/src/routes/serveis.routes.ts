@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
+import { desarFitxatge, ErrorFitxatge, calcularHores, dataFitxatge } from '../services/fitxatgeServei.service';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -43,7 +44,7 @@ router.get('/', async (req: AuthRequest, res) => {
     const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
     if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
     const serveis = await prisma.servei.findMany({
-      where: { agrupacioId: voluntari.agrupacioId, arxivat: false },
+      where: { agrupacioId: voluntari.agrupacioId, OR: [{arxivat:false},{assistencies:{some:{voluntariId:voluntari.id,horaEntrada:{not:null},horaSortida:null}}}] },
       select: { ...SELECCIO, assistencies: { where: { voluntariId: voluntari.id } } },
       orderBy: { dataInici: 'asc' },
     });
@@ -149,6 +150,7 @@ router.post('/', async (req: AuthRequest, res) => {
     return res.status(403).json({ error: "No pots crear serveis per a una altra associació" });
   }
   try {
+    calcularHores(dataFitxatge(dataInici), dataFitxatge(dataFi));
     const any = new Date(dataInici).getFullYear();
     const servei = await prisma.$transaction(async (tx) => {
       const inici = new Date(any, 0, 1);
@@ -218,6 +220,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   // Cada camp només es toca si venia al body; si no, es conserva el valor existent
   // (evita que un PATCH parcial, com el d'arxivar, buidi la resta de dades).
   try {
+    if (dataInici !== undefined || dataFi !== undefined) calcularHores(dataInici !== undefined ? dataFitxatge(dataInici) : existent.dataInici, dataFi !== undefined ? dataFitxatge(dataFi) : existent.dataFi);
     const servei = await prisma.servei.update({
       where: { id: req.params.id },
       data: {
@@ -279,43 +282,22 @@ router.post('/:id/cancelar', async (req: AuthRequest, res) => {
   if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
   const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
   if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
+  const registrada = await prisma.assistenciaServei.findUnique({where:{serveiId_voluntariId:{serveiId:req.params.id,voluntariId:voluntari.id}}});
+  if (registrada?.horaEntrada || registrada?.horesRealitzades != null) return res.status(409).json({error:'Ja hi ha hores o un fitxatge: contacta amb l’administrador'});
   await prisma.assistenciaServei.updateMany({
-    where: { serveiId: req.params.id, voluntariId: voluntari.id },
+    where: { serveiId: req.params.id, voluntariId: voluntari.id, horaEntrada:null, horesRealitzades:null },
     data: { confirmat: false },
   });
   res.json({ ok: true });
 });
 
-// L'associació marca les hores reals fetes per un voluntari en un servei.
-router.patch('/:id/assistencies/:voluntariId', async (req: AuthRequest, res) => {
-  const servei = await prisma.servei.findUnique({ where: { id: req.params.id } });
-  if (!servei) return res.status(404).json({ error: 'Servei no trobat' });
-  if (!potGestionarAgrupacio(req, servei.agrupacioId)) {
-    return res.status(403).json({ error: 'No pots editar les assistències d\'aquest servei' });
-  }
-  const membre=await prisma.voluntari.findUnique({where:{id:req.params.voluntariId},select:{agrupacioId:true}});
-  if (!membre || membre.agrupacioId !== servei.agrupacioId) return res.status(403).json({error:'El voluntari no pertany a aquesta AVPC'});
-  const { horaEntrada, horaSortida, horesRealitzades, notes, confirmat } = req.body;
-  const assistencia = await prisma.assistenciaServei.upsert({
-    where: { serveiId_voluntariId: { serveiId: req.params.id, voluntariId: req.params.voluntariId } },
-    update: {
-      horaEntrada: horaEntrada ? new Date(horaEntrada) : undefined,
-      horaSortida: horaSortida ? new Date(horaSortida) : undefined,
-      horesRealitzades: horesRealitzades !== undefined ? Number(horesRealitzades) : undefined,
-      notes: notes || undefined,
-      confirmat: confirmat !== undefined ? !!confirmat : undefined,
-    },
-    create: {
-      serveiId: req.params.id,
-      voluntariId: req.params.voluntariId,
-      horaEntrada: horaEntrada ? new Date(horaEntrada) : undefined,
-      horaSortida: horaSortida ? new Date(horaSortida) : undefined,
-      horesRealitzades: horesRealitzades !== undefined ? Number(horesRealitzades) : undefined,
-      notes: notes || undefined,
-      confirmat: !!confirmat,
-    },
-  });
-  res.json(assistencia);
-});
+// L'hora personal es pren del servidor; l'administrador registra dates explícites.
+async function fitxar(req: AuthRequest, res: import('express').Response, mode: 'entrada' | 'sortida' | 'admin') {
+  try { res.json(await desarFitxatge(req,mode)); }
+  catch (e) { if(e instanceof ErrorFitxatge) return res.status(e.status).json({error:e.message}); throw e; }
+}
+router.post('/:id/fitxar-entrada', (req: AuthRequest,res) => fitxar(req,res,'entrada'));
+router.post('/:id/fitxar-sortida', (req: AuthRequest,res) => fitxar(req,res,'sortida'));
+router.patch('/:id/assistencies/:voluntariId', (req: AuthRequest,res) => fitxar(req,res,'admin'));
 
 export default router;

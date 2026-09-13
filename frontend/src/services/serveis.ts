@@ -119,8 +119,12 @@ export async function obtenirDadesEstadistiques(agrupacioId?: string): Promise<S
 export async function marcarAssistencia(
   serveiId: string,
   voluntariId: string,
-  dades: { horaEntrada?: string; horaSortida?: string; horesRealitzades?: number; notes?: string; confirmat?: boolean }
+  dades: { horaEntrada?: string; horaSortida?: string | null; validarHorariServei?: boolean }
 ): Promise<Assistencia> {
   const { data } = await api.patch(`/serveis/${serveiId}/assistencies/${voluntariId}`, dades);
   return data;
+}
+
+export async function fitxarServei(id: string, accio: 'entrada' | 'sortida'): Promise<Assistencia> {
+  const {data}=await api.post(`/serveis/${id}/fitxar-${accio}`,{});return data;
 }

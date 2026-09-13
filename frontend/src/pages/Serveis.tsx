@@ -12,6 +12,8 @@ import { crearAvis } from '../services/avisos';
 import { getUsuariActual } from '../services/api';
 import GestorCataleg from '../components/GestorCataleg';
 import SelectorMapa from '../components/SelectorMapa';
+import { dataLocal, duradaHores, mostrarData } from '../utils/horesServei';
+import HorariAssistent from '../components/HorariAssistent';
 
 const DESTINATARIS_OPCIONS = [
   { valor: 'PRESENCIAL', etiqueta: 'Disponibles: Presencial' },
@@ -21,7 +23,7 @@ const DESTINATARIS_OPCIONS = [
 
 function aDatetimeLocal(iso: string | null): string {
   if (!iso) return '';
-  return iso.slice(0, 16);
+  return dataLocal(iso);
 }
 
 const buit = {
@@ -114,9 +116,9 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
         titol: form.titol,
         maxAssistents: form.maxAssistents ? Number(form.maxAssistents) : undefined,
         collaboracioEmergencies: form.collaboracioEmergencies,
-        dataInici: form.dataInici,
-        dataFi: form.dataFi,
-        limitInscripcio: form.limitInscripcio || undefined,
+        dataInici: new Date(form.dataInici).toISOString(),
+        dataFi: new Date(form.dataFi).toISOString(),
+        limitInscripcio: form.limitInscripcio ? new Date(form.limitInscripcio).toISOString() : undefined,
         tipus: form.tipus || undefined,
         categoria: form.categoria || undefined,
         localitat: form.localitat || undefined,
@@ -357,6 +359,7 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
             <input type="checkbox" checked={form.notificar} onChange={(e) => setForm({ ...form, notificar: e.target.checked })} style={{ width: 'auto' }} />
             Envia una notificació confirmant que s'ha creat el servei
           </label>
+          <p>Durada prevista: <strong>{duradaHores(form.dataInici,form.dataFi)}</strong>. Les hores reals es calcularan amb l’entrada i la sortida.</p>
           <button type="submit">Crear servei</button>
         </form>
       )}
@@ -432,17 +435,6 @@ function GestioAssistents({ serveiId, voluntaris, onCanvi }: { serveiId: string;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serveiId]);
 
-  async function handleHores(voluntariId: string, hores: string) {
-    setError('');
-    try {
-      await marcarAssistencia(serveiId, voluntariId, { horesRealitzades: hores === '' ? undefined : Number(hores), confirmat: true });
-      await carregar();
-      onCanvi();
-    } catch {
-      setError('No s\'han pogut desar les hores');
-    }
-  }
-
   function handleGenerarInforme() {
     if (!servei) return;
     setGenerantPdf(true);
@@ -480,10 +472,11 @@ function GestioAssistents({ serveiId, voluntaris, onCanvi }: { serveiId: string;
       }
       autoTable(doc, {
         startY: y + 4,
-        head: [['Voluntari', 'Confirmat', 'Hores']],
+        head: [['Voluntari', 'Confirmat', 'Entrada', 'Sortida', 'Hores']],
         body: (servei.assistencies || []).map((a) => [
           `${a.voluntari?.nom || ''} ${a.voluntari?.cognoms || ''}`,
           a.confirmat ? 'Sí' : 'No',
+          mostrarData(a.horaEntrada), mostrarData(a.horaSortida),
           a.horesRealitzades != null ? String(a.horesRealitzades) : '—',
         ]),
       });
@@ -501,26 +494,9 @@ function GestioAssistents({ serveiId, voluntaris, onCanvi }: { serveiId: string;
     <div style={{ borderTop: '1px solid var(--c-border)', marginTop: 10, paddingTop: 10 }}>
       {error && <p className="text-error" style={{ fontSize: 12 }}>{error}</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
-        {voluntaris.map((v) => {
-          const assistencia = assistenciesPerVoluntari.get(v.id);
-          return (
-            <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-              <span style={{ flex: 1 }}>
-                {v.nom} {v.cognoms}
-                {assistencia?.confirmat && <span className="badge" style={{ marginLeft: 6, color: 'var(--c-success)', background: 'var(--c-success-bg)' }}>Confirmat</span>}
-              </span>
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                placeholder="Hores"
-                defaultValue={assistencia?.horesRealitzades ?? ''}
-                onBlur={(e) => handleHores(v.id, e.target.value)}
-                style={{ width: 80, fontSize: 12 }}
-              />
-            </div>
-          );
-        })}
+        {servei && voluntaris.map((v) => (
+          <HorariAssistent key={v.id} voluntari={v} servei={servei} assistencia={assistenciesPerVoluntari.get(v.id)} onDesat={async()=>{await carregar();}} />
+        ))}
       </div>
       <button onClick={handleGenerarInforme} disabled={!servei || generantPdf} style={{ fontSize: 12 }}>
         {generantPdf ? 'Generant...' : '📄 Generar informe PDF'}

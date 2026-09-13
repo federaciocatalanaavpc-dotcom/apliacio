@@ -11,7 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "test:security": "node tests/security.integration.cjs",
     "test:backup": "node tests/backup.integration.cjs",
-    "test:browser": "node tests/browser.integration.cjs"
+    "test:browser": "node tests/browser.integration.cjs",
+    "test:hours": "node tests/hours.integration.cjs"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

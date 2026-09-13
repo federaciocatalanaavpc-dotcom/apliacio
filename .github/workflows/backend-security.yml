@@ -39,4 +39,5 @@ jobs:
       - run: npm run build
       - run: npx prisma migrate deploy
       - run: npm run test:security
+      - run: npm run test:hours
       - run: npm audit --omit=dev --audit-level=high

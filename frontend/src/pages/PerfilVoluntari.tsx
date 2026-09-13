@@ -5,7 +5,8 @@ import {
   obtenirVoluntariPropi,
   actualitzarDisponibilitatPropia,
 } from '../services/voluntaris';
-import { Servei, llistarServeis, confirmarAssistencia, cancelarAssistencia } from '../services/serveis';
+import { Servei, llistarServeis, confirmarAssistencia, cancelarAssistencia, fitxarServei } from '../services/serveis';
+import { duradaHores, mostrarData } from '../utils/horesServei';
 import BotoTornar from '../components/BotoTornar';
 import SelectorDisponibilitat from '../components/SelectorDisponibilitat';
 
@@ -42,6 +43,7 @@ export default function PerfilVoluntari() {
   const [serveis, setServeis] = useState<Servei[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
+  const [fitxant,setFitxant]=useState<string | null>(null);
   const [ancora, setAncora] = useState(new Date());
   const [seleccionat, setSeleccionat] = useState(new Date());
   const [actualitzantDisponibilitat, setActualitzantDisponibilitat] = useState(false);
@@ -97,6 +99,13 @@ export default function PerfilVoluntari() {
     }
   }
 
+  async function handleFitxar(id: string, accio: 'entrada' | 'sortida') {
+    if(fitxant) return;setFitxant(id);setError('');
+    try {await fitxarServei(id,accio);await carregar();}
+    catch(e:any){setError(e.response?.data?.error || 'No s’ha pogut fitxar. Comprova la connexió i torna-ho a provar');}
+    finally {setFitxant(null);}
+  }
+
   function moure(delta: number) {
     const nova = new Date(ancora);
     nova.setMonth(nova.getMonth() + delta);
@@ -131,7 +140,7 @@ export default function PerfilVoluntari() {
   const esAvuiSeleccionat = mateixDia(seleccionat, avui);
   const diesVisibles = graellaDelMes(ancora);
   const serveisDe = (d: Date) => serveis.filter((s) => mateixDia(new Date(s.dataInici), d));
-  const serveisDelDia = serveisDe(seleccionat);
+  const serveisDelDia = serveis.filter(s=>mateixDia(new Date(s.dataInici),seleccionat) || (s.assistenciaPropia?.horaEntrada && !s.assistenciaPropia?.horaSortida));
 
   return (
     <div className="page">
@@ -199,13 +208,23 @@ export default function PerfilVoluntari() {
                 {s.localitat ? ` · ${s.localitat}` : ''}
               </p>
               {s.descripcio && <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>{s.descripcio}</p>}
+              <p>Horari previst: {mostrarData(s.dataInici)} — {mostrarData(s.dataFi)} · {duradaHores(s.dataInici,s.dataFi)}</p>
+              <div className="card" style={{marginTop:8}}>
+                <p>Entrada: {mostrarData(s.assistenciaPropia?.horaEntrada || null)}<br/>Sortida: {mostrarData(s.assistenciaPropia?.horaSortida || null)}</p>
+                <strong>{s.assistenciaPropia?.horesRealitzades!=null ? `${s.assistenciaPropia.horesRealitzades.toLocaleString('ca-ES')} h registrades` : s.assistenciaPropia?.horaEntrada?'En servei · pendent de fitxar la sortida':'Sense fitxar'}</strong>
+                {s.assistenciaPropia?.horesRealitzades==null && <div style={{marginTop:10}}>
+                  <button disabled={fitxant!==null} onClick={()=>handleFitxar(s.id,s.assistenciaPropia?.horaEntrada?'sortida':'entrada')}>
+                    {fitxant===s.id?'Desant…':s.assistenciaPropia?.horaEntrada?'Fitxar sortida':'Fitxar entrada'}
+                  </button>
+                </div>}
+              </div>
               <div style={{ marginTop: 8 }}>
                 {s.assistenciaPropia?.confirmat ? (
                   <>
                     <span className="badge" style={{ color: 'var(--c-success)', background: 'var(--c-success-bg)', marginRight: 8 }}>
                       Assistència confirmada
                     </span>
-                    <button onClick={() => handleCancelar(s.id)} style={{ fontSize: 12 }}>Cancel·lar</button>
+                    {!s.assistenciaPropia?.horaEntrada && s.assistenciaPropia?.horesRealitzades==null && <button onClick={() => handleCancelar(s.id)} style={{ fontSize: 12 }}>Cancel·lar</button>}
                   </>
                 ) : (
                   <button onClick={() => handleConfirmar(s.id)} style={{ fontSize: 12 }}>Confirmar assistència</button>
