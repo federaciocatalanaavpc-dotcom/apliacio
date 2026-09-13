@@ -1,4 +1,5 @@
 import { prisma } from '../prisma';
+import { aturarUbicacio } from './ubicacioServei.service';
 import { AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 
 export class ErrorFitxatge extends Error { constructor(public status: number, message: string) { super(message); } }
@@ -54,6 +55,7 @@ export async function desarFitxatge(req: AuthRequest, mode: 'entrada' | 'sortida
     const hores=entrada && sortida ? calcularHores(entrada,sortida) : null;
     const resultat=await tx.assistenciaServei.upsert({where:key,create:{serveiId:servei.id,voluntariId:v.id,confirmat:true,horaEntrada:entrada,horaSortida:sortida,horesRealitzades:hores},update:{confirmat:true,horaEntrada:entrada,horaSortida:sortida,horesRealitzades:hores}});
     await tx.registreAuditoria.create({data:{usuariId:req.usuari!.id,accio:'EDITAR',entitat:'AssistenciaServei',entitatId:resultat.id,agrupacioId:servei.agrupacioId,detall:JSON.stringify({accio:personal?mode:req.body.validarHorariServei?'validar-horari-servei':'corregir-horaris',abans:{entrada:anterior?.horaEntrada,sortida:anterior?.horaSortida,hores:anterior?.horesRealitzades},despres:{entrada,sortida,hores}})}});
+    if (sortida) aturarUbicacio(resultat.id);
     return resultat;
   });
 }

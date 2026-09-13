@@ -3,8 +3,10 @@ import { prisma } from '../prisma';
 import { desarFitxatge, ErrorFitxatge, calcularHores, dataFitxatge } from '../services/fitxatgeServei.service';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 
+import ubicacioRoutes from './ubicacioServei.routes';
 const router = Router();
 router.use(requireAuth);
+router.use(ubicacioRoutes);
 
 const SELECCIO = {
   id: true,

@@ -1,6 +1,10 @@
 import { api } from './api';
 
 export interface Assistencia {
+  puntNom?: string | null;
+  puntLatitud?: number | null;
+  puntLongitud?: number | null;
+  puntRadi?: number;
   id: string;
   serveiId: string;
   voluntariId: string;

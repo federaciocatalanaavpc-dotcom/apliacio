@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { prisma } from '../prisma';
+import { aturarUbicacionsUsuari } from '../services/ubicacioServei.service';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 import { compteDisponible, resultatLogin, repteValid, passwordValida, intentFallat, hashToken, tokenPer, prepararInvitacio, urlInvitacio } from '../services/seguretat.service';
 const router=Router();
@@ -51,6 +52,7 @@ router.patch('/contrasenya',requireAuth,async(req:AuthRequest,res)=>{
  res.json({ok:true,token:tokenPer(updated,'access')});
 });
 router.post('/sortir',requireAuth,async(req:AuthRequest,res)=>{
+ aturarUbicacionsUsuari(req.usuari!.id);
  await prisma.$transaction([
   prisma.usuari.update({where:{id:req.usuari!.id},data:{sessionVersion:{increment:1}}}),
   prisma.subscripcioPush.deleteMany({where:{usuariId:req.usuari!.id}}),

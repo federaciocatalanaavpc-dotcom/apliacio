@@ -1,0 +1,44 @@
+const assert=require('node:assert/strict'),crypto=require('node:crypto');
+const url=new URL(process.env.TEST_DATABASE_URL||'');if(!['localhost','127.0.0.1'].includes(url.hostname)||!url.pathname.endsWith('_test'))throw Error('Only isolated local tests');
+process.env.DATABASE_URL=url.toString();process.env.DIRECT_URL=url.toString();process.env.NODE_ENV='test';process.env.JWT_SECRET=crypto.randomBytes(40).toString('hex');
+const {prisma}=require('../dist/prisma'),{tokenPer}=require('../dist/services/seguretat.service'),geo=require('../dist/services/ubicacioServei.service'),app=require('../dist/index').default;let server;
+(async()=>{
+ const tag=crypto.randomBytes(6).toString('hex');const a=await prisma.agrupacio.create({data:{nom:'GPS fixture '+tag}}),b=await prisma.agrupacio.create({data:{nom:'Other GPS '+tag}});
+ async function user(rol,agrupacioId){return prisma.usuari.create({data:{nom:'GPS fictici',usuari:rol+crypto.randomBytes(6).toString('hex'),rol,agrupacioId,contrasenya:'unused',passwordMustChange:false}});}
+ const adm=await user('ADMIN_AVPC',a.id),u=await user('VOLUNTARI',a.id),peer=await user('VOLUNTARI',a.id),other=await user('AGRUPACIO',b.id);
+ await prisma.voluntari.create({data:{agrupacioId:a.id,usuariId:adm.id,nom:'Admin',cognoms:'GPS'}});
+ const v=await prisma.voluntari.create({data:{agrupacioId:a.id,usuariId:u.id,nom:'Persona',cognoms:'GPS'}});
+ await prisma.voluntari.create({data:{agrupacioId:a.id,usuariId:peer.id,nom:'Company',cognoms:'GPS'}});
+ const s=await prisma.servei.create({data:{agrupacioId:a.id,creatPerId:adm.id,titol:'GPS demo',dataInici:new Date(Date.now()-3600000),dataFi:new Date(Date.now()+3600000)}});
+ server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base='http://127.0.0.1:'+server.address().port+'/api/';
+ async function call(p,m='GET',body,account=u){const r=await fetch(base+p,{method:m,headers:{Authorization:'Bearer '+tokenPer(account,'access'),'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json(),headers:r.headers};}
+ const p='serveis/'+s.id;const point={puntNom:'Punt fictici',puntLatitud:41.1,puntLongitud:1.2,puntRadi:100};
+ assert.equal((await call(p+'/punts/'+v.id,'PATCH',point,u)).status,403);
+ assert.equal((await call(p+'/punts/'+v.id,'PATCH',point,other)).status,403);
+ assert.equal((await call(p+'/punts/'+v.id,'PATCH',{...point,puntLatitud:91},adm)).status,400);
+ assert.equal((await call(p+'/punts/'+v.id,'PATCH',point,adm)).status,200);
+ assert.equal((await call(p+'/ubicacio/iniciar','POST',{acceptoCompartir:true})).status,409);
+ const clock=await call(p+'/fitxar-entrada','POST',{});assert.equal(clock.status,200);const aid=clock.data.id;
+ assert.equal((await call(p+'/ubicacio/iniciar','POST',{})).status,400);
+ let start=await call(p+'/ubicacio/iniciar','POST',{acceptoCompartir:true});assert.equal(start.status,200);
+ const fix=()=>({...point,latitud:41.1,longitud:1.2,precisio:10,capturadaEl:new Date().toISOString(),comparticioId:start.data.comparticioId});
+ assert.equal((await call(p+'/ubicacio','PATCH',fix(),peer)).status,404);
+ assert.equal((await call(p+'/ubicacio','PATCH',{...fix(),capturadaEl:'2000-01-01T00:00:00Z'})).status,400);
+ assert.equal((await call(p+'/ubicacio','PATCH',{...fix(),precisio:-1})).status,400);
+ assert.equal((await call(p+'/ubicacio','PATCH',fix())).status,200);
+ assert.equal((await call(p+'/ubicacions')).status,403);assert.equal((await call(p+'/ubicacions','GET',undefined,other)).status,403);
+ let map=await call(p+'/ubicacions','GET',undefined,adm);assert.equal(map.status,200);assert.equal(map.data.voluntaris[0].estat,'DINS');assert.match(map.headers.get('cache-control'),/no-store/);
+ const generic=await call(p);assert.equal(JSON.stringify(generic.data).includes('capturadaEl'),false,'No GPS in generic service payload');
+ const near=geo.compararPunt({latitud:41.1,longitud:1.2,precisio:500,capturadaEl:new Date().toISOString(),actualitzadaEl:new Date().toISOString()},41.1,1.2,100);assert.equal(near.estat,'PRECISIO_BAIXA');
+ assert.equal(geo.compararPunt({...fix(),latitud:42,actualitzadaEl:new Date().toISOString()},41.1,1.2,100).estat,'FORA');
+ geo.obtenirComparticio(aid).posicio.capturadaEl=new Date(Date.now()-100000).toISOString();map=await call(p+'/ubicacions','GET',undefined,adm);assert.equal(map.data.voluntaris[0].estat,'ANTIGA');
+ assert.equal((await call(p+'/ubicacio','DELETE',{comparticioId:start.data.comparticioId})).status,200);assert.equal(geo.obtenirComparticio(aid),undefined);
+ assert.equal((await call(p+'/ubicacio','PATCH',fix())).status,410,'Late update cannot restart stopped sharing');
+ start=await call(p+'/ubicacio/iniciar','POST',{acceptoCompartir:true});await call(p+'/ubicacio','PATCH',fix());geo.purgarUbicacions(Date.now()+geo.CADUCITAT_UBICACIO+1);assert.equal(geo.obtenirComparticio(aid),undefined);
+ start=await call(p+'/ubicacio/iniciar','POST',{acceptoCompartir:true});await call(p+'/ubicacio','PATCH',fix());await call(p+'/fitxar-sortida','POST',{});assert.equal(geo.obtenirComparticio(aid),undefined);
+ assert.equal((await call(p+'/ubicacio','PATCH',fix())).status,409);
+ await prisma.assistenciaServei.update({where:{id:aid},data:{horaSortida:null,horesRealitzades:null}});
+ start=await call(p+'/ubicacio/iniciar','POST',{acceptoCompartir:true});await call(p+'/ubicacio','PATCH',fix());await call('auth/sortir','POST',{});assert.equal(geo.obtenirComparticio(aid),undefined);
+ assert.equal(await prisma.registreAuditoria.count({where:{detall:{contains:'capturadaEl'},agrupacioId:a.id}}),0,'GPS coordinates not logged');
+ console.log('PASS GPS: opt-in, clock prerequisite, scope, freshness/precision, stop, late request, expiry, checkout, logout, no generic leakage');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{if(server)await new Promise(r=>server.close(r));await prisma.$disconnect();});

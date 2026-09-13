@@ -48,7 +48,7 @@ services:
         value: DENY
       - path: /*
         name: Permissions-Policy
-        value: geolocation=(), camera=(), microphone=()
+        value: geolocation=(self), camera=(), microphone=()
       - path: /sw.js
         name: Cache-Control
         value: no-cache

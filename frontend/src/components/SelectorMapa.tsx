@@ -21,7 +21,9 @@ export default function SelectorMapa({
   latitud,
   longitud,
   onCanviar,
+  descripcio = "Fes clic al mapa per marcar la ubicació de la seu.",
 }: {
+  descripcio?: string;
   latitud: number | null;
   longitud: number | null;
   onCanviar: (lat: number, lng: number) => void;
@@ -32,8 +34,8 @@ export default function SelectorMapa({
 
   useEffect(() => {
     if (!contenidorRef.current || mapaRef.current) return;
-    const centreInicial: [number, number] = latitud && longitud ? [latitud, longitud] : CENTRE_CATALUNYA;
-    const mapa = L.map(contenidorRef.current).setView(centreInicial, latitud && longitud ? 13 : 8);
+    const centreInicial: [number, number] = latitud != null && longitud != null ? [latitud, longitud] : CENTRE_CATALUNYA;
+    const mapa = L.map(contenidorRef.current).setView(centreInicial, latitud != null && longitud != null ? 13 : 8);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
     }).addTo(mapa);
@@ -51,7 +53,7 @@ export default function SelectorMapa({
   useEffect(() => {
     const mapa = mapaRef.current;
     if (!mapa) return;
-    if (latitud && longitud) {
+    if (latitud != null && longitud != null) {
       if (marcadorRef.current) {
         marcadorRef.current.setLatLng([latitud, longitud]);
       } else {
@@ -64,7 +66,7 @@ export default function SelectorMapa({
     <div>
       <div ref={contenidorRef} style={{ height: 220, borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--c-border)' }} />
       <p className="text-muted" style={{ fontSize: 11, margin: '4px 0 0' }}>
-        Fes clic al mapa per marcar la ubicació de la seu.
+        {descripcio}
       </p>
     </div>
   );

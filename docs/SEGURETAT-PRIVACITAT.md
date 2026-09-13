@@ -68,3 +68,13 @@ Fonts oficials consultades: [AEPD: protecció per defecte](https://www.aepd.es/d
 - Còpia xifrada i restauració fictícia: recomptes i documents idèntics; rebuig de destí ocupat i xifrat manipulat.
 
 Aquestes comprovacions no equivalen a una auditoria independent ni cobreixen la configuració real de tots els proveïdors.
+
+## Ubicació durant el servei
+
+El GPS del voluntari requereix activació expressa després de fitxar entrada. Es pot participar sense compartir GPS i aturar-lo en qualsevol moment. Només els responsables autoritzats poden consultar-lo.
+
+Només es conserva la darrera posició en memòria temporal del servidor, sense historial ni còpies a la base de dades. Caduca al cap de cinc minuts sense actualització; el servidor neteja les entrades cada trenta segons. Fitxar sortida o sortir de la sessió atura la compartició. Les peticions antigues no poden reactivar-la. Sense connexió, la captura local s'atura i la posició remota caduca.
+
+Les posicions de més de noranta segons es marquen antigues. La precisió i la distància són orientatives, no acrediten presència. Cal mantenir l'app oberta: el bloqueig de pantalla pot suspendre les actualitzacions. Els punts de treball assignats sí que es desen amb l'assistència; no són un historial GPS.
+
+Aquesta implementació necessita una sola instància del servidor. Reiniciar-la elimina les comparticions; abans d'escalar a diverses instàncies cal un magatzem temporal compartit. Cal incorporar aquesta finalitat a la informació del voluntariat i revisar-ne els riscos; les mesures tècniques no constitueixen una certificació legal.

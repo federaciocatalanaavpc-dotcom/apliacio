@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
+import {CompartirUbicacioProvider} from './components/CompartirUbicacio';
 import Dashboard from './pages/Dashboard';
 import Associacions from './pages/Associacions';
 import GestioUsuaris from './pages/GestioUsuaris';
@@ -25,6 +26,7 @@ import VoluntariShell from './components/VoluntariShell';
 export default function App() {
   return (
     <BrowserRouter>
+      <CompartirUbicacioProvider>
       <EstatConnexio />
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -46,6 +48,7 @@ export default function App() {
         <Route path="/avisos" element={<RutaProtegida><Avisos /></RutaProtegida>} />
         <Route path="/canviar-contrasenya" element={<RutaProtegida><CanviarContrasenya /></RutaProtegida>} />
       </Routes>
+      </CompartirUbicacioProvider>
     </BrowserRouter>
   );
 }

@@ -6,6 +6,7 @@ import {
   actualitzarDisponibilitatPropia,
 } from '../services/voluntaris';
 import { Servei, llistarServeis, confirmarAssistencia, cancelarAssistencia, fitxarServei } from '../services/serveis';
+import {useUbicacio} from '../components/CompartirUbicacio';
 import { duradaHores, mostrarData } from '../utils/horesServei';
 import BotoTornar from '../components/BotoTornar';
 import SelectorDisponibilitat from '../components/SelectorDisponibilitat';
@@ -39,6 +40,7 @@ function graellaDelMes(ancora: Date) {
 }
 
 export default function PerfilVoluntari() {
+  const ubicacio=useUbicacio();
   const [voluntari, setVoluntari] = useState<Voluntari | null>(null);
   const [serveis, setServeis] = useState<Servei[]>([]);
   const [carregant, setCarregant] = useState(true);
@@ -101,7 +103,7 @@ export default function PerfilVoluntari() {
 
   async function handleFitxar(id: string, accio: 'entrada' | 'sortida') {
     if(fitxant) return;setFitxant(id);setError('');
-    try {await fitxarServei(id,accio);await carregar();}
+    try {await fitxarServei(id,accio);if(accio==='sortida')window.dispatchEvent(new CustomEvent('avpc-fitxatge-tancat',{detail:id}));await carregar();}
     catch(e:any){setError(e.response?.data?.error || 'No s’ha pogut fitxar. Comprova la connexió i torna-ho a provar');}
     finally {setFitxant(null);}
   }
@@ -217,6 +219,13 @@ export default function PerfilVoluntari() {
                     {fitxant===s.id?'Desant…':s.assistenciaPropia?.horaEntrada?'Fitxar sortida':'Fitxar entrada'}
                   </button>
                 </div>}
+              </div>
+              <div className="card" style={{marginTop:10}}>
+                <strong>Ubicació en servei</strong>
+                <p>Punt assignat: {s.assistenciaPropia?.puntNom||'Encara no tens un punt assignat'}{s.assistenciaPropia?.puntNom?` · marge ${s.assistenciaPropia.puntRadi} m`:''}</p>
+                <p style={{fontSize:13}}>Si ho actives, els responsables autoritzats del servei veuran l’última posició GPS i la precisió. Només mentre estàs fitxat, sense historial de recorreguts. Pots aturar-ho quan vulguis i participar sense GPS.</p>
+                {ubicacio.serveiId===s.id ? <button onClick={ubicacio.aturar}>Aturar ubicació</button> : <button disabled={ubicacio.ocupat || !s.assistenciaPropia?.horaEntrada || !!s.assistenciaPropia?.horaSortida} onClick={()=>ubicacio.iniciar(s.id,s.titol)}>Compartir la meva ubicació</button>}
+                {!s.assistenciaPropia?.horaEntrada && <p style={{fontSize:12}}>Primer has de fitxar l’entrada.</p>}
               </div>
               <div style={{ marginTop: 8 }}>
                 {s.assistenciaPropia?.confirmat ? (

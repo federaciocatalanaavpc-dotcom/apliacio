@@ -31,6 +31,7 @@ export async function login(usuari:string,contrasenya:string):Promise<RespostaAc
   const {data}=await api.post('/auth/login',{usuari,contrasenya}); return data;
 }
 function netejarSessio() {
+ window.dispatchEvent(new Event('avpc-sortir'));
  sessionStorage.removeItem('token'); sessionStorage.removeItem('usuari');
  localStorage.removeItem('token'); localStorage.removeItem('usuari');
  if('caches' in window) caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('api-cache')).map(k=>caches.delete(k)))).catch(()=>{});

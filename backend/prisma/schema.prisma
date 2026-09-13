@@ -325,6 +325,10 @@ model AssistenciaServei {
   voluntari        Voluntari @relation(fields: [voluntariId], references: [id])
   voluntariId      String
   confirmat        Boolean   @default(false)
+  puntNom          String?
+  puntLatitud      Float?
+  puntLongitud     Float?
+  puntRadi         Int       @default(100)
   horaEntrada      DateTime?
   horaSortida      DateTime?
   horesRealitzades Float?
