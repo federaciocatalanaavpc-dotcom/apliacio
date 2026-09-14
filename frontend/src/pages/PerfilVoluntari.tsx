@@ -101,9 +101,9 @@ export default function PerfilVoluntari() {
     }
   }
 
-  async function handleFitxar(id: string, accio: 'entrada' | 'sortida') {
+  async function handleFitxar(id: string, accio: 'entrada' | 'sortida', activarGps=false) {
     if(fitxant) return;setFitxant(id);setError('');
-    try {await fitxarServei(id,accio);if(accio==='sortida')window.dispatchEvent(new CustomEvent('avpc-fitxatge-tancat',{detail:id}));await carregar();}
+    try {await fitxarServei(id,accio);if(accio==='entrada' && activarGps)await ubicacio.iniciar(id,serveis.find(s=>s.id===id)?.titol||'Servei');if(accio==='sortida')window.dispatchEvent(new CustomEvent('avpc-fitxatge-tancat',{detail:id}));await carregar();}
     catch(e:any){setError(e.response?.data?.error || 'No s’ha pogut fitxar. Comprova la connexió i torna-ho a provar');}
     finally {setFitxant(null);}
   }
@@ -216,6 +216,10 @@ export default function PerfilVoluntari() {
                 <p>Entrada: {mostrarData(s.assistenciaPropia?.horaEntrada || null)}<br/>Sortida: {mostrarData(s.assistenciaPropia?.horaSortida || null)}</p>
                 <strong>{s.assistenciaPropia?.horesRealitzades!=null ? `${s.assistenciaPropia.horesRealitzades.toLocaleString('ca-ES')} h registrades` : s.assistenciaPropia?.horaEntrada?'En servei · pendent de fitxar la sortida':'Sense fitxar'}</strong>
                 {s.assistenciaPropia?.horesRealitzades==null && <div style={{marginTop:10}}>
+                  {!s.assistenciaPropia?.horaEntrada && <>
+                    <p style={{fontSize:13}}>En activar el GPS, comparteixes la teva última posició amb els responsables del servei. S’actualitza mentre l’app és oberta i s’atura en fitxar sortida. Pots fitxar sense GPS.</p>
+                    <button disabled={fitxant!==null||ubicacio.ocupat} onClick={()=>handleFitxar(s.id,'entrada',true)} style={{marginBottom:8}}>Fitxar entrada i activar GPS</button>
+                  </>}
                   <button disabled={fitxant!==null} onClick={()=>handleFitxar(s.id,s.assistenciaPropia?.horaEntrada?'sortida':'entrada')}>
                     {fitxant===s.id?'Desant…':s.assistenciaPropia?.horaEntrada?'Fitxar sortida':'Fitxar entrada'}
                   </button>

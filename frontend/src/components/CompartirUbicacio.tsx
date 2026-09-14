@@ -1,8 +1,8 @@
 import {createContext,useContext,useEffect,useRef,useState,ReactNode} from 'react';
 import {api,getUsuariActual} from '../services/api';
 type Sessio={serveiId:string;nom:string;id:string;token:string};
-type Context={serveiId:string|null;ocupat:boolean;iniciar:(id:string,nom:string)=>void;aturar:()=>void};
-const C=createContext<Context>({serveiId:null,ocupat:false,iniciar:()=>{},aturar:()=>{}});
+type Context={serveiId:string|null;ocupat:boolean;iniciar:(id:string,nom:string)=>Promise<void>;aturar:()=>void};
+const C=createContext<Context>({serveiId:null,ocupat:false,iniciar:async()=>{},aturar:()=>{}});
 export const useUbicacio=()=>useContext(C);
 function gps():Promise<GeolocationPosition>{return new Promise((resolve,reject)=>{
   if(!navigator.geolocation)return reject(new Error('Aquest dispositiu no disposa de GPS compatible'));

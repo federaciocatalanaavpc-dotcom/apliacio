@@ -7,14 +7,12 @@ import Serveis from './Serveis';
 import Estadistiques from './Estadistiques';
 import Proveidors from './Proveidors';
 import Inventari from './Inventari';
-import UbicacioEnServei from './UbicacioEnServei';
 import AlertaRapida from '../components/AlertaRapida';
 import { getUsuariActual } from '../services/api';
 
-type Seccio = 'ubicacio' | 'alertaRapida' | 'voluntaris' | 'serveis' | 'estadistiques' | 'proveidors' | 'inventari';
+type Seccio = 'alertaRapida' | 'voluntaris' | 'serveis' | 'estadistiques' | 'proveidors' | 'inventari';
 
 const SECCIONS: { valor: Seccio; icona: string; etiqueta: string; descripcio: string }[] = [
-  {valor:'ubicacio',icona:'📍',etiqueta:'Ubicació en servei',descripcio:'GPS compartit i punts assignats al voluntariat.'},
   { valor: 'alertaRapida', icona: '🚨', etiqueta: 'Alerta ràpida', descripcio: 'Activa una comunicació urgent per als voluntaris.' },
   { valor: 'voluntaris', icona: '👥', etiqueta: 'Voluntariat', descripcio: 'Gestió de membres, dades i disponibilitat.' },
   { valor: 'serveis', icona: '🚒', etiqueta: 'Serveis', descripcio: 'Planifica i consulta serveis i dispositius.' },
@@ -53,7 +51,6 @@ export default function GestioAvpc() {
 
         <section className="workspace-content-card">
           {seccio === 'alertaRapida' && <AlertaRapida incrustat />}
-          {seccio === 'ubicacio' && <UbicacioEnServei />}
           {seccio === 'voluntaris' && <Voluntaris embedded />}
           {seccio === 'serveis' && <Serveis embedded />}
           {seccio === 'estadistiques' && <Estadistiques embedded />}

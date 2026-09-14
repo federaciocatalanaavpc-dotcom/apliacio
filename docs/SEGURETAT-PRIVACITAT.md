@@ -90,3 +90,8 @@ Aquesta implementació necessita una sola instància del servidor. Reiniciar-la 
 - El responsable indicat per l’entitat és Federació Catalana de Protecció Civil i el contacte és federaciocatalanaavpc@gmail.com (confirmats el 14/09/2026). La informació visible s’ha actualitzat a la versió 2026-09-14.1. Els terminis i la base jurídica continuen requerint definició de l’entitat. La casella no certifica compliment legal.
 
 Referència: [AEPD: diferència entre informació i consentiment](https://www.aepd.es/preguntas-frecuentes/2-tus-obligaciones-como-responsable-del-tratamiento/6-el-deber-de-informacion/FAQ-0248-sobre-si-el-usuario-tiene-que-dar-consentimiento-a-clausula-de-privacidad).
+
+
+## Mapa integrat al servei
+
+El mapa es consulta des de cada servei, no des d'un botó independent de Gestió AVPC. El voluntari pot triar «Fitxar entrada i activar GPS»: registra l'entrada i demana el permís del navegador. Si denega el GPS o falla, el fitxatge es conserva. «Fitxar entrada» continua disponible sense ubicació. Mai s'activa el GPS només per iniciar sessió o obrir un servei.

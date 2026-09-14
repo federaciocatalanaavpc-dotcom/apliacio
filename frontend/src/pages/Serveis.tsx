@@ -1,3 +1,4 @@
+import UbicacioEnServei from './UbicacioEnServei';
 import { useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -66,6 +67,7 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
   const [mostrarSollicitant, setMostrarSollicitant] = useState(false);
   const [form, setForm] = useState(buit);
   const [gestionantId, setGestionantId] = useState<string | null>(null);
+  const [mapaId,setMapaId]=useState<string|null>(null);
 
   async function carregar() {
     setCarregant(true);
@@ -392,10 +394,11 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
                     </p>
                     {s.descripcio && <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>{s.descripcio}</p>}
 
-                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <button onClick={() => setGestionantId(gestionantId === s.id ? null : s.id)} style={{ fontSize: 12 }}>
-                        {gestionantId === s.id ? 'Tancar' : 'Gestionar assistents'}
+                    <div style={{ display: 'flex', flexWrap:'wrap', gap: 8, marginTop: 8 }}>
+                      <button onClick={() => {setMapaId(null);setGestionantId(gestionantId === s.id ? null : s.id);}} style={{ fontSize: 12 }}>
+                        {gestionantId === s.id ? 'Tancar assistents' : 'Gestionar assistents'}
                       </button>
+                      <button aria-expanded={mapaId===s.id} onClick={()=>{setGestionantId(null);setMapaId(mapaId===s.id?null:s.id);}} style={{fontSize:12}}>{mapaId===s.id?'Tancar mapa':'Mapa i ubicació'}</button>
                       <button onClick={() => handleArxivar(s)} style={{ fontSize: 12 }}>
                         {s.arxivat ? 'Desarxivar' : 'Arxivar'}
                       </button>
@@ -404,6 +407,7 @@ export default function ServeisPage({ embedded = false }: { embedded?: boolean }
                       </button>
                     </div>
 
+                    {mapaId===s.id && <section style={{marginTop:16}} aria-label={`Ubicació de ${s.titol}`}><h3>Mapa i ubicació · {s.titol}</h3><UbicacioEnServei key={s.id} serveiId={s.id}/></section>}
                     {gestionantId === s.id && (
                       <GestioAssistents serveiId={s.id} voluntaris={voluntaris} onCanvi={carregar} />
                     )}
