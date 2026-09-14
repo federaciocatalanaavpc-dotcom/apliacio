@@ -57,10 +57,10 @@ const {prisma}=require('../dist/prisma'),{tokenPer}=require('../dist/services/se
  // Privacy reading acknowledgement: no prechecked/default acceptance on server.
  const creds={usuari:ab.usuari,contrasenya:password};
  assert.equal((await call('auth/login','POST',creds)).status,400);
- assert.equal((await call('auth/login','POST',{...creds,privacitatLlegida:false,privacitatVersio:'2026-09-14'})).status,400);
+ assert.equal((await call('auth/login','POST',{...creds,privacitatLlegida:false,privacitatVersio:'2026-09-14.1'})).status,400);
  assert.equal((await call('auth/login','POST',{...creds,privacitatLlegida:true,privacitatVersio:'old'})).status,400);
- const ack={...creds,privacitatLlegida:true,privacitatVersio:'2026-09-14'};assert.equal((await call('auth/login','POST',ack)).status,200);
- const receipt=await prisma.usuari.findUniqueOrThrow({where:{id:ab.id}});assert.equal(receipt.privacitatVersio,'2026-09-14');assert.ok(receipt.privacitatLlegidaEl);
+ const ack={...creds,privacitatLlegida:true,privacitatVersio:'2026-09-14.1'};assert.equal((await call('auth/login','POST',ack)).status,200);
+ const receipt=await prisma.usuari.findUniqueOrThrow({where:{id:ab.id}});assert.equal(receipt.privacitatVersio,'2026-09-14.1');assert.ok(receipt.privacitatLlegidaEl);
  await call('auth/login','POST',ack);assert.equal(await prisma.registreAuditoria.count({where:{usuariId:ab.id,entitat:'InformacioPrivacitat'}}),1,'No repetitive consent history');
  // Logo content remains separate from association metadata and own-AVPC only.
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ9sAAAAASUVORK5CYII=','base64');

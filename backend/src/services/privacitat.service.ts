@@ -1,5 +1,5 @@
 import {prisma} from '../prisma';
-export const VERSIO_PRIVACITAT='2026-09-14';
+export const VERSIO_PRIVACITAT='2026-09-14.1';
 export function lecturaValida(body:any){return body?.privacitatLlegida===true && body?.privacitatVersio===VERSIO_PRIVACITAT;}
 // Constatació de lectura, no consentiment genèric ni renúncia de drets.
 export async function registrarLectura(id:string){

@@ -21,7 +21,7 @@ let server;
  server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
  const base='http://127.0.0.1:'+server.address().port+'/api/';
  async function call(path,method='GET',body,token){
-  if(['auth/login','auth/invitacio','auth/completar-contrasenya'].includes(path))body={...body,privacitatLlegida:true,privacitatVersio:'2026-09-14'};
+  if(['auth/login','auth/invitacio','auth/completar-contrasenya'].includes(path))body={...body,privacitatLlegida:true,privacitatVersio:'2026-09-14.1'};
   const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
   const data=await r.json().catch(()=>null);return {status:r.status,data,headers:r.headers};
  }
