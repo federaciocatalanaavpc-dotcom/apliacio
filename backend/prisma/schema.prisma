@@ -50,6 +50,8 @@ model Usuari {
   id          String   @id @default(uuid())
   nom         String
   usuari      String   @unique
+  privacitatVersio String?
+  privacitatLlegidaEl DateTime?
   sessionVersion Int @default(0)
   passwordMustChange Boolean @default(true)
   mfaSecret String?
@@ -111,6 +113,7 @@ model Agrupacio {
   actiu        Boolean   @default(true)
   creatEl      DateTime  @default(now())
 
+  logo               LogoAgrupacio?
   usuaris            Usuari[]
   vehicles           Vehicle[]
   materials          Material[]
@@ -118,6 +121,7 @@ model Agrupacio {
   avisos             Avis[]
   voluntaris         Voluntari[]
   serveis            Servei[]
+  serveisConjunts     ParticipacioServei[]
   proveidors         Proveidor[]
   articlesEquipament ArticleEquipament[]
   tipusServei        TipusServei[]
@@ -312,6 +316,9 @@ model Servei {
   creatPerId             String
   creatEl                DateTime  @default(now())
 
+  conjunt                Boolean @default(false)
+  versioCoordinacio       Int @default(0)
+  participants           ParticipacioServei[]
   assistencies           AssistenciaServei[]
 }
 
@@ -459,4 +466,22 @@ model TipusMaterial {
   id      String   @id @default(uuid())
   nom     String   @unique
   creatEl DateTime @default(now())
+}
+
+// La delegació només cobreix un servei, mai les fitxes privades de l'altra AVPC.
+model ParticipacioServei {
+  serveiId String
+  agrupacioId String
+  coordinadora Boolean @default(false)
+  servei Servei @relation(fields: [serveiId], references: [id], onDelete: Cascade)
+  agrupacio Agrupacio @relation(fields: [agrupacioId], references: [id])
+  @@id([serveiId, agrupacioId])
+  @@index([agrupacioId])
+}
+
+model LogoAgrupacio {
+ agrupacioId String @id
+ agrupacio Agrupacio @relation(fields:[agrupacioId],references:[id],onDelete:Cascade)
+ contingut Bytes
+ actualitzatEl DateTime @updatedAt
 }

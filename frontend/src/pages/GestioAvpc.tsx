@@ -1,3 +1,4 @@
+import IdentitatAvpc from '../components/IdentitatAvpc';
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import '../workspace.css';
@@ -74,7 +75,7 @@ export default function GestioAvpc() {
         <div>
           <span className="workspace-home-hero__kicker">Espai de l’agrupació</span>
           <h1>Gestió AVPC</h1>
-          <p>{nomAgrupacio}</p>
+          <p>{nomAgrupacio}</p><IdentitatAvpc editable/>
         </div>
         <div className="workspace-home-hero__badge">AVPC</div>
       </section>
@@ -87,6 +88,7 @@ export default function GestioAvpc() {
         <p>Tot el dia a dia de l’agrupació, organitzat en un únic espai.</p>
       </section>
 
+      <Link to="/serveis-conjunts" className="module-card module-card--avpc" style={{marginBottom:16}}><span className="module-card__icon">🤝</span><span className="module-card__copy"><strong>Serveis conjunts</strong><small>Participació i coordinació amb altres AVPC.</small></span><span>→</span></Link>
       <div className="module-grid">
         {SECCIONS.map((s) => (
           <button key={s.valor} onClick={() => setSeccio(s.valor)} className="module-card module-card--avpc">

@@ -1,3 +1,4 @@
+import InformacioPrivacitat,{VERSIO_PRIVACITAT} from '../components/InformacioPrivacitat';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, login, desarSessio, RespostaAcces } from '../services/api';
@@ -8,6 +9,7 @@ export default function Login() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [lectura,setLectura]=useState(false);
   const [invitation] = useState(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('invitacio');
     if (token) window.history.replaceState(null, '', window.location.pathname);
@@ -33,15 +35,16 @@ export default function Login() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if(!lectura){setError('Confirma que has llegit la informació de privacitat');return;}
     setBusy(true);
     try {
       if (step === 'login') {
-        receive(await login(nomUsuari.trim().toLowerCase(), password));
+        receive(await login(nomUsuari.trim().toLowerCase(), password, lectura));
       } else {
         if (password !== confirm) throw new Error('Les contrasenyes no coincideixen');
         const { data } = await api.post(
           step === 'invite' ? '/auth/invitacio' : '/auth/completar-contrasenya',
-          step === 'invite' ? { token: invitation, contrasenya: password } : { repte: challenge, contrasenya: password },
+          step === 'invite' ? { token: invitation, contrasenya: password,privacitatLlegida:lectura,privacitatVersio:VERSIO_PRIVACITAT } : { repte: challenge, contrasenya: password,privacitatLlegida:lectura,privacitatVersio:VERSIO_PRIVACITAT },
         );
         receive(data);
       }
@@ -70,6 +73,8 @@ export default function Login() {
             <label htmlFor="confirm-password">Repeteix la contrasenya</label>
             <input id="confirm-password" type="password" autoComplete="new-password" required value={confirm} onChange={e => setConfirm(e.target.value)} style={{ width: '100%' }} />
           </>}
+          <InformacioPrivacitat/>
+          <label style={{display:"flex",alignItems:"flex-start",gap:10}}><input type="checkbox" required checked={lectura} onChange={e=>setLectura(e.target.checked)} style={{width:18,marginTop:3}}/> He llegit la informació de protecció de dades.</label>
           {error && <p className="text-error" role="alert">{error}</p>}
           <button disabled={busy} type="submit" style={{ width: '100%', marginTop: 16 }}>{busy ? 'Comprovant…' : step === 'login' ? 'Entrar' : 'Continuar'}</button>
           {step === 'login' ? <p className="text-muted" style={{ fontSize: 13 }}>Si has oblidat la contrasenya, demana al teu administrador un enllaç de recuperació. La Federació gestiona els comptes de les associacions.</p> : <button type="button" onClick={() => window.location.replace('/login')} style={{ marginTop: 12 }}>Tornar a l’inici de sessió</button>}

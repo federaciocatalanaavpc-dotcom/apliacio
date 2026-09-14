@@ -13,7 +13,8 @@
     "test:backup": "node tests/backup.integration.cjs",
     "test:browser": "node tests/browser.integration.cjs",
     "test:hours": "node tests/hours.integration.cjs",
-    "test:location": "node tests/location.integration.cjs"
+    "test:location": "node tests/location.integration.cjs",
+    "test:joint": "node tests/joint.integration.cjs"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

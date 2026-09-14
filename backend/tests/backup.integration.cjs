@@ -14,7 +14,7 @@ const original=new PrismaClient({datasources:{db:{url:u.toString()}}}),copy=new 
 (async()=>{
  await backup();const bytes=fs.readFileSync(process.env.BACKUP_PATH);assert.ok(!bytes.includes(Buffer.from('%PDF-1.4')));
  await restore();
- for(const model of ['usuari','voluntari','servei','assistenciaServei','document','agrupacio'])assert.equal(await copy[model].count(),await original[model].count(),model);
+ for(const model of ['usuari','voluntari','servei','assistenciaServei','document','agrupacio','participacioServei','logoAgrupacio'])assert.equal(await copy[model].count(),await original[model].count(),model);
  const docs=await original.document.findMany({orderBy:{id:'asc'}}),restored=await copy.document.findMany({orderBy:{id:'asc'}});
  assert.deepEqual(restored,docs,'PDF i metadades idèntics');
  await assert.rejects(restore(),'es prohibeix sobreescriure el destí');

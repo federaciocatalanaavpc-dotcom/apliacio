@@ -30,6 +30,7 @@ let server,browser;
  page.on('console',msg=>{if(/violates.*Content Security Policy|Refused to/i.test(msg.text()))violations.push(msg.text());});
  await page.goto(base+'/login',{waitUntil:'domcontentloaded',timeout:60000});
  await page.locator('#login-name').fill(user.usuari);await page.locator('#login-password').fill('123456');
+ await page.getByRole('checkbox',{name:'He llegit la informació de protecció de dades.'}).check();
  await page.getByRole('button',{name:'Entrar',exact:true}).click();
  await page.locator('#confirm-password').waitFor();
  const password='Frase-ficticia-'+suffix+'!';

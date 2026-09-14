@@ -11,6 +11,7 @@ import DocumentacioPropia from './pages/DocumentacioPropia';
 import Formacio from './pages/Formacio';
 import GestioAvpc from './pages/GestioAvpc';
 import Federacio from './pages/Federacio';
+import ServeisConjunts from './pages/ServeisConjunts';
 import PerfilVoluntari from './pages/PerfilVoluntari';
 import RobaVoluntari from './pages/RobaVoluntari';
 import DisponibilitatVoluntari from './pages/DisponibilitatVoluntari';
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/documentacio-propia" element={<RutaProtegida><DocumentacioPropia /></RutaProtegida>} />
         <Route path="/formacio" element={<RutaProtegida><Formacio /></RutaProtegida>} />
         <Route path="/gestio-avpc" element={<RutaProtegida><GestioAvpc /></RutaProtegida>} />
+        <Route path="/serveis-conjunts" element={<RutaProtegida><ServeisConjunts /></RutaProtegida>} />
         <Route path="/federacio" element={<RutaProtegida><Federacio /></RutaProtegida>} />
         <Route path="/voluntari/serveis" element={<RutaProtegida><VoluntariShell><PerfilVoluntari /></VoluntariShell></RutaProtegida>} />
         <Route path="/voluntari/roba" element={<RutaProtegida><VoluntariShell><RobaVoluntari /></VoluntariShell></RutaProtegida>} />

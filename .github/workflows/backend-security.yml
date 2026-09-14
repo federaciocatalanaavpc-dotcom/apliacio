@@ -41,4 +41,5 @@ jobs:
       - run: npm run test:security
       - run: npm run test:hours
       - run: npm run test:location
+      - run: npm run test:joint
       - run: npm audit --omit=dev --audit-level=high

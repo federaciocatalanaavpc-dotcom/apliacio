@@ -3,12 +3,16 @@ import { prisma } from '../prisma';
 import { desarFitxatge, ErrorFitxatge, calcularHores, dataFitxatge } from '../services/fitxatgeServei.service';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 
+import {participa,coordina,consultaServei,editaServei,seleccioParticipants} from '../services/permisosServei.service';
+import conjuntsRoutes from './serveisConjunts.routes';
 import ubicacioRoutes from './ubicacioServei.routes';
 const router = Router();
 router.use(requireAuth);
+router.use(conjuntsRoutes);
 router.use(ubicacioRoutes);
 
 const SELECCIO = {
+  conjunt: true, versioCoordinacio:true, participants:seleccioParticipants,
   id: true,
   agrupacioId: true,
   titol: true,
@@ -46,7 +50,7 @@ router.get('/', async (req: AuthRequest, res) => {
     const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
     if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
     const serveis = await prisma.servei.findMany({
-      where: { agrupacioId: voluntari.agrupacioId, OR: [{arxivat:false},{assistencies:{some:{voluntariId:voluntari.id,horaEntrada:{not:null},horaSortida:null}}}] },
+      where: { AND:[{OR:[{conjunt:false,agrupacioId:voluntari.agrupacioId},{conjunt:true,participants:{some:{agrupacioId:voluntari.agrupacioId}},assistencies:{some:{voluntariId:voluntari.id}}}]},{OR: [{arxivat:false},{assistencies:{some:{voluntariId:voluntari.id,horaEntrada:{not:null},horaSortida:null}}}]}] },
       select: { ...SELECCIO, assistencies: { where: { voluntariId: voluntari.id } } },
       orderBy: { dataInici: 'asc' },
     });
@@ -60,7 +64,7 @@ router.get('/', async (req: AuthRequest, res) => {
     req.usuari!.rol === 'FEDERACIO' ? (req.query.agrupacioId as string | undefined) : req.usuari!.agrupacioId!;
   const arxivat = req.query.arxivat === 'true';
   const serveis = await prisma.servei.findMany({
-    where: { ...(agrupacioId ? { agrupacioId } : {}), arxivat },
+    where: { conjunt:false, ...(agrupacioId ? { agrupacioId } : {}), arxivat },
     select: SELECCIO,
     orderBy: { dataInici: 'desc' },
   });
@@ -77,7 +81,7 @@ router.get('/estadistiques/dades', async (req: AuthRequest, res) => {
     req.usuari!.rol === 'FEDERACIO' ? (req.query.agrupacioId as string | undefined) : req.usuari!.agrupacioId!;
   if (!agrupacioId) return res.status(400).json({ error: "Cal indicar l'associació" });
   const serveis = await prisma.servei.findMany({
-    where: { agrupacioId },
+    where: { OR:[{conjunt:false,agrupacioId},{conjunt:true,assistencies:{some:{voluntari:{agrupacioId}}}}] },
     select: {
       id: true,
       titol: true,
@@ -86,6 +90,7 @@ router.get('/estadistiques/dades', async (req: AuthRequest, res) => {
       dataInici: true,
       arxivat: true,
       assistencies: {
+        where:{voluntari:{agrupacioId}},
         select: {
           confirmat: true,
           horesRealitzades: true,
@@ -112,11 +117,15 @@ router.get('/:id', async (req: AuthRequest, res) => {
   if (!servei) return res.status(404).json({ error: 'Servei no trobat' });
   if (req.usuari!.rol === 'VOLUNTARI') {
     const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
-    if (!voluntari || voluntari.agrupacioId !== servei.agrupacioId) {
+    if (!voluntari || !participa(servei,voluntari.agrupacioId) || (servei.conjunt && !servei.assistencies.length)) {
       return res.status(403).json({ error: 'No pots veure aquest servei' });
     }
-  } else if (!potGestionarAgrupacio(req, servei.agrupacioId)) {
+  } else if (!consultaServei(req, servei)) {
     return res.status(403).json({ error: 'No pots veure aquest servei' });
+  }
+  if(servei.conjunt && !coordina(req,servei) && req.usuari!.rol!=='VOLUNTARI'){
+    const own=await prisma.voluntari.findMany({where:{agrupacioId:req.usuari!.agrupacioId!},select:{id:true}});
+    const ids=new Set(own.map(v=>v.id));servei.assistencies=servei.assistencies.filter(a=>ids.has(a.voluntariId));
   }
   res.json(servei);
 });
@@ -195,7 +204,8 @@ router.post('/', async (req: AuthRequest, res) => {
 router.patch('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.servei.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Servei no trobat' });
-  if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
+  if(existent.conjunt)return res.status(403).json({error:'Gestiona aquest servei des de Serveis conjunts'});
+  if (!editaServei(req, existent)) {
     return res.status(403).json({ error: 'No pots editar aquest servei' });
   }
   const {
@@ -256,7 +266,8 @@ router.patch('/:id', async (req: AuthRequest, res) => {
 router.delete('/:id', async (req: AuthRequest, res) => {
   const existent = await prisma.servei.findUnique({ where: { id: req.params.id } });
   if (!existent) return res.status(404).json({ error: 'Servei no trobat' });
-  if (!potGestionarAgrupacio(req, existent.agrupacioId)) {
+  if(existent.conjunt)return res.status(403).json({error:'Gestiona aquest servei des de Serveis conjunts'});
+  if (!editaServei(req, existent)) {
     return res.status(403).json({ error: 'No pots eliminar aquest servei' });
   }
   await prisma.servei.delete({ where: { id: req.params.id } });
@@ -264,20 +275,20 @@ router.delete('/:id', async (req: AuthRequest, res) => {
 });
 
 // El voluntari confirma o cancel·la la seva pròpia assistència.
-router.post('/:id/confirmar', async (req: AuthRequest, res) => {
-  if (req.usuari!.rol !== 'VOLUNTARI') return res.status(403).json({ error: 'Només per a comptes de voluntari' });
-  const voluntari = await prisma.voluntari.findUnique({ where: { usuariId: req.usuari!.id } });
-  if (!voluntari) return res.status(404).json({ error: 'Fitxa de voluntari no trobada' });
-  const servei = await prisma.servei.findUnique({ where: { id: req.params.id } });
-  if (!servei || servei.agrupacioId !== voluntari.agrupacioId) {
-    return res.status(404).json({ error: 'Servei no trobat' });
-  }
-  const assistencia = await prisma.assistenciaServei.upsert({
-    where: { serveiId_voluntariId: { serveiId: servei.id, voluntariId: voluntari.id } },
-    update: { confirmat: true },
-    create: { serveiId: servei.id, voluntariId: voluntari.id, confirmat: true },
-  });
-  res.json(assistencia);
+router.post('/:id/confirmar', async (req:AuthRequest,res)=>{
+ if(req.usuari!.rol!=='VOLUNTARI')return res.status(403).json({error:'Només per a comptes de voluntari'});
+ try {
+  const assistencia=await prisma.$transaction(async tx=>{
+   await tx.$queryRaw`SELECT id FROM "Servei" WHERE id=${req.params.id} FOR UPDATE`;
+   const voluntari=await tx.voluntari.findUnique({where:{usuariId:req.usuari!.id}});
+   const servei=await tx.servei.findUnique({where:{id:req.params.id},include:{participants:true}});
+   if(!voluntari?.actiu||!servei||!participa(servei,voluntari.agrupacioId))throw new ErrorFitxatge(404,'Servei no trobat');
+   const where={serveiId_voluntariId:{serveiId:servei.id,voluntariId:voluntari.id}};
+   if(servei.conjunt&&!await tx.assistenciaServei.findUnique({where}))throw new ErrorFitxatge(403,'No estàs incorporat al servei conjunt');
+   if(servei.arxivat)throw new ErrorFitxatge(409,'El servei està tancat');
+   return tx.assistenciaServei.upsert({where,update:{confirmat:true},create:{serveiId:servei.id,voluntariId:voluntari.id,confirmat:true}});
+  });res.json(assistencia);
+ }catch(e){if(e instanceof ErrorFitxatge)return res.status(e.status).json({error:e.message});throw e;}
 });
 
 router.post('/:id/cancelar', async (req: AuthRequest, res) => {

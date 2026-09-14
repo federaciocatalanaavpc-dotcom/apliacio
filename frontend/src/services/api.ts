@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {VERSIO_PRIVACITAT} from '../components/InformacioPrivacitat';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000/api',
@@ -27,8 +28,8 @@ export function desarSessio(data:RespostaAcces) {
   if(!data.token || !data.usuari) throw new Error('Accés incomplet');
   sessionStorage.setItem('token',data.token); sessionStorage.setItem('usuari',JSON.stringify(data.usuari));
 }
-export async function login(usuari:string,contrasenya:string):Promise<RespostaAcces> {
-  const {data}=await api.post('/auth/login',{usuari,contrasenya}); return data;
+export async function login(usuari:string,contrasenya:string,privacitatLlegida:boolean):Promise<RespostaAcces> {
+  const {data}=await api.post('/auth/login',{usuari,contrasenya,privacitatLlegida,privacitatVersio:VERSIO_PRIVACITAT}); return data;
 }
 function netejarSessio() {
  window.dispatchEvent(new Event('avpc-sortir'));

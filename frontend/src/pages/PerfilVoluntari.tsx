@@ -205,6 +205,7 @@ export default function PerfilVoluntari() {
           {serveisDelDia.map((s) => (
             <div key={s.id} className="card" style={{ maxWidth: 460 }}>
               <p style={{ margin: 0, fontWeight: 600 }}>{s.titol}</p>
+              {s.conjunt&&<p className="badge">Servei conjunt · {s.participants?.map(p=>p.agrupacio.nom).join(" / ")}</p>}
               <p className="text-muted" style={{ fontSize: 13, margin: '4px 0' }}>
                 {new Date(s.dataInici).toLocaleString('ca-ES')}
                 {s.localitat ? ` · ${s.localitat}` : ''}

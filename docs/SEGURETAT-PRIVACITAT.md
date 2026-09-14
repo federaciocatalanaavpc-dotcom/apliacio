@@ -78,3 +78,15 @@ Només es conserva la darrera posició en memòria temporal del servidor, sense 
 Les posicions de més de noranta segons es marquen antigues. La precisió i la distància són orientatives, no acrediten presència. Cal mantenir l'app oberta: el bloqueig de pantalla pot suspendre les actualitzacions. Els punts de treball assignats sí que es desen amb l'assistència; no són un historial GPS.
 
 Aquesta implementació necessita una sola instància del servidor. Reiniciar-la elimina les comparticions; abans d'escalar a diverses instàncies cal un magatzem temporal compartit. Cal incorporar aquesta finalitat a la informació del voluntariat i revisar-ne els riscos; les mesures tècniques no constitueixen una certificació legal.
+
+
+## Serveis conjunts, lectura informativa i logotips (14/09/2026)
+
+- La Federació crea serveis conjunts amb almenys dues AVPC. Cada AVPC incorpora el seu voluntariat; la Federació també ho pot fer. La delegació permet organitzar únicament els assistents incorporats a aquell servei, mai exportar o obrir fitxes privades alienes. Retirar la delegació té efecte a les peticions següents, encara que el token sigui anterior.
+- Les AVPC no coordinadores només reben els seus assistents i posicions. Les hores dels serveis conjunts entren a les estadístiques de cada AVPC sense mostrar-hi voluntaris d'altres associacions. Tancar serveis amb fitxatges oberts, eliminar assistents amb hores i retirar AVPC amb assistències es bloqueja per preservar registres.
+- El GPS continua sent opcional i temporal; els punts assignats i les assistències són dades de gestió persistents. La delegació i els canvis d'equip queden auditats sense guardar el recorregut GPS.
+- El login requereix una casella desmarcada de lectura d'informació. Es registra la versió i primera data de lectura amb un registre d'auditoria, després d'autenticar la persona. No és consentiment general, no activa GPS ni supleix la base jurídica, els contactes legals ni la política de conservació que ha de completar l'entitat. Les sessions ja obertes veuran la casella al proper inici de sessió.
+- El logotip propi el poden pujar el compte AVPC i els seus administradors. La imatge es redimensiona i es torna a codificar a PNG al navegador, sense metadades originals. El servidor limita mida/dimensions, rebutja formats actius i el desa separat a PostgreSQL; només els usuaris de la mateixa AVPC el poden descarregar amb autenticació i sense cache privada.
+- La identitat legal del responsable, el correu de drets, els terminis i la base jurídica continuen requerint confirmació de l'entitat. La casella no certifica compliment legal.
+
+Referència: [AEPD: diferència entre informació i consentiment](https://www.aepd.es/preguntas-frecuentes/2-tus-obligaciones-como-responsable-del-tratamiento/6-el-deber-de-informacion/FAQ-0248-sobre-si-el-usuario-tiene-que-dar-consentimiento-a-clausula-de-privacidad).

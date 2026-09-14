@@ -24,7 +24,7 @@ export default function RutaProtegida({ children }: { children: React.ReactNode 
  if(error)return <main className="page"><p>No s’ha pogut verificar la sessió.</p><button onClick={()=>window.location.reload()}>Tornar-ho a provar</button></main>;
  if(checked!==pathname)return <main className="page">Verificant l’accés…</main>;
  const u=getUsuariActual();
- if(u?.rol==='ADMIN_AVPC'&&!['/','/gestio-avpc','/inventari','/avisos','/canviar-contrasenya','/voluntari/roba','/voluntari/disponibilitat','/voluntari/estadistiques','/voluntari/alertes'].includes(pathname))return <Navigate to="/gestio-avpc" replace/>;
+ if(u?.rol==='ADMIN_AVPC'&&!['/serveis-conjunts','/','/gestio-avpc','/inventari','/avisos','/canviar-contrasenya','/voluntari/roba','/voluntari/disponibilitat','/voluntari/estadistiques','/voluntari/alertes'].includes(pathname))return <Navigate to="/gestio-avpc" replace/>;
  if(u?.rol==='VOLUNTARI'&&pathname!=='/'&&pathname!=='/canviar-contrasenya'&&!pathname.startsWith('/voluntari/'))return <Navigate to="/" replace/>;
  return <><Capcalera/>{children}</>;
 }

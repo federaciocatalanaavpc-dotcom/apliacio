@@ -1,3 +1,4 @@
+import IdentitatAvpc from './IdentitatAvpc';
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
@@ -21,7 +22,7 @@ export default function VoluntariShell({ children }: { children: ReactNode }) {
       <section className="voluntari-shell__hero">
         <div>
           <span className="voluntari-shell__eyebrow">Espai personal</span>
-          <h1>Hola, {nom} 👋</h1>
+          <h1>Hola, {nom} 👋</h1><IdentitatAvpc/>
           <p>Consulta els teus serveis, disponibilitat, equipament, activitat i avisos des d’un únic espai.</p>
         </div>
         <div className="voluntari-shell__badge">Voluntariat</div>

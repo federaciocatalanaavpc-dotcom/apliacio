@@ -3,7 +3,7 @@ import { Servei, Assistencia, marcarAssistencia } from '../services/serveis';
 import { Voluntari } from '../services/voluntaris';
 import { dataLocal, duradaHores, mostrarData } from '../utils/horesServei';
 
-export default function HorariAssistent({voluntari:v,servei,assistencia:a,onDesat}:{voluntari:Voluntari;servei:Servei;assistencia?:Assistencia;onDesat:()=>Promise<void>}) {
+export default function HorariAssistent({voluntari:v,servei,assistencia:a,onDesat}:{voluntari:Pick<Voluntari,"id"|"nom"|"cognoms">;servei:Servei;assistencia?:Assistencia;onDesat:()=>Promise<void>}) {
   const [obert,setObert]=useState(false),[entrada,setEntrada]=useState(''),[sortida,setSortida]=useState(''),[ocupat,setOcupat]=useState(false),[error,setError]=useState('');
   useEffect(()=>{setEntrada(dataLocal(a?.horaEntrada || null));setSortida(dataLocal(a?.horaSortida || null));},[a?.horaEntrada,a?.horaSortida]);
   async function desar(validar=false) {

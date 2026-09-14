@@ -1,3 +1,4 @@
+import {participa,gestionaAssistents} from './permisosServei.service';
 import { prisma } from '../prisma';
 import { aturarUbicacio } from './ubicacioServei.service';
 import { AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
@@ -18,15 +19,15 @@ export function calcularHores(entrada: Date, sortida: Date): number {
 export async function desarFitxatge(req: AuthRequest, mode: 'entrada' | 'sortida' | 'admin') {
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "Servei" WHERE id = ${req.params.id} FOR UPDATE`;
-    const servei = await tx.servei.findUnique({where:{id:req.params.id}});
+    const servei = await tx.servei.findUnique({where:{id:req.params.id},include:{participants:true}});
     if (!servei) throw new ErrorFitxatge(404,'Servei no trobat');
     const personal = mode !== 'admin';
     if (personal && req.usuari!.rol !== 'VOLUNTARI') throw new ErrorFitxatge(403,'Només per al teu compte de voluntari');
-    if (!personal && !potGestionarAgrupacio(req,servei.agrupacioId)) throw new ErrorFitxatge(403,'No pots gestionar aquest servei');
     const v = personal ? await tx.voluntari.findUnique({where:{usuariId:req.usuari!.id}}) : await tx.voluntari.findUnique({where:{id:req.params.voluntariId}});
-    if (!v || v.agrupacioId !== servei.agrupacioId) throw new ErrorFitxatge(403,'El voluntari no pertany a aquesta AVPC');
+    if (!v || !participa(servei,v.agrupacioId) || (!personal && !gestionaAssistents(req,servei,v.agrupacioId))) throw new ErrorFitxatge(403,'El voluntari no pertany a aquesta AVPC');
     const key={serveiId_voluntariId:{serveiId:servei.id,voluntariId:v.id}};
     const anterior=await tx.assistenciaServei.findUnique({where:key});
+    if(servei.conjunt && !anterior)throw new ErrorFitxatge(403,'El voluntari no està incorporat al servei conjunt');
     const ara=new Date(); let entrada=anterior?.horaEntrada || null, sortida=anterior?.horaSortida || null;
     if (personal) {
       if (!v.actiu) throw new ErrorFitxatge(403,'Voluntari inactiu');

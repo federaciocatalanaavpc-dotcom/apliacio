@@ -5,10 +5,14 @@ import { prisma } from '../prisma';
 import { aturarUbicacionsUsuari } from '../services/ubicacioServei.service';
 import { requireAuth, AuthRequest, potGestionarAgrupacio } from '../middleware/auth.middleware';
 import { compteDisponible, resultatLogin, repteValid, passwordValida, intentFallat, hashToken, tokenPer, prepararInvitacio, urlInvitacio } from '../services/seguretat.service';
+import {lecturaValida,registrarLectura} from '../services/privacitat.service';
+import identitatRoutes from './identitat.routes';
 const router=Router();
+router.use(identitatRoutes);
 const dummy=bcrypt.hash('dummy-'+crypto.randomBytes(20).toString('hex'),12);
 router.post('/registre', (_req,res)=>res.status(403).json({error:'El registre públic està desactivat. Demana una invitació.'}));
 router.post('/login',async(req,res)=>{
+ if(!lecturaValida(req.body))return res.status(400).json({error:'Cal confirmar la lectura de la informació de privacitat vigent'});
  const {usuari,contrasenya}=req.body;
  if(typeof usuari!=='string'||typeof contrasenya!=='string'||contrasenya.length>128) return res.status(401).json({error:'Credencials incorrectes'});
  const u=await prisma.usuari.findUnique({where:{usuari:usuari.trim().toLowerCase()}});
@@ -17,11 +21,13 @@ router.post('/login',async(req,res)=>{
   if(u&&!ok) await intentFallat(u.id);
   return res.status(401).json({error:'Accés no disponible. Revisa les credencials o demana una invitació al teu administrador.'});
  }
+ await registrarLectura(u.id);
  const result=await resultatLogin(u);
  if(result.token || (u.authLockedUntil && u.authLockedUntil <= new Date()))await prisma.usuari.update({where:{id:u.id},data:{authFailed:0,authLockedUntil:null}});
  res.json(result);
 });
 router.post('/completar-contrasenya',async(req,res)=>{
+ if(!lecturaValida(req.body))return res.status(400).json({error:'Cal confirmar la lectura de la informació de privacitat vigent'});
  const ctx=await repteValid(req.body.repte,'setup');
  if(!ctx||!ctx.u.passwordMustChange) return res.status(401).json({error:'Torna a iniciar sessió'});
  if(!passwordValida(req.body.contrasenya)) return res.status(400).json({error:'Utilitza una contrasenya pròpia de 12 caràcters o més (màxim 72 bytes).'});
@@ -29,9 +35,11 @@ router.post('/completar-contrasenya',async(req,res)=>{
  const hash=await bcrypt.hash(req.body.contrasenya,12);
  const saved=await prisma.usuari.updateMany({where:{id:ctx.u.id,sessionVersion:ctx.u.sessionVersion,passwordMustChange:true},data:{contrasenya:hash,passwordMustChange:false,sessionVersion:{increment:1}}});
  if(!saved.count) return res.status(401).json({error:'El repte ha caducat'});
+ await registrarLectura(ctx.u.id);
  res.json(await resultatLogin(await prisma.usuari.findUniqueOrThrow({where:{id:ctx.u.id}})));
 });
 router.post('/invitacio',async(req,res)=>{
+ if(!lecturaValida(req.body))return res.status(400).json({error:'Cal confirmar la lectura de la informació de privacitat vigent'});
  const {token,contrasenya}=req.body;
  if(typeof token!=='string'||!passwordValida(contrasenya)) return res.status(400).json({error:'Enllaç invàlid o contrasenya massa curta (mínim 12 caràcters).'});
  const u=await prisma.usuari.findUnique({where:{accessTokenHash:hashToken(token)}});
@@ -39,6 +47,7 @@ router.post('/invitacio',async(req,res)=>{
  const hash=await bcrypt.hash(contrasenya,12);
  const changed=await prisma.usuari.updateMany({where:{id:u.id,accessTokenHash:hashToken(token),accessExpires:{gt:new Date()}},data:{contrasenya:hash,accessTokenHash:null,accessExpires:null,passwordMustChange:false,sessionVersion:{increment:1},authFailed:0,authLockedUntil:null}});
  if(!changed.count) return res.status(400).json({error:'La invitació ja s’ha utilitzat.'});
+ await registrarLectura(u.id);
  res.json(await resultatLogin(await prisma.usuari.findUniqueOrThrow({where:{id:u.id}})));
 });
 // Pantalles antigues han de tornar al login. Un repte MFA mai dona accés.

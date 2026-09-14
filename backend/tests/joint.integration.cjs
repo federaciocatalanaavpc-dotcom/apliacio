@@ -1,0 +1,73 @@
+const assert=require('node:assert/strict'),crypto=require('node:crypto'),bcrypt=require('bcrypt');
+const url=new URL(process.env.TEST_DATABASE_URL||'');if(!['localhost','127.0.0.1'].includes(url.hostname)||!url.pathname.endsWith('_test'))throw Error('Only isolated local tests');
+process.env.DATABASE_URL=url.toString();process.env.DIRECT_URL=url.toString();process.env.NODE_ENV='test';process.env.JWT_SECRET=crypto.randomBytes(40).toString('hex');
+const {prisma}=require('../dist/prisma'),{tokenPer}=require('../dist/services/seguretat.service'),app=require('../dist/index').default;let server;
+(async()=>{
+ const tag=crypto.randomBytes(5).toString('hex'),password='Password-fixture-'+tag;
+ const ags=await Promise.all(['A','B','C'].map(n=>prisma.agrupacio.create({data:{nom:'Conjunt '+n+' '+tag}})));const [a,b,c]=ags;
+ async function user(rol,agrupacioId){return prisma.usuari.create({data:{nom:'Fictici '+rol,usuari:rol.toLowerCase()+crypto.randomBytes(6).toString('hex'),rol,agrupacioId,contrasenya:await bcrypt.hash(password,8),passwordMustChange:false}});}
+ const fed=await user('FEDERACIO'),aa=await user('ADMIN_AVPC',a.id),ab=await user('AGRUPACIO',b.id),ac=await user('AGRUPACIO',c.id),ua=await user('VOLUNTARI',a.id),ub=await user('VOLUNTARI',b.id),uc=await user('VOLUNTARI',c.id);
+ await prisma.voluntari.create({data:{agrupacioId:a.id,usuariId:aa.id,nom:'Admin',cognoms:'A'}});
+ const vs=await Promise.all([ua,ub,uc].map((u,i)=>prisma.voluntari.create({data:{agrupacioId:ags[i].id,usuariId:u.id,nom:'Persona '+i,cognoms:'Prova',dni:'SECRET-DNI',telefon:'PRIVATE-PHONE'}})));const [va,vb,vc]=vs;
+ server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base='http://127.0.0.1:'+server.address().port+'/api/';
+ async function call(p,m='GET',body,account=fed){const r=await fetch(base+p,{method:m,headers:{Authorization:'Bearer '+tokenPer(account,'access'),'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json().catch(()=>null),headers:r.headers};}
+ const config={titol:'Dispositiu conjunt fictici',dataInici:new Date(Date.now()-7200000).toISOString(),dataFi:new Date(Date.now()-3600000).toISOString(),collaboracioEmergencies:true,descripcio:'Prova local',adreca:'Punt fictici',latitud:41.1,longitud:1.2,arxivat:false,participants:[{agrupacioId:a.id,coordinadora:true},{agrupacioId:b.id,coordinadora:false}]};
+ assert.equal((await call('serveis/conjunts','POST',config,aa)).status,403);
+ assert.equal((await call('serveis/conjunts','POST',{...config,participants:[config.participants[0]]})).status,400);
+ const created=await call('serveis/conjunts','POST',config);assert.equal(created.status,201,JSON.stringify(created));const id=created.data.id,p='serveis/'+id;
+ assert.equal((await call('serveis/conjunts','GET',undefined,ac)).data.length,0);
+ assert.equal((await call(p,'GET',undefined,ac)).status,403);
+ assert.equal((await call(p+'/fitxar-entrada','POST',{},ub)).status,403);
+ assert.equal((await call(p+'/equip/'+vb.id,'POST',{},aa)).status,403,'Delegation cannot nominate foreign roster');
+ assert.equal((await call(p+'/equip/'+va.id,'POST',{},aa)).status,200);
+ assert.equal((await call(p+'/equip/'+vb.id,'POST',{},ab)).status,200);
+ assert.equal((await call(p+'/equip/'+vc.id,'POST',{})).status,403,'Federation cannot add nonparticipating AVPC');
+ const scoped=await call(p+'/equip','GET',undefined,ab);assert.deepEqual(scoped.data.map(v=>v.id),[vb.id]);
+ const full=await call(p+'/equip','GET',undefined,aa);assert.equal(full.data.length,2);assert.ok(!JSON.stringify(full.data).includes('SECRET-DNI'));assert.ok(!JSON.stringify(full.data).includes('PRIVATE-PHONE'));
+ const candidates=await call(p+'/candidats','GET',undefined,aa);assert.ok(candidates.data.every(v=>v.agrupacioId===a.id));
+ assert.equal((await call('voluntaris/'+vb.id+'/exportar','GET',undefined,aa)).status,403,'Delegation never allows private export');
+ assert.equal((await call(p+'/equip','GET',undefined,ub)).status,403);
+ assert.equal((await call(p,'GET',undefined,ub)).data.assistencies.length,1);
+ assert.ok((await call('serveis','GET',undefined,ub)).data.some(s=>s.id===id));
+ assert.equal((await call(p+'/confirmar','POST',{},ub)).status,200);
+ assert.equal((await call(p+'/fitxar-entrada','POST',{},ub)).status,200);
+ const start=await call(p+'/ubicacio/iniciar','POST',{acceptoCompartir:true},ub);assert.equal(start.status,200);
+ assert.equal((await call(p+'/ubicacio','PATCH',{comparticioId:start.data.comparticioId,latitud:41.1,longitud:1.2,precisio:5,capturadaEl:new Date().toISOString()},ub)).status,200);
+ const point={puntNom:'Cruïlla B',puntLatitud:41.1,puntLongitud:1.2,puntRadi:100};
+ assert.equal((await call(p+'/punts/'+vb.id,'PATCH',point,aa)).status,200);
+ assert.ok((await call(p+'/ubicacions','GET',undefined,aa)).data.voluntaris.find(v=>v.voluntariId===vb.id).posicio);
+ assert.equal((await call(p+'/punts/'+va.id,'PATCH',point,ab)).status,403);
+ assert.equal((await call(p+'/assistencies/'+va.id,'PATCH',{validarHorariServei:true},ab)).status,403);
+ assert.equal((await call('serveis/conjunts/'+id,'PATCH',{...config,arxivat:true,versioCoordinacio:0})).status,409,'Cannot close active clock');
+ assert.equal((await call(p,'PATCH',{arxivat:true})).status,403,'No generic edit bypass');
+ assert.equal((await call(p,'DELETE')).status,403);
+ const revoked={...config,versioCoordinacio:0,participants:config.participants.map(x=>({...x,coordinadora:false}))};
+ assert.equal((await call('serveis/conjunts/'+id,'PATCH',revoked)).status,200);
+ assert.equal((await call('serveis/conjunts/'+id,'PATCH',revoked)).status,409,'Reject stale delegation version');
+ assert.equal((await call(p+'/punts/'+vb.id,'PATCH',point,aa)).status,403,'Revocation immediate');
+ assert.ok((await call(p+'/ubicacions','GET',undefined,aa)).data.voluntaris.every(v=>v.voluntariId===va.id));
+ assert.equal((await call(p,'GET',undefined,aa)).data.assistencies.length,1);
+ assert.equal((await call(p+'/assistencies/'+vb.id,'PATCH',{validarHorariServei:true},aa)).status,403);
+ assert.equal((await call(p+'/fitxar-sortida','POST',{},ub)).status,200);
+ assert.equal((await call(p+'/equip/'+vb.id,'DELETE',{},ab)).status,409,'Preserve clock records');
+ assert.equal((await call(p+'/assistencies/'+va.id,'PATCH',{validarHorariServei:true},aa)).status,200);
+ const stats=await call('serveis/estadistiques/dades','GET',undefined,ab);assert.equal(stats.status,200);const joint=stats.data.find(s=>s.id===id);assert.equal(joint.assistencies.length,1);assert.equal(joint.assistencies[0].voluntari.id,vb.id);
+ assert.equal((await call('serveis/conjunts/'+id,'PATCH',{...revoked,versioCoordinacio:1,participants:[{agrupacioId:a.id,coordinadora:false},{agrupacioId:c.id,coordinadora:false}]})).status,409);
+ assert.equal((await call('serveis/conjunts/'+id,'PATCH',{...revoked,versioCoordinacio:1,arxivat:true})).status,200);
+ // Privacy reading acknowledgement: no prechecked/default acceptance on server.
+ const creds={usuari:ab.usuari,contrasenya:password};
+ assert.equal((await call('auth/login','POST',creds)).status,400);
+ assert.equal((await call('auth/login','POST',{...creds,privacitatLlegida:false,privacitatVersio:'2026-09-14'})).status,400);
+ assert.equal((await call('auth/login','POST',{...creds,privacitatLlegida:true,privacitatVersio:'old'})).status,400);
+ const ack={...creds,privacitatLlegida:true,privacitatVersio:'2026-09-14'};assert.equal((await call('auth/login','POST',ack)).status,200);
+ const receipt=await prisma.usuari.findUniqueOrThrow({where:{id:ab.id}});assert.equal(receipt.privacitatVersio,'2026-09-14');assert.ok(receipt.privacitatLlegidaEl);
+ await call('auth/login','POST',ack);assert.equal(await prisma.registreAuditoria.count({where:{usuariId:ab.id,entitat:'InformacioPrivacitat'}}),1,'No repetitive consent history');
+ // Logo content remains separate from association metadata and own-AVPC only.
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ9sAAAAASUVORK5CYII=','base64');
+ async function upload(account,bytes=png){const f=new FormData();f.append('logo',new Blob([bytes],{type:'image/png'}),'logo.png');return fetch(base+'auth/associacio/logo',{method:'PUT',headers:{Authorization:'Bearer '+tokenPer(account,'access')},body:f});}
+ assert.equal((await upload(ua)).status,403);assert.equal((await upload(aa,Buffer.from('<svg/>'))).status,400);assert.equal((await upload(aa)).status,200);
+ const logo=await fetch(base+'auth/associacio/logo',{headers:{Authorization:'Bearer '+tokenPer(ua,'access')}});assert.equal(logo.status,200);assert.deepEqual(Buffer.from(await logo.arrayBuffer()),png);assert.match(logo.headers.get('cache-control'),/no-store/);
+ assert.equal((await fetch(base+'auth/associacio/logo',{headers:{Authorization:'Bearer '+tokenPer(ub,'access')}})).status,404);
+ assert.equal((await call('auth/associacio/logo','DELETE',{},ua)).status,403);assert.equal((await call('auth/associacio/logo','DELETE',{},aa)).status,200);
+ console.log('PASS joint services: participants, nomination, isolation, delegated map/clock, revocation, statistics, closing; privacy acknowledgement; private logo permissions');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}await prisma.$disconnect();});

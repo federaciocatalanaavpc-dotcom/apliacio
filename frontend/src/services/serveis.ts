@@ -17,6 +17,9 @@ export interface Assistencia {
 }
 
 export interface Servei {
+  conjunt?:boolean;
+  versioCoordinacio?:number;
+  participants?:{agrupacioId:string;coordinadora:boolean;agrupacio:{id:string;nom:string}}[];
   id: string;
   agrupacioId: string;
   titol: string;

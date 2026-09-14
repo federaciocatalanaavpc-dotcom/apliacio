@@ -5,6 +5,7 @@ import AlertaAFederacio from '../components/AlertaAFederacio';
 import NotificacioAssociacions from '../components/NotificacioAssociacions';
 
 const enllacos = [
+  {to:'/serveis-conjunts',icon:'🤝',label:'Serveis conjunts',text:'Coordina diverses AVPC, assistents i punts al mapa.'},
   { to: '/agrupacions', icon: '🏛️', label: 'Associacions', text: 'Consulta i gestiona les AVPC adherides.' },
   { to: '/inventari', icon: '🚗', label: 'Inventari', text: 'Vehicles, material i recursos compartits.' },
   { to: '/mapa', icon: '🗺️', label: 'Mapa', text: 'Visualitza les agrupacions sobre el territori.' },

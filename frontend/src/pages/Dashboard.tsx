@@ -1,3 +1,4 @@
+import IdentitatAvpc from '../components/IdentitatAvpc';
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
@@ -37,7 +38,7 @@ export default function Dashboard() {
         <section className="vol-home-hero">
           <div className="vol-home-hero__copy">
             <span className="vol-home-kicker">El meu espai</span>
-            <h1>Hola, {nomMostrat}</h1>
+            <h1>Hola, {nomMostrat}</h1><IdentitatAvpc/>
             <p>Tot el que necessites com a voluntari, en un únic lloc.</p>
           </div>
           <div className="vol-home-status">
