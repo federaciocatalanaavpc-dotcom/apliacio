@@ -17,6 +17,10 @@ registerSW({
   },
 });
 
+// Si després d'un desplegament un fragment antic ja no existeix, es recarrega
+// l'app per obtenir la versió nova en lloc de quedar-se en blanc.
+window.addEventListener('vite:preloadError', () => window.location.reload());
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

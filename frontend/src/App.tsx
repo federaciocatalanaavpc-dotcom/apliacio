@@ -1,34 +1,39 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import {CompartirUbicacioProvider} from './components/CompartirUbicacio';
 import Dashboard from './pages/Dashboard';
-import Associacions from './pages/Associacions';
-import GestioUsuaris from './pages/GestioUsuaris';
-import Inventari from './pages/Inventari';
-import Mapa from './pages/Mapa';
-import Documents from './pages/Documents';
-import DocumentacioPropia from './pages/DocumentacioPropia';
-import Formacio from './pages/Formacio';
-import GestioAvpc from './pages/GestioAvpc';
-import Federacio from './pages/Federacio';
-import ServeisConjunts from './pages/ServeisConjunts';
-import PerfilVoluntari from './pages/PerfilVoluntari';
-import RobaVoluntari from './pages/RobaVoluntari';
-import DisponibilitatVoluntari from './pages/DisponibilitatVoluntari';
-import EstadistiquesVoluntari from './pages/EstadistiquesVoluntari';
-import AlertesVoluntari from './pages/AlertesVoluntari';
-import Avisos from './pages/Avisos';
-import CanviarContrasenya from './pages/CanviarContrasenya';
 import RutaProtegida from './components/RutaProtegida';
 import RutaFederacio from './components/RutaFederacio';
 import EstatConnexio from './components/EstatConnexio';
 import VoluntariShell from './components/VoluntariShell';
+
+// Les pantalles pesades (mapes, PDF, gràfics) es descarreguen només quan
+// s'obren: la càrrega inicial al mòbil és molt més ràpida.
+const Associacions = lazy(() => import('./pages/Associacions'));
+const GestioUsuaris = lazy(() => import('./pages/GestioUsuaris'));
+const Inventari = lazy(() => import('./pages/Inventari'));
+const Mapa = lazy(() => import('./pages/Mapa'));
+const Documents = lazy(() => import('./pages/Documents'));
+const DocumentacioPropia = lazy(() => import('./pages/DocumentacioPropia'));
+const Formacio = lazy(() => import('./pages/Formacio'));
+const GestioAvpc = lazy(() => import('./pages/GestioAvpc'));
+const Federacio = lazy(() => import('./pages/Federacio'));
+const ServeisConjunts = lazy(() => import('./pages/ServeisConjunts'));
+const PerfilVoluntari = lazy(() => import('./pages/PerfilVoluntari'));
+const RobaVoluntari = lazy(() => import('./pages/RobaVoluntari'));
+const DisponibilitatVoluntari = lazy(() => import('./pages/DisponibilitatVoluntari'));
+const EstadistiquesVoluntari = lazy(() => import('./pages/EstadistiquesVoluntari'));
+const AlertesVoluntari = lazy(() => import('./pages/AlertesVoluntari'));
+const Avisos = lazy(() => import('./pages/Avisos'));
+const CanviarContrasenya = lazy(() => import('./pages/CanviarContrasenya'));
 
 export default function App() {
   return (
     <BrowserRouter>
       <CompartirUbicacioProvider>
       <EstatConnexio />
+      <Suspense fallback={<main className="page"><p className="text-muted">Carregant…</p></main>}>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<RutaProtegida><Dashboard /></RutaProtegida>} />
@@ -50,6 +55,7 @@ export default function App() {
         <Route path="/avisos" element={<RutaProtegida><Avisos /></RutaProtegida>} />
         <Route path="/canviar-contrasenya" element={<RutaProtegida><CanviarContrasenya /></RutaProtegida>} />
       </Routes>
+      </Suspense>
       </CompartirUbicacioProvider>
     </BrowserRouter>
   );

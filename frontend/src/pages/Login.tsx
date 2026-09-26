@@ -79,7 +79,7 @@ export default function Login() {
           {step === 'login' && (
             <label style={{display:"flex",alignItems:"flex-start",gap:10,marginTop:10}}>
               <input type="checkbox" checked={recordar} onChange={e=>setRecordar(e.target.checked)} style={{width:18,marginTop:3}}/>
-              <span>Mantén la sessió iniciada en aquest dispositiu (14 dies)<br/><small className="text-muted">Només per a voluntaris i associacions. Desmarca-ho en dispositius compartits. "Sortir" tanca la sessió a tots els dispositius.</small></span>
+              <span style={{fontWeight:600}}>Mantén la sessió iniciada en aquest dispositiu (14 dies)<br/><small className="text-muted" style={{fontWeight:400,display:"block",marginTop:2}}>Només per a voluntaris i associacions. Desmarca-ho en dispositius compartits. "Sortir" tanca la sessió a tots els dispositius.</small></span>
             </label>
           )}
           {error && <p className="text-error" role="alert">{error}</p>}

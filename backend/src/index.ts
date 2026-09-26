@@ -31,6 +31,7 @@ import notificacioAssociacionsRoutes from './routes/notificacioAssociacions.rout
 import auditoriaRoutes from './routes/auditoria.routes';
 import alertesRoutes from './routes/alertes.routes';
 import caducitatsRoutes from './routes/caducitats.routes';
+import { prisma } from './prisma';
 import { iniciarRevisioCaducitats } from './services/caducitats.service';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
@@ -75,8 +76,16 @@ app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/alertes', alertesRoutes);
 app.use('/api/caducitats', caducitatsRoutes);
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
+// Comprova també la base de dades: així un monitor extern (que a més manté
+// desperta la instància gratuïta) detecta una caiguda real, no només que el
+// procés respon.
+app.get('/api/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok' });
+  } catch {
+    res.status(503).json({ status: 'db-error' });
+  }
 });
 
 app.use((err:any,_req:express.Request,res:express.Response,_next:express.NextFunction)=>{

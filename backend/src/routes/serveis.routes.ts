@@ -162,13 +162,16 @@ router.post('/', async (req: AuthRequest, res) => {
   }
   try {
     calcularHores(dataFitxatge(dataInici), dataFitxatge(dataFi));
-    const any = new Date(dataInici).getFullYear();
+    // L'any es calcula amb l'hora de Catalunya (el servidor va en UTC): un
+    // servei de l'1 de gener a 00:30 compta per al nou any.
+    const anyMadrid = (d: Date) => Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric' }).format(d));
+    const any = anyMadrid(new Date(dataInici));
     const servei = await prisma.$transaction(async (tx) => {
-      const inici = new Date(any, 0, 1);
-      const fi = new Date(any + 1, 0, 1);
-      const comptador = await tx.servei.count({
-        where: { agrupacioId: agrupacioFinal, dataInici: { gte: inici, lt: fi } },
+      const candidats = await tx.servei.findMany({
+        where: { agrupacioId: agrupacioFinal, dataInici: { gte: new Date(Date.UTC(any, 0, 1) - 36 * 3600_000), lt: new Date(Date.UTC(any + 1, 0, 1) + 36 * 3600_000) } },
+        select: { dataInici: true },
       });
+      const comptador = candidats.filter((c) => anyMadrid(c.dataInici) === any).length;
       return tx.servei.create({
         data: {
           agrupacioId: agrupacioFinal,
