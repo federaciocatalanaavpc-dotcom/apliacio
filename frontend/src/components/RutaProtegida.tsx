@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { api, getUsuariActual } from '../services/api';
 import Capcalera from './Capcalera';
+import AvisNotificacions from './AvisNotificacions';
 
 export default function RutaProtegida({ children }: { children: React.ReactNode }) {
  const {pathname}=useLocation();
@@ -26,5 +27,5 @@ export default function RutaProtegida({ children }: { children: React.ReactNode 
  const u=getUsuariActual();
  if(u?.rol==='ADMIN_AVPC'&&!['/serveis-conjunts','/','/gestio-avpc','/inventari','/avisos','/canviar-contrasenya','/voluntari/roba','/voluntari/disponibilitat','/voluntari/estadistiques','/voluntari/alertes'].includes(pathname))return <Navigate to="/gestio-avpc" replace/>;
  if(u?.rol==='VOLUNTARI'&&pathname!=='/'&&pathname!=='/canviar-contrasenya'&&!pathname.startsWith('/voluntari/'))return <Navigate to="/" replace/>;
- return <><Capcalera/>{children}</>;
+ return <><Capcalera/><AvisNotificacions/>{children}</>;
 }

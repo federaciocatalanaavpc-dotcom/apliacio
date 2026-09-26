@@ -35,11 +35,23 @@ self.addEventListener('push', (event) => {
       body: 'Tens un avís nou. Obre l’app per consultar-lo.',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
+      // Es queda a la pantalla fins que l'usuari la toca, amb vibració, perquè
+      // una alerta d'emergència no passi desapercebuda.
+      requireInteraction: true,
+      vibrate: [300, 150, 300, 150, 300],
+      renotify: true,
+      tag: 'avpc-avis-' + Date.now(),
     })
   );
 });
 
+// Si l'app ja és oberta se li dona el focus; si no, s'obre.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow('/'));
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestres) => {
+      const oberta = finestres.find((f) => 'focus' in f);
+      return oberta ? oberta.focus() : clients.openWindow('/');
+    })
+  );
 });

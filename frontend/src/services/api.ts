@@ -33,7 +33,7 @@ export async function login(usuari:string,contrasenya:string,privacitatLlegida:b
 }
 function netejarSessio() {
  window.dispatchEvent(new Event('avpc-sortir'));
- sessionStorage.removeItem('token'); sessionStorage.removeItem('usuari');
+ sessionStorage.removeItem('token'); sessionStorage.removeItem('usuari'); sessionStorage.removeItem('avpc-avis-notis-vist');
  localStorage.removeItem('token'); localStorage.removeItem('usuari');
  if('caches' in window) caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('api-cache')).map(k=>caches.delete(k)))).catch(()=>{});
  navigator.serviceWorker?.controller?.postMessage({type:'CLEAR_PRIVATE_CACHE'});
@@ -42,9 +42,19 @@ function netejarSessio() {
 localStorage.removeItem('token'); localStorage.removeItem('usuari');
 export function logout() {
  const token=sessionStorage.getItem('token');
- const revoke=token ? api.post('/auth/sortir',{}, {headers:{Authorization:'Bearer '+token}}).catch(()=>{}) : Promise.resolve();
+ const auth={headers:{Authorization:'Bearer '+token}};
+ // Primer es treu la subscripció push d'aquest dispositiu del servidor (amb
+ // el token encara vàlid) i després es revoca la sessió, perquè el següent
+ // usuari d'aquest dispositiu no rebi els avisos de l'anterior.
+ const revoke=(async()=>{
+  try {
+   const reg=await navigator.serviceWorker?.getRegistration();
+   const sub=await reg?.pushManager.getSubscription();
+   if(sub){ if(token) await api.post('/push/desubscriure',{endpoint:sub.endpoint},auth).catch(()=>{}); await sub.unsubscribe(); }
+  } catch {}
+  if(token) await api.post('/auth/sortir',{},auth).catch(()=>{});
+ })();
  netejarSessio();
- navigator.serviceWorker?.getRegistration().then(r=>r?.pushManager.getSubscription()).then(s=>s?.unsubscribe()).catch(()=>{});
  return revoke;
 }
 api.interceptors.response.use(r=>r,err=>{

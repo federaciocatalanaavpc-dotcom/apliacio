@@ -1,0 +1,111 @@
+.avis-notis {
+  position: sticky;
+  top: 68px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  background: var(--c-error-bg);
+  border-bottom: 2px solid var(--c-error);
+  color: var(--c-text);
+}
+
+.avis-notis__icona {
+  font-size: 22px;
+}
+
+.avis-notis__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.avis-notis__text strong {
+  color: var(--c-error);
+}
+
+.avis-notis__boto {
+  flex: 0 0 auto;
+  background: var(--c-error);
+  color: #fff;
+  font-weight: 700;
+}
+
+.avis-notis__boto:disabled {
+  opacity: 0.7;
+}
+
+.avis-notis-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.avis-notis-modal__caixa {
+  width: min(440px, 100%);
+  background: var(--c-surface);
+  color: var(--c-text);
+  border-radius: var(--radius-lg);
+  padding: 26px 24px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.avis-notis-modal__icona {
+  font-size: 44px;
+  margin-bottom: 6px;
+}
+
+.avis-notis-modal__caixa h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+.avis-notis-modal__caixa p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--c-text-muted);
+}
+
+.avis-notis-modal__accions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.avis-notis-modal__accions button {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.avis-notis-modal__secundari {
+  background: transparent;
+}
+
+.avis-notis-modal__caixa small {
+  color: var(--c-text-muted);
+  font-size: 11px;
+}
+
+@media (max-width: 640px) {
+  .avis-notis {
+    top: 0;
+    position: relative;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+  }
+  .avis-notis__boto {
+    width: 100%;
+  }
+}

@@ -8,7 +8,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export async function estatNotificacions(): Promise<NotificationPermission | 'no-suportat'> {
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'no-suportat';
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return 'no-suportat';
   return Notification.permission;
 }
 
@@ -21,38 +21,65 @@ export function esIosSenseInstallar(): boolean {
   return esIos && !esStandalone;
 }
 
-// Activa les notificacions: demana permís, registra el service worker,
-// crea la subscripció push i l'envia al backend perquè guardi les claus.
-// Si qualsevol pas falla (motiu habitual al mòbil: iOS sense instal·lar,
-// o un navegador que no accepta subscripcions push) es retorna false en
-// lloc de deixar l'excepció sense capturar, perquè la pantalla ho pugui dir.
-export async function activarNotificacions(): Promise<boolean> {
-  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-    return false;
+// El service worker pot no arribar a estar llest (p.ex. en desenvolupament);
+// sense aquest límit la promesa "ready" es quedaria penjada per sempre.
+async function registreServiceWorker(): Promise<ServiceWorkerRegistration> {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, rebutja) => setTimeout(() => rebutja(new Error('sw-timeout')), 10_000)),
+  ]);
+}
+
+function mateixaClau(a: ArrayBuffer | null, b: Uint8Array): boolean {
+  if (!a) return false;
+  const x = new Uint8Array(a);
+  return x.length === b.length && x.every((v, i) => v === b[i]);
+}
+
+// Crea (o reutilitza) la subscripció push del dispositiu i la registra al
+// backend associada a l'usuari que ha iniciat sessió. Es fa a cada inici de
+// sessió: així un dispositiu compartit, una subscripció caducada o una clau
+// VAPID canviada mai deixen l'usuari sense rebre avisos sense que se n'adoni.
+async function subscriureIRegistrar(): Promise<boolean> {
+  const registration = await registreServiceWorker();
+  const { data } = await api.get('/push/clau-publica');
+  if (!data.clauPublica) return false;
+  const clau = urlBase64ToUint8Array(data.clauPublica);
+
+  let subscripcio = await registration.pushManager.getSubscription();
+  if (subscripcio && !mateixaClau(subscripcio.options.applicationServerKey, clau)) {
+    await subscripcio.unsubscribe();
+    subscripcio = null;
   }
+  if (!subscripcio) {
+    subscripcio = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: clau });
+  }
+
+  const json = subscripcio.toJSON();
+  await api.post('/push/subscriure', { endpoint: json.endpoint, keys: json.keys });
+  return true;
+}
+
+// Activa les notificacions: demana permís i registra la subscripció.
+// Retorna false (en lloc de llançar) si qualsevol pas falla, perquè la
+// pantalla ho pugui explicar.
+export async function activarNotificacions(): Promise<boolean> {
+  if ((await estatNotificacions()) === 'no-suportat') return false;
   try {
     const permis = await Notification.requestPermission();
     if (permis !== 'granted') return false;
+    return await subscriureIRegistrar();
+  } catch {
+    return false;
+  }
+}
 
-    const registration = await navigator.serviceWorker.ready;
-    const { data } = await api.get('/push/clau-publica');
-    if (!data.clauPublica) return false;
-
-    const subscripcioExistent = await registration.pushManager.getSubscription();
-    const subscripcio =
-      subscripcioExistent ||
-      (await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(data.clauPublica),
-      }));
-
-    const json = subscripcio.toJSON();
-    await api.post('/push/subscriure', {
-      endpoint: json.endpoint,
-      keys: json.keys,
-    });
-
-    return true;
+// Si el permís ja hi és, refà silenciosament la subscripció (sense cap
+// diàleg). Retorna false si no s'ha pogut deixar registrada.
+export async function sincronitzarNotificacions(): Promise<boolean> {
+  if ((await estatNotificacions()) !== 'granted') return false;
+  try {
+    return await subscriureIRegistrar();
   } catch {
     return false;
   }

@@ -31,11 +31,17 @@ export async function enviarNotificacio(usuariId: string, titol: string, cos: st
           endpoint: sub.endpoint,
           keys: { p256dh: sub.p256dh, auth: sub.auth },
         },
-        JSON.stringify({ title: titol, body: cos })
+        JSON.stringify({ title: titol, body: cos }),
+        // urgency "high" fa que Android/FCM lliuri el missatge immediatament
+        // encara que el mòbil estigui en repòs; TTL de 24h perquè si el
+        // dispositiu està sense cobertura rebi l'avís en tornar-hi.
+        { urgency: 'high', TTL: 60 * 60 * 24 }
       );
     } catch (error: any) {
       if (error.statusCode === 404 || error.statusCode === 410) {
         await prisma.subscripcioPush.delete({ where: { id: sub.id } });
+      } else {
+        console.warn('Push no enviat (', error.statusCode, ')', sub.endpoint.slice(0, 40));
       }
     }
   }
