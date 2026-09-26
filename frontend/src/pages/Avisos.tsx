@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Avis, SeguimentAvis, crearAvis, eliminarAvis, llistarAvisos, obtenirSeguimentAvis } from '../services/avisos';
 import { Agrupacio, llistarAgrupacions } from '../services/agrupacions';
-import { estatNotificacions, activarNotificacions, enviarNotificacioProva, esIosSenseInstallar } from '../services/push';
 import { getUsuariActual } from '../services/api';
 import BotoTornar from '../components/BotoTornar';
+import NotificacionsCard from '../components/NotificacionsCard';
 
 export default function Avisos() {
   const usuariActual = getUsuariActual();
@@ -12,7 +12,6 @@ export default function Avisos() {
   const [agrupacions, setAgrupacions] = useState<Agrupacio[]>([]);
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState('');
-  const [permis, setPermis] = useState<string>('default');
 
   const [titol, setTitol] = useState('');
   const [cos, setCos] = useState('');
@@ -35,30 +34,10 @@ export default function Avisos() {
     }
   }
 
-  async function actualitzarEstatNotis() {
-    const e = await estatNotificacions();
-    setPermis(e);
-  }
-
   useEffect(() => {
     carregar();
-    actualitzarEstatNotis();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function handleActivarNotis() {
-    const ok = await activarNotificacions();
-    await actualitzarEstatNotis();
-    if (ok) {
-      try {
-        await enviarNotificacioProva();
-      } catch {
-        // si la notificació de prova falla, no cal bloquejar la resta
-      }
-    } else {
-      setError('No s\'han pogut activar les notificacions en aquest navegador');
-    }
-  }
 
   async function handleCrear(e: React.FormEvent) {
     e.preventDefault();
@@ -117,23 +96,7 @@ export default function Avisos() {
       <BotoTornar />
       <h1>Avisos</h1>
 
-      <div className="card" style={{ marginBottom: 20, maxWidth: 420 }}>
-        <p style={{ margin: '0 0 8px', fontWeight: 'bold' }}>
-          Notificacions: {permis === 'granted' ? 'Activades' : permis === 'denied' ? 'Bloquejades pel navegador' : 'No activades'}
-        </p>
-        <p className="text-muted" style={{ fontSize: 13, margin: '0 0 10px' }}>
-          Activa-les per rebre els avisos al mòbil o ordinador encara que no tinguis la web oberta.
-        </p>
-        {permis !== 'granted' && esIosSenseInstallar() ? (
-          <p style={{ fontSize: 13, color: 'var(--c-warning)', margin: 0 }}>
-            En un iPhone/iPad, per rebre notificacions primer cal afegir aquesta app a la pantalla d'inici:
-            toca el botó de compartir de Safari (⬆️) i tria "Afegeix a la pantalla d'inici". Després obre l'app
-            des d'aquesta icona (no des de Safari) i torna aquí per activar-les.
-          </p>
-        ) : (
-          permis !== 'granted' && <button onClick={handleActivarNotis}>Activar notificacions</button>
-        )}
-      </div>
+      <NotificacionsCard />
 
       {error && <p className="text-error">{error}</p>}
 

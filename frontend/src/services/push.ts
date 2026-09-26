@@ -85,6 +85,32 @@ export async function sincronitzarNotificacions(): Promise<boolean> {
   }
 }
 
-export async function enviarNotificacioProva() {
-  await api.post('/push/prova');
+export interface ResultatProva {
+  dispositius: number;
+  enviades: number;
+  fallides: number;
+  eliminades: number;
+  ultimError: number | null;
+}
+
+export async function enviarNotificacioProva(): Promise<ResultatProva> {
+  const { data } = await api.post('/push/prova');
+  return data;
+}
+
+// Text entenedor per a l'usuari sobre què ha passat amb la notificació de prova.
+export function descriureProva(r: ResultatProva): { ok: boolean; text: string } {
+  if (r.dispositius === 0) {
+    return { ok: false, text: "Aquest compte no té cap dispositiu registrat. Recarrega l'app i accepta l'avís de notificacions." };
+  }
+  if (r.enviades > 0) {
+    return {
+      ok: true,
+      text: `Enviada a ${r.enviades} dispositiu(s). Si no et surt res, revisa el mode "No molestar" i l'estalvi de bateria, i que el navegador pugui executar-se en segon pla.`,
+    };
+  }
+  if (r.fallides > 0) {
+    return { ok: false, text: `El servei de notificacions del navegador ha rebutjat l'enviament (codi ${r.ultimError}). Torna a activar-les.` };
+  }
+  return { ok: false, text: "El dispositiu registrat ja no era vàlid i s'ha eliminat. Recarrega l'app per registrar-lo de nou." };
 }

@@ -36,8 +36,8 @@ router.post('/desubscriure', async (req: AuthRequest, res) => {
 });
 
 router.post('/prova', async (req: AuthRequest, res) => {
-  await enviarNotificacio(req.usuari!.id, 'AVPC Federació', 'Notificacions activades correctament.');
-  res.json({ ok: true });
+  const resultat = await enviarNotificacio(req.usuari!.id, 'AVPC Federació', 'Notificacions activades correctament.');
+  res.json({ ok: true, ...resultat });
 });
 
 export default router;

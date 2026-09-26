@@ -20,9 +20,11 @@ export function clauPublicaVapid() {
 // Si alguna subscripció ha caducat (l'usuari va desinstal·lar o revocar permisos),
 // s'elimina automàticament de la base de dades.
 export async function enviarNotificacio(usuariId: string, titol: string, cos: string) {
+  const resultat = { dispositius: 0, enviades: 0, fallides: 0, eliminades: 0, ultimError: null as number | null };
   const u=await prisma.usuari.findUnique({where:{id:usuariId}});
-  if(!await compteDisponible(u))return;
+  if(!await compteDisponible(u))return resultat;
   const subscripcions = await prisma.subscripcioPush.findMany({ where: { usuariId } });
+  resultat.dispositius = subscripcions.length;
 
   for (const sub of subscripcions) {
     try {
@@ -37,12 +39,17 @@ export async function enviarNotificacio(usuariId: string, titol: string, cos: st
         // dispositiu està sense cobertura rebi l'avís en tornar-hi.
         { urgency: 'high', TTL: 60 * 60 * 24 }
       );
+      resultat.enviades++;
     } catch (error: any) {
       if (error.statusCode === 404 || error.statusCode === 410) {
         await prisma.subscripcioPush.delete({ where: { id: sub.id } });
+        resultat.eliminades++;
       } else {
+        resultat.fallides++;
+        resultat.ultimError = error.statusCode ?? 0;
         console.warn('Push no enviat (', error.statusCode, ')', sub.endpoint.slice(0, 40));
       }
     }
   }
+  return resultat;
 }

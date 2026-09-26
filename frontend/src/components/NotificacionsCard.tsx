@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { estatNotificacions, activarNotificacions, enviarNotificacioProva, esIosSenseInstallar } from '../services/push';
+import { estatNotificacions, activarNotificacions, enviarNotificacioProva, esIosSenseInstallar, descriureProva } from '../services/push';
 
 // Targeta reutilitzable per activar les notificacions push del dispositiu.
 export default function NotificacionsCard() {
   const [permis, setPermis] = useState<string>('default');
   const [error, setError] = useState('');
+  const [resultatProva, setResultatProva] = useState<{ ok: boolean; text: string } | null>(null);
+  const [provant, setProvant] = useState(false);
 
   async function actualitzarEstatNotis() {
     setPermis(await estatNotificacions());
@@ -29,6 +31,18 @@ export default function NotificacionsCard() {
     }
   }
 
+  async function handleProvar() {
+    setProvant(true);
+    setResultatProva(null);
+    try {
+      setResultatProva(descriureProva(await enviarNotificacioProva()));
+    } catch {
+      setResultatProva({ ok: false, text: "No s'ha pogut fer la prova. Comprova la connexió." });
+    } finally {
+      setProvant(false);
+    }
+  }
+
   return (
     <div className="card" style={{ marginBottom: 20, maxWidth: 420 }}>
       <p style={{ margin: '0 0 8px', fontWeight: 'bold' }}>
@@ -46,6 +60,16 @@ export default function NotificacionsCard() {
         </p>
       ) : (
         permis !== 'granted' && <button onClick={handleActivarNotis}>Activar notificacions</button>
+      )}
+      {permis === 'granted' && (
+        <>
+          <button onClick={handleProvar} disabled={provant}>{provant ? 'Enviant...' : 'Provar la recepció'}</button>
+          {resultatProva && (
+            <p style={{ fontSize: 13, margin: '10px 0 0', color: resultatProva.ok ? 'var(--c-success)' : 'var(--c-error)' }}>
+              {resultatProva.text}
+            </p>
+          )}
+        </>
       )}
     </div>
   );
