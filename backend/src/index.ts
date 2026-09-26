@@ -30,6 +30,8 @@ import alertaFederacioRoutes from './routes/alertaFederacio.routes';
 import notificacioAssociacionsRoutes from './routes/notificacioAssociacions.routes';
 import auditoriaRoutes from './routes/auditoria.routes';
 import alertesRoutes from './routes/alertes.routes';
+import caducitatsRoutes from './routes/caducitats.routes';
+import { iniciarRevisioCaducitats } from './services/caducitats.service';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -71,6 +73,7 @@ app.use('/api/alerta-federacio', alertaFederacioRoutes);
 app.use('/api/notificacio-associacions', notificacioAssociacionsRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/alertes', alertesRoutes);
+app.use('/api/caducitats', caducitatsRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -84,5 +87,6 @@ export default app;
 if (require.main === module) app.listen(PORT, () => {
   console.log(`Servidor AVPC Federació backend escoltant al port ${PORT}`);
   iniciarPlanificadorAvisos();
+  iniciarRevisioCaducitats();
   console.log("Planificador d'avisos iniciat (revisió cada minut)");
 });

@@ -1,4 +1,5 @@
 import IdentitatAvpc from '../components/IdentitatAvpc';
+import ResumCaducitats from '../components/ResumCaducitats';
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { getUsuariActual } from '../services/api';
@@ -101,6 +102,8 @@ export default function Dashboard() {
           {usuari?.rol === 'FEDERACIO' ? 'Administrador Federació' : 'Associació'}
         </span>
       </section>
+
+      <ResumCaducitats />
 
       <section className="dashboard-section" aria-labelledby="espais-titol">
         <div className="dashboard-section__heading">

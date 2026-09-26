@@ -4,10 +4,13 @@ import BotoTornar from '../components/BotoTornar';
 import Vehicles from './Vehicles';
 import Material from './Material';
 import Equipament from './Equipament';
+import Caducitats from './Caducitats';
 
 export default function Inventari({ embedded = false }: { embedded?: boolean } = {}) {
-  const [pestanya, setPestanya] = useState<'vehicles' | 'material' | 'roba' | 'epi'>('vehicles');
   const [params] = useSearchParams();
+  const [pestanya, setPestanya] = useState<'vehicles' | 'material' | 'roba' | 'epi' | 'caducitats'>(
+    params.get('pestanya') === 'caducitats' ? 'caducitats' : 'vehicles'
+  );
   const agrupacioId = params.get('agrupacio') || undefined;
   const agrupacioNom = params.get('nom');
 
@@ -36,12 +39,16 @@ export default function Inventari({ embedded = false }: { embedded?: boolean } =
         <button onClick={() => setPestanya('epi')} className={`tab ${pestanya === 'epi' ? 'tab--active' : ''}`}>
           EPI
         </button>
+        <button onClick={() => setPestanya('caducitats')} className={`tab ${pestanya === 'caducitats' ? 'tab--active' : ''}`}>
+          Caducitats
+        </button>
       </div>
 
       {pestanya === 'vehicles' && <Vehicles embedded filtreAgrupacioId={agrupacioId} />}
       {pestanya === 'material' && <Material embedded filtreAgrupacioId={agrupacioId} />}
       {pestanya === 'roba' && <Equipament tipus="ROBA" titol="Roba" embedded filtreAgrupacioId={agrupacioId} />}
-      {pestanya === 'epi' && <Equipament tipus="EPI" titol="EPI" embedded filtreAgrupacioId={agrupacioId} />}
+      {pestanya === 'caducitats' && <Caducitats filtreAgrupacioId={agrupacioId} />}
+      {pestanya === 'epi' &&<Equipament tipus="EPI" titol="EPI" embedded filtreAgrupacioId={agrupacioId} />}
     </div>
   );
 }
