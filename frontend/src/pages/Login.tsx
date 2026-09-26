@@ -10,6 +10,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [lectura,setLectura]=useState(false);
+  const [recordar,setRecordar]=useState(true);
   const [invitation] = useState(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('invitacio');
     if (token) window.history.replaceState(null, '', window.location.pathname);
@@ -23,7 +24,7 @@ export default function Login() {
     setPassword('');
     setConfirm('');
     if (data.token) {
-      desarSessio(data);
+      desarSessio(data, recordar && step === 'login');
       navigate('/');
       return;
     }
@@ -39,7 +40,7 @@ export default function Login() {
     setBusy(true);
     try {
       if (step === 'login') {
-        receive(await login(nomUsuari.trim().toLowerCase(), password, lectura));
+        receive(await login(nomUsuari.trim().toLowerCase(), password, lectura, recordar));
       } else {
         if (password !== confirm) throw new Error('Les contrasenyes no coincideixen');
         const { data } = await api.post(
@@ -75,6 +76,12 @@ export default function Login() {
           </>}
           <InformacioPrivacitat/>
           <label style={{display:"flex",alignItems:"flex-start",gap:10}}><input type="checkbox" required checked={lectura} onChange={e=>setLectura(e.target.checked)} style={{width:18,marginTop:3}}/> He llegit la informació de protecció de dades.</label>
+          {step === 'login' && (
+            <label style={{display:"flex",alignItems:"flex-start",gap:10,marginTop:10}}>
+              <input type="checkbox" checked={recordar} onChange={e=>setRecordar(e.target.checked)} style={{width:18,marginTop:3}}/>
+              <span>Mantén la sessió iniciada en aquest dispositiu (14 dies)<br/><small className="text-muted">Només per a voluntaris i associacions. Desmarca-ho en dispositius compartits. "Sortir" tanca la sessió a tots els dispositius.</small></span>
+            </label>
+          )}
           {error && <p className="text-error" role="alert">{error}</p>}
           <button disabled={busy} type="submit" style={{ width: '100%', marginTop: 16 }}>{busy ? 'Comprovant…' : step === 'login' ? 'Entrar' : 'Continuar'}</button>
           {step === 'login' ? <p className="text-muted" style={{ fontSize: 13 }}>Si has oblidat la contrasenya, demana al teu administrador un enllaç de recuperació. La Federació gestiona els comptes de les associacions.</p> : <button type="button" onClick={() => window.location.replace('/login')} style={{ marginTop: 12 }}>Tornar a l’inici de sessió</button>}

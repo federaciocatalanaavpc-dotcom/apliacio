@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { api, getUsuariActual } from '../services/api';
+import { api, getUsuariActual, netejarSessio } from '../services/api';
 import Capcalera from './Capcalera';
 import AvisNotificacions from './AvisNotificacions';
 import AlertaEmergencia from './AlertaEmergencia';
@@ -18,7 +18,7 @@ export default function RutaProtegida({ children }: { children: React.ReactNode 
   let cancelled=false;setChecked('');setError(false);
   if(token&&online)api.get('/auth/me').then(({data})=>{
    if(!cancelled){sessionStorage.setItem('usuari',JSON.stringify(data));setChecked(pathname);}
-  }).catch(e=>{if(!cancelled){if(e.response?.status===401){sessionStorage.clear();window.location.replace('/login');}else setError(true);}});
+  }).catch(e=>{if(!cancelled){if(e.response?.status===401){netejarSessio();sessionStorage.clear();window.location.replace('/login');}else setError(true);}});
   return ()=>{cancelled=true;};
  },[pathname,token,online]);
  if(!token)return <Navigate to="/login" replace/>;

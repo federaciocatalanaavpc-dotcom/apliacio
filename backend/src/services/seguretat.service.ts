@@ -12,8 +12,15 @@ export const hashToken = (v: string) => crypto.createHash('sha256').update(v).di
 export function passwordValida(p: unknown): p is string {
   return typeof p === 'string' && p.length >= 12 && Buffer.byteLength(p, 'utf8') <= 72 && !/^(.)\1+$/.test(p) && !['123456789012','password1234','contrasenya123','contraseña123'].includes(p.toLowerCase());
 }
-export function tokenPer(u: Pick<Usuari, 'id' | 'sessionVersion'>, purpose: 'access' | 'setup') {
-  return jwt.sign({ id: u.id, sv: u.sessionVersion, purpose }, secret!, { algorithm: 'HS256', issuer: options.issuer, audience: options.audience, expiresIn: purpose === 'access' ? '8h' : '10m' });
+// Sessió llarga (14 dies) només si l'usuari ho demana al login i només per a
+// voluntaris i associacions; federació i administradors AVPC, que veuen més
+// dades, sempre tenen sessió de 8 hores. Es pot anul·lar en qualsevol moment
+// (Sortir, canvi de contrasenya, desactivar el compte) via sessionVersion.
+export function sessioRecordable(u: Pick<Usuari, 'rol'>) {
+  return u.rol === 'VOLUNTARI' || u.rol === 'AGRUPACIO';
+}
+export function tokenPer(u: Pick<Usuari, 'id' | 'sessionVersion'>, purpose: 'access' | 'setup', llarga = false) {
+  return jwt.sign({ id: u.id, sv: u.sessionVersion, purpose }, secret!, { algorithm: 'HS256', issuer: options.issuer, audience: options.audience, expiresIn: purpose === 'access' ? (llarga ? '14d' : '8h') : '10m' });
 }
 export function llegirToken(token: string) {
   const p = jwt.verify(token, secret!, options) as jwt.JwtPayload;
@@ -34,10 +41,10 @@ export async function compteDisponible(u: Usuari | null) {
 export function usuariPublic(u: Usuari) {
   return { id:u.id, nom:u.nom, usuari:u.usuari, rol:u.rol, agrupacioId:u.agrupacioId, actiu:u.actiu, creatEl:u.creatEl };
 }
-export async function resultatLogin(u: Usuari): Promise<any> {
+export async function resultatLogin(u: Usuari, recordar = false): Promise<any> {
   if (u.passwordMustChange) return { pas:'password', repte:tokenPer(u,'setup') };
   const ag = u.agrupacioId ? await prisma.agrupacio.findUnique({ where:{id:u.agrupacioId},select:{nom:true} }) : null;
-  return { token:tokenPer(u,'access'), usuari:{...usuariPublic(u),agrupacioNom:ag?.nom || null} };
+  return { token:tokenPer(u,'access',recordar && sessioRecordable(u)), usuari:{...usuariPublic(u),agrupacioNom:ag?.nom || null} };
 }
 export async function repteValid(token: unknown, purpose: 'setup') {
   if (typeof token !== 'string') return null;

@@ -24,14 +24,14 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
     if (!actual || actual.sessionVersion !== payload.sv || actual.passwordMustChange || actual.accessTokenHash || !await compteDisponible(actual)) return res.status(401).json({ error: 'Compte no disponible' });
     if (actual.rol === 'VOLUNTARI') {
       const seccio=req.baseUrl.split('/').pop();
-      if (!['auth','voluntaris','serveis','equipament','push'].includes(seccio || '')) return res.status(403).json({error:'Accés limitat al teu espai de voluntari'});
+      if (!['auth','voluntaris','serveis','equipament','push','alertes'].includes(seccio || '')) return res.status(403).json({error:'Accés limitat al teu espai de voluntari'});
     }
     if (actual.rol === 'ADMIN_AVPC') {
       const seccio = req.baseUrl.split('/').pop();
       const permeses = ['auth', 'voluntaris', 'serveis', 'proveidors', 'equipament',
         'vehicles', 'material', 'avisos', 'push', 'auditoria', 'provincies',
         'tipus-vehicles', 'tipus-material', 'tipus-servei', 'categoria-servei',
-        'localitat-servei', 'sollicitant-servei', 'nom-equipament'];
+        'localitat-servei', 'sollicitant-servei', 'nom-equipament', 'alertes', 'caducitats'];
       if (!actual.agrupacioId || !permeses.includes(seccio || '')) {
         return res.status(403).json({ error: 'Accés limitat a Gestió AVPC' });
       }

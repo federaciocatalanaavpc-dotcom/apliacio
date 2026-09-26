@@ -24,22 +24,41 @@ export interface UsuariActual {
 }
 
 export interface RespostaAcces { token?:string; usuari?:UsuariActual; pas?:'password'; repte?:string; }
-export function desarSessio(data:RespostaAcces) {
+// Sessió recordada: només s'hi desa un token de llarga durada (14 dies, que el
+// servidor només emet a voluntaris i associacions si ho han demanat). Cada cop
+// que s'obre l'app es copia a sessionStorage, que és on la resta del codi el
+// llegeix; Sortir, un 401 o un canvi de contrasenya l'esborren.
+const CLAU_RECORDADA='avpc-sessio-recordada';
+function caducitatToken(token:string):number {
+  try { return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).exp*1000; } catch { return 0; }
+}
+export function desarSessio(data:RespostaAcces, recordar=false) {
   if(!data.token || !data.usuari) throw new Error('Accés incomplet');
   sessionStorage.setItem('token',data.token); sessionStorage.setItem('usuari',JSON.stringify(data.usuari));
+  localStorage.removeItem(CLAU_RECORDADA);
+  if(recordar && caducitatToken(data.token)-Date.now()>12*3600_000) localStorage.setItem(CLAU_RECORDADA,JSON.stringify({token:data.token,usuari:data.usuari}));
 }
-export async function login(usuari:string,contrasenya:string,privacitatLlegida:boolean):Promise<RespostaAcces> {
-  const {data}=await api.post('/auth/login',{usuari,contrasenya,privacitatLlegida,privacitatVersio:VERSIO_PRIVACITAT}); return data;
+export async function login(usuari:string,contrasenya:string,privacitatLlegida:boolean,recordar=false):Promise<RespostaAcces> {
+  const {data}=await api.post('/auth/login',{usuari,contrasenya,privacitatLlegida,privacitatVersio:VERSIO_PRIVACITAT,recordar}); return data;
 }
-function netejarSessio() {
+export function netejarSessio() {
  window.dispatchEvent(new Event('avpc-sortir'));
  sessionStorage.removeItem('token'); sessionStorage.removeItem('usuari'); sessionStorage.removeItem('avpc-avis-notis-vist');
- localStorage.removeItem('token'); localStorage.removeItem('usuari');
+ localStorage.removeItem('token'); localStorage.removeItem('usuari'); localStorage.removeItem(CLAU_RECORDADA);
  if('caches' in window) caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('api-cache')).map(k=>caches.delete(k)))).catch(()=>{});
  navigator.serviceWorker?.controller?.postMessage({type:'CLEAR_PRIVATE_CACHE'});
 }
 // Les sessions anteriors persistents no es reutilitzen.
 localStorage.removeItem('token'); localStorage.removeItem('usuari');
+// En obrir l'app, si hi ha una sessió recordada vàlida es restaura.
+(()=>{
+ if(sessionStorage.getItem('token')) return;
+ try {
+  const r=JSON.parse(localStorage.getItem(CLAU_RECORDADA)||'null');
+  if(r?.token && r?.usuari && caducitatToken(r.token)>Date.now()) { sessionStorage.setItem('token',r.token); sessionStorage.setItem('usuari',JSON.stringify(r.usuari)); }
+  else localStorage.removeItem(CLAU_RECORDADA);
+ } catch { localStorage.removeItem(CLAU_RECORDADA); }
+})();
 export function logout() {
  const token=sessionStorage.getItem('token');
  const auth={headers:{Authorization:'Bearer '+token}};
@@ -76,6 +95,7 @@ export function getUsuariActual(): UsuariActual | null {
 export async function canviarContrasenya(contrasenyaActual: string, contrasenyaNova: string) {
   const {data}=await api.patch('/auth/contrasenya', { contrasenyaActual, contrasenyaNova });
   sessionStorage.setItem('token',data.token);
+  localStorage.removeItem(CLAU_RECORDADA);
 }
 
 // Els fitxers (desats a la base de dades) es serveixen darrere d'autenticació,

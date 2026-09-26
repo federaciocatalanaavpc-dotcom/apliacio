@@ -22,7 +22,7 @@ router.post('/login',async(req,res)=>{
   return res.status(401).json({error:'Accés no disponible. Revisa les credencials o demana una invitació al teu administrador.'});
  }
  await registrarLectura(u.id);
- const result=await resultatLogin(u);
+ const result=await resultatLogin(u, req.body.recordar===true);
  if(result.token || (u.authLockedUntil && u.authLockedUntil <= new Date()))await prisma.usuari.update({where:{id:u.id},data:{authFailed:0,authLockedUntil:null}});
  res.json(result);
 });
