@@ -1,0 +1,72 @@
+.alerta-emergencia {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(127, 29, 29, 0.82);
+}
+
+.alerta-emergencia__caixa {
+  width: min(480px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 3px solid var(--c-error);
+  border-radius: var(--radius-lg);
+  padding: 24px 22px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.alerta-emergencia__icona {
+  font-size: 48px;
+}
+
+.alerta-emergencia__caixa h2 {
+  margin: 4px 0;
+  color: var(--c-error);
+  font-size: 22px;
+}
+
+.alerta-emergencia__hora {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.alerta-emergencia__cos {
+  margin: 0 0 18px;
+  font-size: 16px;
+  white-space: pre-line;
+  text-align: left;
+}
+
+.alerta-emergencia__accions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.alerta-emergencia__accions button {
+  padding: 16px 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.alerta-emergencia__vaig {
+  background: var(--c-success);
+}
+
+.alerta-emergencia__nopuc {
+  background: #64748b;
+}
+
+.alerta-emergencia__caixa small {
+  color: var(--c-text-muted);
+}

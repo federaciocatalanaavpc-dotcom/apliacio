@@ -77,6 +77,7 @@ model Usuari {
   voluntariPerfil    Voluntari?
   serveisCreats      Servei[]
   registresAuditoria RegistreAuditoria[]
+  lecturesAvis       LecturaAvis[]
 }
 
 // Registre de qui crea, edita o elimina fitxes amb dades personals
@@ -427,7 +428,31 @@ model Avis {
   agrupacioId   String?
   dataEnviament DateTime   @default(now())
   enviat        Boolean    @default(false)
+  // Si és true (alertes d'emergència), els destinataris han de respondre
+  // "vaig" / "no puc" i l'associació en veu el seguiment en temps real.
+  demanaResposta Boolean   @default(false)
   creatEl       DateTime   @default(now())
+
+  lectures      LecturaAvis[]
+}
+
+enum RespostaAvis {
+  VAIG
+  NO_PUC
+}
+
+// Confirmació de lectura (i resposta) d'un avís per part d'un destinatari.
+model LecturaAvis {
+  id          String        @id @default(uuid())
+  avis        Avis          @relation(fields: [avisId], references: [id], onDelete: Cascade)
+  avisId      String
+  usuari      Usuari        @relation(fields: [usuariId], references: [id], onDelete: Cascade)
+  usuariId    String
+  llegitEl    DateTime      @default(now())
+  resposta    RespostaAvis?
+  respostaEl  DateTime?
+
+  @@unique([avisId, usuariId])
 }
 
 // Guarda la subscripció push del navegador de cada dispositiu de l'usuari,

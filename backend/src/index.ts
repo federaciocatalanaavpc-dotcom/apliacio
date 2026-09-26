@@ -29,6 +29,7 @@ import nomEquipamentRoutes from './routes/nomEquipament.routes';
 import alertaFederacioRoutes from './routes/alertaFederacio.routes';
 import notificacioAssociacionsRoutes from './routes/notificacioAssociacions.routes';
 import auditoriaRoutes from './routes/auditoria.routes';
+import alertesRoutes from './routes/alertes.routes';
 import { iniciarPlanificadorAvisos } from './services/scheduler.service';
 
 dotenv.config();
@@ -69,6 +70,7 @@ app.use('/api/nom-equipament', nomEquipamentRoutes);
 app.use('/api/alerta-federacio', alertaFederacioRoutes);
 app.use('/api/notificacio-associacions', notificacioAssociacionsRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api/alertes', alertesRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

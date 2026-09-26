@@ -44,6 +44,7 @@ export default function AlertaRapida({ incrustat = false }: { incrustat?: boolea
         titol: form.titol.trim() || buit.titol,
         cos,
         agrupacioId: esFederacio ? agrupacioSeleccionada : undefined,
+        demanaResposta: true,
       });
       setEnviada(true);
       setForm(buit);
@@ -112,7 +113,7 @@ export default function AlertaRapida({ incrustat = false }: { incrustat?: boolea
       </div>
 
       {error && <p className="text-error" style={{ fontSize: 13 }}>{error}</p>}
-      {enviada && <p style={{ color: 'var(--c-success)', fontSize: 13 }}>Alerta enviada.</p>}
+      {enviada && <p style={{ color: 'var(--c-success)', fontSize: 13 }}>Alerta enviada. Pots veure qui l'ha llegit i qui ha respost "vaig" a Avisos → Seguiment.</p>}
 
       <button type="submit" className="btn-danger" disabled={enviant}>
         {enviant ? 'Enviant...' : 'Enviar alerta ara'}
