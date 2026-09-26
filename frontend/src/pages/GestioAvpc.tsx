@@ -85,7 +85,6 @@ export default function GestioAvpc() {
         <p>Tot el dia a dia de l’agrupació, organitzat en un únic espai.</p>
       </section>
 
-      <Link to="/serveis-conjunts" className="module-card module-card--avpc" style={{marginBottom:16}}><span className="module-card__icon">🤝</span><span className="module-card__copy"><strong>Serveis conjunts</strong><small>Participació i coordinació amb altres AVPC.</small></span><span>→</span></Link>
       <div className="module-grid">
         {SECCIONS.map((s) => (
           <button key={s.valor} onClick={() => setSeccio(s.valor)} className="module-card module-card--avpc">
@@ -97,6 +96,14 @@ export default function GestioAvpc() {
             <span className="module-card__arrow" aria-hidden="true">→</span>
           </button>
         ))}
+        <Link to="/serveis-conjunts" className="module-card module-card--avpc">
+          <span className="module-card__icon" aria-hidden="true">🤝</span>
+          <span className="module-card__copy">
+            <strong>Serveis conjunts</strong>
+            <small>Participació i coordinació amb altres AVPC.</small>
+          </span>
+          <span className="module-card__arrow" aria-hidden="true">→</span>
+        </Link>
       </div>
 
       <section className="workspace-tip workspace-tip--avpc">
